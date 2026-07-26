@@ -19,6 +19,8 @@ Then open `http://localhost:8000` in a browser. Refresh after any edit to `index
 ## Status
 Not deployed anywhere. Do not deploy / publish without explicit approval — keep all work local or in a private preview until given the go-ahead.
 
+Domain: `nextup.exchange` (acquired, not yet connected to anything).
+
 ## Known follow-ups (not yet built)
 - Waitlist form is front-end only — submissions aren't captured anywhere yet.
 - Artist roster (Marra Vale, Dry Season, etc.) is placeholder/fictional — swap for real assets when available.
