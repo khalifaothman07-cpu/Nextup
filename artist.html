@@ -162,22 +162,13 @@
                 <div class="eyebrow">Side A</div>
                 <h2 style="font-size:28px; margin-top:12px;">Back ${artist.name}</h2>
               </div>
-              <div class="backing-panel">
-                <h3>Put a stake behind their career</h3>
-                <p class="lede">Tied to ${artist.name}'s whole catalogue, not one release. You'll show up on this page as an early backer. Paid in crypto — BTC, ETH, USDC, and more.</p>
-                <div class="amount-row" id="amountRow">
-                  <button type="button" class="amount-chip" data-amount="2500">$25</button>
-                  <button type="button" class="amount-chip" data-amount="5000">$50</button>
-                  <button type="button" class="amount-chip" data-amount="10000">$100</button>
-                </div>
-                <button type="button" class="back-btn" id="backBtn">Back this artist — pay with crypto</button>
-                <div class="action-status" id="backStatus"></div>
-              </div>
+              <div id="backingPanelSlot"></div>
             </div>
           </div>
         </section>
       `;
           wireReveal();
+          await renderBackingPanel(artist);
 
           // track list
           const trackList = document.getElementById("trackList");
@@ -226,52 +217,211 @@
               window.location.href = data.hosted_url;
             });
           });
+        }
+      }
 
-          // backing panel
-          let selectedAmount = null;
-          const amountRow = document.getElementById("amountRow");
-          const backBtn = document.getElementById("backBtn");
-          const backStatus = document.getElementById("backStatus");
-          amountRow.querySelectorAll(".amount-chip").forEach((chip) => {
+      // Backing an artist is a "regulatedOfferings" surface (continuous
+      // bonding-curve Buy/Sell trading, see docs/ASSUMPTIONS.md) and stays
+      // hidden until the regulated_offerings feature flag is turned on —
+      // no disabled/fake trading UI shown in the meantime.
+      async function renderBackingPanel(artist) {
+        const slot = document.getElementById("backingPanelSlot");
+        const { data: flag } = await supabase
+          .from("feature_flags")
+          .select("enabled")
+          .eq("key", "regulated_offerings")
+          .maybeSingle();
+
+        if (!flag?.enabled) {
+          slot.innerHTML = `
+            <div class="backing-panel">
+              <h3>Backing isn't open yet</h3>
+              <p class="lede">Support for ${artist.name} is still being built. Join the waitlist on the homepage and we'll let you know when it's ready.</p>
+            </div>
+          `;
+          return;
+        }
+
+        const { data: curve } = await supabase
+          .from("artist_curves")
+          .select("supply, base_price_cents, k")
+          .eq("artist_id", artist.id)
+          .single();
+        const priceCents = curve
+          ? Math.round(
+              curve.base_price_cents * Math.exp(curve.k * curve.supply),
+            )
+          : null;
+
+        slot.innerHTML = `
+          <div class="backing-panel">
+            <h3>Put a stake behind their career</h3>
+            <p class="lede">A live price that moves with demand — buy if you think ${artist.name} is heating up, sell if you think the opposite. Paid from your Nextup wallet, funded by crypto.</p>
+            <div class="price-ticker" id="priceTicker">${priceCents != null ? formatUSD(priceCents) : "—"}</div>
+            <div class="wallet-bar" id="walletBar"></div>
+            <div class="direction-toggle" id="directionToggle">
+              <button type="button" class="direction-btn active" data-direction="positive">Buy</button>
+              <button type="button" class="direction-btn" data-direction="negative">Sell</button>
+            </div>
+            <div class="amount-row" id="amountRow">
+              <button type="button" class="amount-chip" data-amount="500">$5</button>
+              <button type="button" class="amount-chip" data-amount="2000">$20</button>
+              <button type="button" class="amount-chip" data-amount="10000">$100</button>
+            </div>
+            <button type="button" class="back-btn" id="tradeBtn">Sign in to trade</button>
+            <div class="action-status" id="tradeStatus"></div>
+          </div>
+          <div class="positions-list" id="positionsList"></div>
+        `;
+
+        let direction = "positive";
+        let selectedAmount = null;
+        const walletBar = document.getElementById("walletBar");
+        const tradeBtn = document.getElementById("tradeBtn");
+        const tradeStatus = document.getElementById("tradeStatus");
+        const positionsList = document.getElementById("positionsList");
+
+        document
+          .getElementById("directionToggle")
+          .querySelectorAll(".direction-btn")
+          .forEach((btn) => {
+            btn.addEventListener("click", () => {
+              direction = btn.dataset.direction;
+              document
+                .querySelectorAll(".direction-btn")
+                .forEach((b) => b.classList.remove("active"));
+              btn.classList.add("active");
+              tradeBtn.textContent = session
+                ? direction === "positive"
+                  ? "Buy"
+                  : "Sell"
+                : "Sign in to trade";
+            });
+          });
+
+        document
+          .getElementById("amountRow")
+          .querySelectorAll(".amount-chip")
+          .forEach((chip) => {
             chip.addEventListener("click", () => {
-              amountRow
-                .querySelectorAll(".amount-chip")
+              document
+                .querySelectorAll("#amountRow .amount-chip")
                 .forEach((c) => c.classList.remove("active"));
               chip.classList.add("active");
               selectedAmount = Number(chip.dataset.amount);
             });
           });
-          backBtn.addEventListener("click", async () => {
-            if (!session) {
-              backStatus.textContent = "Sign in at the top of the page first.";
-              return;
-            }
-            if (!selectedAmount) {
-              backStatus.textContent = "Pick an amount first.";
-              return;
-            }
-            backBtn.disabled = true;
-            backStatus.textContent = "Redirecting to checkout…";
-            const { data, error } = await supabase.functions.invoke(
-              "create-charge",
-              {
-                body: {
-                  kind: "backing",
-                  artist_id: artist.id,
-                  amount_usd_cents: selectedAmount,
-                  slug,
-                },
-              },
-            );
-            backBtn.disabled = false;
-            if (error || !data?.hosted_url) {
-              backStatus.textContent =
-                data?.error ?? "Could not start checkout — try again.";
-              return;
-            }
-            window.location.href = data.hosted_url;
-          });
+
+        async function refreshWallet() {
+          if (!session) {
+            walletBar.innerHTML = "";
+            tradeBtn.textContent = "Sign in to trade";
+            positionsList.innerHTML = "";
+            return;
+          }
+          const { data: wallet } = await supabase
+            .from("wallets")
+            .select("balance_cents")
+            .eq("user_id", session.user.id)
+            .maybeSingle();
+          const balance = wallet?.balance_cents ?? 0;
+          walletBar.innerHTML = `
+            <span>Wallet: ${formatUSD(balance)}</span>
+            <button type="button" class="wallet-add-btn" id="addFundsBtn">Add funds</button>
+          `;
+          document
+            .getElementById("addFundsBtn")
+            .addEventListener("click", async () => {
+              const amount = prompt(
+                "Add how many US dollars (paid in crypto)? Minimum $10.",
+              );
+              const cents = Math.round(Number(amount) * 100);
+              if (!Number.isInteger(cents) || cents < 1000) return;
+              const { data, error } = await supabase.functions.invoke(
+                "deposit",
+                { body: { amount_usd_cents: cents, slug } },
+              );
+              if (error || !data?.hosted_url) {
+                alert(data?.error ?? "Could not start deposit — try again.");
+                return;
+              }
+              window.location.href = data.hosted_url;
+            });
+          tradeBtn.textContent = direction === "positive" ? "Buy" : "Sell";
+
+          const { data: positions } = await supabase
+            .from("positions")
+            .select(
+              "id, direction, units, stake_cents, entry_price_cents, status",
+            )
+            .eq("user_id", session.user.id)
+            .eq("artist_id", artist.id)
+            .eq("status", "open")
+            .order("opened_at", { ascending: false });
+
+          positionsList.innerHTML = (positions ?? [])
+            .map(
+              (p) => `
+            <div class="position-row" data-position-id="${p.id}">
+              <div>
+                <div class="track-title">${p.direction === "positive" ? "Buy" : "Sell"} · ${formatUSD(p.stake_cents)}</div>
+                <div class="track-price">Entry ${formatUSD(p.entry_price_cents)}</div>
+              </div>
+              <button type="button" class="track-buy close-position-btn">Close</button>
+            </div>
+          `,
+            )
+            .join("");
+
+          positionsList
+            .querySelectorAll(".close-position-btn")
+            .forEach((btn) => {
+              btn.addEventListener("click", async () => {
+                const positionId =
+                  btn.closest(".position-row").dataset.positionId;
+                btn.disabled = true;
+                btn.textContent = "Closing…";
+                const { data, error } = await supabase.functions.invoke(
+                  "close-position",
+                  { body: { position_id: positionId } },
+                );
+                if (error || !data?.position) {
+                  btn.disabled = false;
+                  btn.textContent = "Close";
+                  alert(data?.error ?? "Could not close position — try again.");
+                  return;
+                }
+                await refreshWallet();
+              });
+            });
         }
+
+        await refreshWallet();
+
+        tradeBtn.addEventListener("click", async () => {
+          if (!session) {
+            tradeStatus.textContent = "Sign in at the top of the page first.";
+            return;
+          }
+          if (!selectedAmount) {
+            tradeStatus.textContent = "Pick an amount first.";
+            return;
+          }
+          tradeBtn.disabled = true;
+          tradeStatus.textContent = "Placing order…";
+          const { data, error } = await supabase.functions.invoke("trade", {
+            body: {
+              artist_id: artist.id,
+              direction,
+              stake_cents: selectedAmount,
+            },
+          });
+          tradeBtn.disabled = false;
+          tradeStatus.textContent = error
+            ? (data?.error ?? "Could not place trade — try again.")
+            : `${direction === "positive" ? "Bought" : "Sold"} ${formatUSD(selectedAmount)} of ${artist.name}.`;
+          if (!error) await refreshWallet();
+        });
       }
     </script>
   </body>

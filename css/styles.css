@@ -1185,6 +1185,82 @@ footer {
   min-height: 18px;
 }
 
+.price-ticker {
+  font-family: "Archivo Black", sans-serif;
+  font-size: 32px;
+  margin: 4px 0 16px;
+}
+.wallet-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12.5px;
+  color: var(--paper-dim);
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  padding: 10px 10px 10px 16px;
+  margin-bottom: 16px;
+}
+.wallet-add-btn {
+  font-family: "Archivo", sans-serif;
+  font-weight: 600;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--paper);
+  color: var(--ink);
+  border: none;
+  border-radius: 100px;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+.wallet-add-btn:hover {
+  background: var(--brass);
+}
+.direction-toggle {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  padding: 3px;
+  margin-bottom: 16px;
+}
+.direction-btn {
+  flex: 1;
+  font-family: "Archivo", sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--paper-dim);
+  border: none;
+  border-radius: 100px;
+  padding: 9px 0;
+  cursor: pointer;
+}
+.direction-btn.active {
+  background: var(--paper);
+  color: var(--ink);
+}
+.positions-list {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.position-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 18px;
+  background: var(--ink-2);
+}
+
 .two-col {
   display: grid;
   grid-template-columns: 1fr 1fr;

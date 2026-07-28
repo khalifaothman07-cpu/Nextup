@@ -3,9 +3,10 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const COMMERCE_API_KEY = Deno.env.get("COMMERCE_API_KEY");
 const SITE_URL = Deno.env.get("SITE_URL") ?? "https://nextup.exchange";
+const MIN_DEPOSIT_CENTS = 1000; // $10
 
-interface ChargeRequest {
-  track_id?: string;
+interface DepositRequest {
+  amount_usd_cents?: number;
   slug?: string;
 }
 
@@ -40,33 +41,19 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "Not signed in" }, 401);
   }
 
-  let body: ChargeRequest;
+  let body: DepositRequest;
   try {
     body = await req.json();
   } catch {
     return jsonResponse({ error: "Invalid JSON body" }, 400);
   }
 
-  const { track_id, slug } = body;
-  if (!track_id) {
-    return jsonResponse({ error: "track_id is required" }, 400);
-  }
-
-  const { data: track, error: trackError } = await supabase
-    .from("tracks")
-    .select("id, title, price_cents")
-    .eq("id", track_id)
-    .single();
-  if (trackError || !track) {
-    return jsonResponse({ error: "Track not found" }, 404);
-  }
-  const { data: alreadyOwned } = await supabase
-    .from("track_ownership_public")
-    .select("track_id")
-    .eq("track_id", track_id)
-    .maybeSingle();
-  if (alreadyOwned) {
-    return jsonResponse({ error: "Track is already owned" }, 409);
+  const amountCents = Number(body.amount_usd_cents);
+  if (!Number.isInteger(amountCents) || amountCents < MIN_DEPOSIT_CENTS) {
+    return jsonResponse(
+      { error: `amount_usd_cents must be an integer >= ${MIN_DEPOSIT_CENTS}` },
+      400,
+    );
   }
 
   if (!COMMERCE_API_KEY) {
@@ -87,16 +74,13 @@ Deno.serve(async (req) => {
       "X-CC-Version": "2018-03-22",
     },
     body: JSON.stringify({
-      name: `Own "${track.title}" on Nextup`,
-      description: `Song ownership for "${track.title}".`,
+      name: "Add funds to Nextup wallet",
+      description: "Crypto deposit to your Nextup trading balance.",
       pricing_type: "fixed_price",
-      local_price: {
-        amount: (track.price_cents / 100).toFixed(2),
-        currency: "USD",
-      },
-      metadata: { user_id: user.id, track_id },
-      redirect_url: `${SITE_URL}/artist.html?slug=${encodeURIComponent(slug ?? "")}&charge=success`,
-      cancel_url: `${SITE_URL}/artist.html?slug=${encodeURIComponent(slug ?? "")}&charge=cancelled`,
+      local_price: { amount: (amountCents / 100).toFixed(2), currency: "USD" },
+      metadata: { user_id: user.id, purpose: "wallet_deposit" },
+      redirect_url: `${SITE_URL}/artist.html?slug=${encodeURIComponent(body.slug ?? "")}&deposit=success`,
+      cancel_url: `${SITE_URL}/artist.html?slug=${encodeURIComponent(body.slug ?? "")}&deposit=cancelled`,
     }),
   });
 
@@ -108,17 +92,16 @@ Deno.serve(async (req) => {
   const commerceData = await commerceRes.json();
   const charge = commerceData.data;
 
-  const { error: insertError } = await supabase.from("crypto_charges").insert({
+  const { error: insertError } = await supabase.from("wallet_deposits").insert({
     user_id: user.id,
-    track_id,
-    amount_usd_cents: track.price_cents,
+    amount_usd_cents: amountCents,
     commerce_charge_id: charge.code,
     status: "pending",
   });
 
   if (insertError) {
-    console.error("Failed to record charge:", insertError);
-    return jsonResponse({ error: "Could not record charge" }, 500);
+    console.error("Failed to record deposit:", insertError);
+    return jsonResponse({ error: "Could not record deposit" }, 500);
   }
 
   return jsonResponse({ hosted_url: charge.hosted_url }, 200);

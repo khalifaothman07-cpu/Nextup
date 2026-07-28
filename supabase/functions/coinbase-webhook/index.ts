@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "jsr:@supabase/supabase-js@2";
 
 const WEBHOOK_SECRET = Deno.env.get("COMMERCE_WEBHOOK_SECRET");
 
@@ -31,6 +31,85 @@ async function verifySignature(
   return diff === 0;
 }
 
+// deno-lint-ignore no-explicit-any
+async function handleSongCharge(
+  supabase: SupabaseClient,
+  chargeRow: any,
+  eventType: string,
+) {
+  if (eventType === "charge:failed" || eventType === "charge:delayed") {
+    if (chargeRow.status === "pending") {
+      await supabase
+        .from("crypto_charges")
+        .update({ status: "failed" })
+        .eq("id", chargeRow.id)
+        .eq("status", "pending");
+    }
+    return;
+  }
+  if (eventType !== "charge:confirmed" || chargeRow.status === "confirmed") {
+    return;
+  }
+
+  const { data: updated, error: updateError } = await supabase
+    .from("crypto_charges")
+    .update({ status: "confirmed", confirmed_at: new Date().toISOString() })
+    .eq("id", chargeRow.id)
+    .eq("status", "pending")
+    .select();
+  if (updateError) {
+    console.error("Failed to update crypto_charges:", updateError);
+    return;
+  }
+  if (!updated || updated.length === 0) return; // already processed
+
+  const { error } = await supabase.from("song_ownership").insert({
+    user_id: chargeRow.user_id,
+    track_id: chargeRow.track_id,
+    price_cents: chargeRow.amount_usd_cents,
+  });
+  if (error) console.error("Failed to insert song_ownership:", error);
+}
+
+// deno-lint-ignore no-explicit-any
+async function handleDeposit(
+  supabase: SupabaseClient,
+  deposit: any,
+  eventType: string,
+) {
+  if (eventType === "charge:failed" || eventType === "charge:delayed") {
+    if (deposit.status === "pending") {
+      await supabase
+        .from("wallet_deposits")
+        .update({ status: "failed" })
+        .eq("id", deposit.id)
+        .eq("status", "pending");
+    }
+    return;
+  }
+  if (eventType !== "charge:confirmed" || deposit.status === "confirmed") {
+    return;
+  }
+
+  const { data: updated, error: updateError } = await supabase
+    .from("wallet_deposits")
+    .update({ status: "confirmed", confirmed_at: new Date().toISOString() })
+    .eq("id", deposit.id)
+    .eq("status", "pending")
+    .select();
+  if (updateError) {
+    console.error("Failed to update wallet_deposits:", updateError);
+    return;
+  }
+  if (!updated || updated.length === 0) return; // already processed
+
+  const { error } = await supabase.rpc("credit_wallet", {
+    p_user_id: deposit.user_id,
+    p_amount_cents: deposit.amount_usd_cents,
+  });
+  if (error) console.error("Failed to credit wallet:", error);
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
@@ -60,64 +139,30 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  const { data: chargeRow, error: chargeError } = await supabase
+  // A charge.code is unique across both flows, so exactly one of these
+  // lookups will hit — check which flow this charge belongs to.
+  const { data: songCharge } = await supabase
     .from("crypto_charges")
     .select("*")
     .eq("commerce_charge_id", charge.code)
-    .single();
+    .maybeSingle();
 
-  if (chargeError || !chargeRow) {
-    console.error("Unknown charge:", charge.code);
-    return new Response("unknown charge", { status: 200 });
-  }
-
-  if (eventType === "charge:failed" || eventType === "charge:delayed") {
-    if (chargeRow.status === "pending") {
-      await supabase
-        .from("crypto_charges")
-        .update({ status: "failed" })
-        .eq("id", chargeRow.id)
-        .eq("status", "pending");
-    }
+  if (songCharge) {
+    await handleSongCharge(supabase, songCharge, eventType);
     return new Response("ok", { status: 200 });
   }
 
-  if (eventType !== "charge:confirmed") {
-    return new Response("ignored", { status: 200 });
+  const { data: deposit } = await supabase
+    .from("wallet_deposits")
+    .select("*")
+    .eq("commerce_charge_id", charge.code)
+    .maybeSingle();
+
+  if (deposit) {
+    await handleDeposit(supabase, deposit, eventType);
+    return new Response("ok", { status: 200 });
   }
 
-  const { data: updated, error: updateError } = await supabase
-    .from("crypto_charges")
-    .update({ status: "confirmed", confirmed_at: new Date().toISOString() })
-    .eq("id", chargeRow.id)
-    .eq("status", "pending")
-    .select();
-
-  if (updateError) {
-    console.error("Failed to update charge:", updateError);
-    return new Response("update failed", { status: 500 });
-  }
-
-  if (!updated || updated.length === 0) {
-    // Already processed by a concurrent webhook delivery.
-    return new Response("already processed", { status: 200 });
-  }
-
-  if (chargeRow.kind === "backing") {
-    const { error } = await supabase.from("backings").insert({
-      user_id: chargeRow.user_id,
-      artist_id: chargeRow.artist_id,
-      amount_cents: chargeRow.amount_usd_cents,
-    });
-    if (error) console.error("Failed to insert backing:", error);
-  } else {
-    const { error } = await supabase.from("song_ownership").insert({
-      user_id: chargeRow.user_id,
-      track_id: chargeRow.track_id,
-      price_cents: chargeRow.amount_usd_cents,
-    });
-    if (error) console.error("Failed to insert song_ownership:", error);
-  }
-
-  return new Response("ok", { status: 200 });
+  console.error("Unknown charge:", charge.code);
+  return new Response("unknown charge", { status: 200 });
 });

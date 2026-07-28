@@ -1,72 +1,59 @@
-# Nextup — Landing Page + Artist Profiles
+# NextUp
 
-Static multi-page site (no build step). Backend is Supabase — data and auth are called directly from the browser via the `anon`/publishable key, protected by row-level security. Payments are crypto-only, via Coinbase Commerce.
+An artist discovery, support, and commerce platform — not a generic streaming clone. Full product definition: `docs/PRODUCT_SPEC.md`. Current architecture, what's built vs. missing, and the implementation sequence: `docs/ARCHITECTURE.md`.
 
-Nextup is global — there's no regional rollout or eligibility gate baked into the product.
+**Status: not deployed anywhere.** Domain `nextup.exchange` is acquired but unconnected — nothing goes live without explicit approval.
 
-## Run it locally / preview edits
+## What's actually built right now
 
-From this folder:
+A static two-page site (`index.html`, `artist.html`) plus a Supabase backend:
+
+- Landing page: roster, pricing/tiers copy, FAQ, waitlist capture.
+- Artist profile pages: bio, track list, song-ownership purchase (crypto checkout via Coinbase Commerce).
+- Magic-link auth (no passwords).
+- A feature-flagged `regulatedOfferings` module (continuous bonding-curve Buy/Sell trading on artist momentum) — **disabled by default**, see `docs/ASSUMPTIONS.md` #1 for why it exists and `docs/SECURITY.md` for how it's locked down.
+- RBAC foundation (`profiles`, `user_roles`, `artist_members`, `feature_flags`) — schema only; no admin UI to manage it yet.
+
+Everything else in the product spec (marketplace, community, momentum engine, A&R pipeline, admin console, ledger/credits) is **not built** — see `docs/ARCHITECTURE.md`'s "Missing functionality" section rather than assuming partial/hidden implementations exist.
+
+## Install / run locally
+
+No build step. From the repo root:
 
 ```
 python3 -m http.server 8000
 ```
 
-Then open `http://localhost:8000` in a browser. Refresh after any edit — no build/compile step needed.
+Open `http://localhost:8000`. Edits to `index.html`/`artist.html`/`css/styles.css`/`js/*.js` take effect on refresh.
 
-## Before committing
+## Configure
 
-Run `npx prettier --write .` (or `npm run format`) before every commit — CI has no separate lint/build step, so this is the only formatting gate. `npm run format:check` fails without writing, useful in CI.
+Copy `.env.example` for the list of secrets. In practice: the Supabase URL/publishable key are hardcoded in `js/supabase-client.js` (no build step to inject them); the Coinbase Commerce secrets (`COMMERCE_API_KEY`, `COMMERCE_WEBHOOK_SECRET`) are set via `supabase secrets set` against the `nextup` project and are **not currently set** — see `docs/DEPLOYMENT.md`.
 
-## Structure
+## Seed data
 
-- `index.html` — landing page: hero, how-it-works, pricing/tiers, live artist roster, about, FAQ, press contact, waitlist.
-- `artist.html?slug=<slug>` — per-artist profile: bio, track list ("Side B" — own a song), backing panel ("Side A" — back the artist). Both flows redirect to a Coinbase Commerce hosted checkout.
-- `css/styles.css` — shared design system.
-- `js/supabase-client.js` — Supabase client init (project URL + publishable key).
-- `js/app.js` — shared helpers: waitlist submission, auth widget (magic-link sign-in), scroll reveal.
-- `supabase/functions/create-charge/` — Edge Function: authenticated user requests a charge for a backing or song purchase; creates a Coinbase Commerce charge and returns the hosted checkout URL.
-- `supabase/functions/coinbase-webhook/` — Edge Function: receives Coinbase Commerce's `charge:confirmed` webhook, verifies its signature, and records the backing/song ownership.
+The artist roster (5 fictional artists, 3 tracks each) is seeded directly via SQL migration, not a script — see the migration history in the `nextup` Supabase project. All seed artists are explicitly fictional/placeholder.
 
-## Backend (Supabase)
+## Test
 
-Dedicated project `nextup` (org: khalifaothman07-cpu's Org, region ap-south-1) — **not** shared with the Unbeatable app's project.
+No automated test suite exists yet (see `docs/SECURITY.md`'s "Known gaps"). Format before every commit:
 
-Tables: `waitlist_signups`, `artists`, `tracks`, `backings` (Side A), `song_ownership` (Side B), `crypto_charges` (tracks each Coinbase Commerce charge from creation through confirmation), plus a `track_ownership_public` view that exposes ownership status without leaking buyer identity. All tables have RLS enabled:
+```
+npm run format         # npx prettier --write .
+npm run format:check   # check only, for CI
+```
 
-- `artists` / `tracks`: public read.
-- `waitlist_signups`: public insert only.
-- `backings` / `song_ownership` / `crypto_charges`: authenticated users can insert/read only their own rows. `backings` and `song_ownership` rows are only ever written server-side (by the webhook, using the service role key) once a charge is confirmed — the client never inserts into them directly.
+## Feature flags
 
-Auth is email magic-link (Supabase Auth OTP) — no passwords.
+`regulated_offerings` (in the `feature_flags` table, default `false`) gates the entire Buy/Sell trading UI. See `docs/DEPLOYMENT.md` before ever turning it on — it's a legal/jurisdiction gate, not a config toggle.
 
-## Crypto payments (Coinbase Commerce)
+## Docs
 
-Checkout accepts BTC, ETH, USDC, and whatever else Coinbase Commerce supports — pricing is set in USD and Coinbase converts it at checkout, so no single volatile asset is hardcoded into the product.
-
-**Flow:** user clicks "Own this song" / "Back this artist" → `create-charge` Edge Function creates a Coinbase Commerce charge and a `pending` row in `crypto_charges` → user pays on Coinbase's hosted page → Coinbase calls the `coinbase-webhook` Edge Function on confirmation → the webhook verifies the signature and writes the real `backings` / `song_ownership` row.
-
-**To actually accept payments, this still needs, from you:**
-
-1. A Coinbase Commerce account (business account, their own KYC) at commerce.coinbase.com.
-2. An API key from that account, set as an Edge Function secret: `supabase secrets set COMMERCE_API_KEY=... --project-ref djnsjtlkjgjqmfcucjqp`
-3. A webhook endpoint added in the Coinbase Commerce dashboard pointing at `https://djnsjtlkjgjqmfcucjqp.supabase.co/functions/v1/coinbase-webhook`, and its shared secret set the same way: `supabase secrets set COMMERCE_WEBHOOK_SECRET=... --project-ref djnsjtlkjgjqmfcucjqp`
-4. Optionally `SITE_URL` (defaults to `https://nextup.exchange`) if checkout should redirect somewhere else during testing.
-
-Until those secrets are set, `create-charge` returns a clear "crypto payments aren't configured yet" error instead of pretending to work — no partial/fake charges.
-
-I couldn't deploy the two Edge Functions myself this pass (the deploy tool call needs your approval) — their source is committed under `supabase/functions/`; deploy them with `supabase functions deploy create-charge` / `supabase functions deploy coinbase-webhook --no-verify-jwt` once you're set up, or grant the tool approval and I'll deploy them directly.
-
-## Status
-
-Not deployed anywhere. Do not deploy / publish without explicit approval — keep all work local or in a private preview until given the go-ahead.
-
-Domain: `nextup.exchange` (acquired, not yet connected to anything).
-
-## Known follow-ups (not yet built)
-
-- Coinbase Commerce account isn't set up yet — see "Crypto payments" above for what's needed to go from code-complete to actually able to charge someone.
-- Edge Functions are written but not deployed (blocked on tool approval — see above).
-- No real audio playback for tracks yet — "Spin" behavior on the landing page is a visual demo only.
-- Artist roster (Marra Vale, Dry Season, etc.) is placeholder/fictional — swap for real assets when available.
-- No admin/artist-facing tools yet (roster is seeded directly via SQL).
+- `docs/PRODUCT_SPEC.md` — what NextUp is, terminology rules, roles, visual identity.
+- `docs/ARCHITECTURE.md` — inspection/assessment, architectural risks, implementation sequence.
+- `docs/DATA_MODEL.md` — the real deployed schema.
+- `docs/API.md` — Edge Functions.
+- `docs/SECURITY.md` — the trust model, and a documented near-miss worth reading before writing any new `SECURITY DEFINER` function.
+- `docs/ASSUMPTIONS.md` — recorded assumptions and why.
+- `docs/IMPLEMENTATION_LOG.md` — running log, newest first.
+- `docs/DEPLOYMENT.md` — what deploying would involve (nothing is deployed yet).
