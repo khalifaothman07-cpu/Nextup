@@ -49,7 +49,7 @@
 
 <script type="module">
   import { supabase } from './js/supabase-client.js';
-  import { formatUSD, initAuthWidget } from './js/app.js';
+  import { formatUSD, initAuthWidget, wireReveal } from './js/app.js';
 
   const content = document.getElementById('artistContent');
   const params = new URLSearchParams(window.location.search);
@@ -133,6 +133,7 @@
           </div>
         </section>
       `;
+      wireReveal();
 
       // track list
       const trackList = document.getElementById('trackList');
