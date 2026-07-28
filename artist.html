@@ -1,96 +1,140 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Artist — Nextup</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css">
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Artist — Nextup</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <header>
+      <nav class="wrap">
+        <a href="index.html#top" class="mark">
+          <svg
+            viewBox="0 0 100 100"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle cx="26" cy="74" r="13" fill="#F3F1EC" />
+            <path
+              d="M39 74V22L74 12V52"
+              stroke="#F3F1EC"
+              stroke-width="7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M74 52L86 40"
+              stroke="#F3F1EC"
+              stroke-width="7"
+              stroke-linecap="round"
+            />
+            <path
+              d="M86 40L86 26"
+              stroke="#F3F1EC"
+              stroke-width="7"
+              stroke-linecap="round"
+            />
+            <path
+              d="M86 40L72 40"
+              stroke="#F3F1EC"
+              stroke-width="7"
+              stroke-linecap="round"
+            />
+          </svg>
+          <span>Nextup</span>
+        </a>
+        <div class="nav-right">
+          <div class="auth-widget" id="authWidget"></div>
+          <a href="index.html#waitlist" class="nav-cta">Get Early Access</a>
+        </div>
+      </nav>
+    </header>
 
-<header>
-  <nav class="wrap">
-    <a href="index.html#top" class="mark">
-      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="26" cy="74" r="13" fill="#F3F1EC"/>
-        <path d="M39 74V22L74 12V52" stroke="#F3F1EC" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M74 52L86 40" stroke="#F3F1EC" stroke-width="7" stroke-linecap="round"/>
-        <path d="M86 40L86 26" stroke="#F3F1EC" stroke-width="7" stroke-linecap="round"/>
-        <path d="M86 40L72 40" stroke="#F3F1EC" stroke-width="7" stroke-linecap="round"/>
-      </svg>
-      <span>Nextup</span>
-    </a>
-    <div class="nav-right">
-      <div class="auth-widget" id="authWidget"></div>
-      <a href="index.html#waitlist" class="nav-cta">Get Early Access</a>
-    </div>
-  </nav>
-</header>
+    <main class="wrap" style="padding-top: 56px">
+      <a href="index.html#top" class="breadcrumb">← Back to Nextup</a>
 
-<main class="wrap" style="padding-top:56px;">
-  <a href="index.html#top" class="breadcrumb">← Back to Nextup</a>
+      <div id="chargeNotice"></div>
 
-  <div id="chargeNotice"></div>
+      <div id="artistContent">
+        <p class="muted">Loading artist…</p>
+      </div>
+    </main>
 
-  <div id="artistContent">
-    <p class="muted">Loading artist…</p>
-  </div>
-</main>
+    <footer style="margin-top: 80px">
+      <div
+        class="wrap foot-bottom"
+        style="border-top: 1px solid var(--line); padding-top: 24px"
+      >
+        <div class="legal">
+          Nextup involves financial risk, including possible loss of your full
+          contribution and exposure to cryptocurrency price volatility. Nothing
+          on this page is investment advice or a solicitation. Crypto payments
+          are final and cannot be reversed.
+        </div>
+        <div class="copy">© 2026 NEXTUP</div>
+      </div>
+    </footer>
 
-<footer style="margin-top:80px;">
-  <div class="wrap foot-bottom" style="border-top:1px solid var(--line); padding-top:24px;">
-    <div class="legal">Nextup involves financial risk, including possible loss of your full contribution and exposure to cryptocurrency price volatility. Nothing on this page is investment advice or a solicitation. Crypto payments are final and cannot be reversed.</div>
-    <div class="copy">© 2026 NEXTUP</div>
-  </div>
-</footer>
+    <script type="module">
+      import { supabase } from "./js/supabase-client.js";
+      import { formatUSD, initAuthWidget, wireReveal } from "./js/app.js";
 
-<script type="module">
-  import { supabase } from './js/supabase-client.js';
-  import { formatUSD, initAuthWidget, wireReveal } from './js/app.js';
+      const content = document.getElementById("artistContent");
+      const params = new URLSearchParams(window.location.search);
+      const slug = params.get("slug");
 
-  const content = document.getElementById('artistContent');
-  const params = new URLSearchParams(window.location.search);
-  const slug = params.get('slug');
+      const chargeNotice = document.getElementById("chargeNotice");
+      const chargeState = params.get("charge");
+      if (chargeState === "success") {
+        chargeNotice.innerHTML =
+          "<p style=\"color:var(--good); font-family:'JetBrains Mono', monospace; font-size:13px; margin-bottom:24px;\">Payment received — confirming on-chain. This can take a few minutes; refresh this page once it confirms.</p>";
+      } else if (chargeState === "cancelled") {
+        chargeNotice.innerHTML =
+          '<p class="muted" style="font-family:\'JetBrains Mono\', monospace; font-size:13px; margin-bottom:24px;">Checkout cancelled — nothing was charged.</p>';
+      }
 
-  const chargeNotice = document.getElementById('chargeNotice');
-  const chargeState = params.get('charge');
-  if (chargeState === 'success') {
-    chargeNotice.innerHTML = '<p style="color:var(--good); font-family:\'JetBrains Mono\', monospace; font-size:13px; margin-bottom:24px;">Payment received — confirming on-chain. This can take a few minutes; refresh this page once it confirms.</p>';
-  } else if (chargeState === 'cancelled') {
-    chargeNotice.innerHTML = '<p class="muted" style="font-family:\'JetBrains Mono\', monospace; font-size:13px; margin-bottom:24px;">Checkout cancelled — nothing was charged.</p>';
-  }
+      let session = null;
+      initAuthWidget(document.getElementById("authWidget"), (s) => {
+        session = s;
+      });
 
-  let session = null;
-  initAuthWidget(document.getElementById('authWidget'), (s) => { session = s; });
+      if (!slug) {
+        content.innerHTML =
+          '<p class="muted">No artist specified. <a href="index.html#top">Back to Nextup →</a></p>';
+      } else {
+        const { data: artist, error: artistError } = await supabase
+          .from("artists")
+          .select("*")
+          .eq("slug", slug)
+          .single();
 
-  if (!slug) {
-    content.innerHTML = '<p class="muted">No artist specified. <a href="index.html#top">Back to Nextup →</a></p>';
-  } else {
-    const { data: artist, error: artistError } = await supabase
-      .from('artists')
-      .select('*')
-      .eq('slug', slug)
-      .single();
+        if (artistError || !artist) {
+          content.innerHTML =
+            '<p class="muted">Couldn\'t find that artist. <a href="index.html#top">Back to Nextup →</a></p>';
+        } else {
+          const { data: tracks } = await supabase
+            .from("tracks")
+            .select("id, title, price_cents")
+            .eq("artist_id", artist.id)
+            .order("sort_order", { ascending: true });
 
-    if (artistError || !artist) {
-      content.innerHTML = '<p class="muted">Couldn\'t find that artist. <a href="index.html#top">Back to Nextup →</a></p>';
-    } else {
-      const { data: tracks } = await supabase
-        .from('tracks')
-        .select('id, title, price_cents')
-        .eq('artist_id', artist.id)
-        .order('sort_order', { ascending: true });
+          const trackIds = (tracks ?? []).map((t) => t.id);
+          const { data: owned } = trackIds.length
+            ? await supabase
+                .from("track_ownership_public")
+                .select("track_id")
+                .in("track_id", trackIds)
+            : { data: [] };
+          const ownedSet = new Set((owned ?? []).map((o) => o.track_id));
 
-      const trackIds = (tracks ?? []).map(t => t.id);
-      const { data: owned } = trackIds.length
-        ? await supabase.from('track_ownership_public').select('track_id').in('track_id', trackIds)
-        : { data: [] };
-      const ownedSet = new Set((owned ?? []).map(o => o.track_id));
-
-      content.innerHTML = `
+          content.innerHTML = `
         <div class="artist-hero" data-reveal>
           <div class="artist-swatch" style="background:linear-gradient(155deg,${artist.accent_from},${artist.accent_to});"></div>
           <div class="artist-meta">
@@ -133,79 +177,102 @@
           </div>
         </section>
       `;
-      wireReveal();
+          wireReveal();
 
-      // track list
-      const trackList = document.getElementById('trackList');
-      trackList.innerHTML = (tracks ?? []).map(t => `
+          // track list
+          const trackList = document.getElementById("trackList");
+          trackList.innerHTML =
+            (tracks ?? [])
+              .map(
+                (t) => `
         <div class="track-row" data-track-id="${t.id}">
           <div>
             <div class="track-title">${t.title}</div>
             <div class="track-price">${formatUSD(t.price_cents)} in crypto</div>
           </div>
-          ${ownedSet.has(t.id)
-            ? `<span class="track-owned">Owned</span>`
-            : `<button type="button" class="track-buy" data-track-id="${t.id}">Own this song</button>`}
+          ${
+            ownedSet.has(t.id)
+              ? `<span class="track-owned">Owned</span>`
+              : `<button type="button" class="track-buy" data-track-id="${t.id}">Own this song</button>`
+          }
         </div>
-      `).join('') || '<p class="muted" style="padding:20px 0;">No tracks listed yet.</p>';
+      `,
+              )
+              .join("") ||
+            '<p class="muted" style="padding:20px 0;">No tracks listed yet.</p>';
 
-      trackList.querySelectorAll('.track-buy').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          if (!session) {
-            alert('Sign in at the top of the page first, then come back and try again.');
-            return;
-          }
-          btn.disabled = true;
-          btn.textContent = 'Redirecting to checkout…';
-          const { data, error } = await supabase.functions.invoke('create-charge', {
-            body: { kind: 'song', track_id: btn.dataset.trackId, slug },
+          trackList.querySelectorAll(".track-buy").forEach((btn) => {
+            btn.addEventListener("click", async () => {
+              if (!session) {
+                alert(
+                  "Sign in at the top of the page first, then come back and try again.",
+                );
+                return;
+              }
+              btn.disabled = true;
+              btn.textContent = "Redirecting to checkout…";
+              const { data, error } = await supabase.functions.invoke(
+                "create-charge",
+                {
+                  body: { kind: "song", track_id: btn.dataset.trackId, slug },
+                },
+              );
+              if (error || !data?.hosted_url) {
+                btn.disabled = false;
+                btn.textContent = "Own this song";
+                alert(data?.error ?? "Could not start checkout — try again.");
+                return;
+              }
+              window.location.href = data.hosted_url;
+            });
           });
-          if (error || !data?.hosted_url) {
-            btn.disabled = false;
-            btn.textContent = 'Own this song';
-            alert(data?.error ?? 'Could not start checkout — try again.');
-            return;
-          }
-          window.location.href = data.hosted_url;
-        });
-      });
 
-      // backing panel
-      let selectedAmount = null;
-      const amountRow = document.getElementById('amountRow');
-      const backBtn = document.getElementById('backBtn');
-      const backStatus = document.getElementById('backStatus');
-      amountRow.querySelectorAll('.amount-chip').forEach(chip => {
-        chip.addEventListener('click', () => {
-          amountRow.querySelectorAll('.amount-chip').forEach(c => c.classList.remove('active'));
-          chip.classList.add('active');
-          selectedAmount = Number(chip.dataset.amount);
-        });
-      });
-      backBtn.addEventListener('click', async () => {
-        if (!session) {
-          backStatus.textContent = 'Sign in at the top of the page first.';
-          return;
+          // backing panel
+          let selectedAmount = null;
+          const amountRow = document.getElementById("amountRow");
+          const backBtn = document.getElementById("backBtn");
+          const backStatus = document.getElementById("backStatus");
+          amountRow.querySelectorAll(".amount-chip").forEach((chip) => {
+            chip.addEventListener("click", () => {
+              amountRow
+                .querySelectorAll(".amount-chip")
+                .forEach((c) => c.classList.remove("active"));
+              chip.classList.add("active");
+              selectedAmount = Number(chip.dataset.amount);
+            });
+          });
+          backBtn.addEventListener("click", async () => {
+            if (!session) {
+              backStatus.textContent = "Sign in at the top of the page first.";
+              return;
+            }
+            if (!selectedAmount) {
+              backStatus.textContent = "Pick an amount first.";
+              return;
+            }
+            backBtn.disabled = true;
+            backStatus.textContent = "Redirecting to checkout…";
+            const { data, error } = await supabase.functions.invoke(
+              "create-charge",
+              {
+                body: {
+                  kind: "backing",
+                  artist_id: artist.id,
+                  amount_usd_cents: selectedAmount,
+                  slug,
+                },
+              },
+            );
+            backBtn.disabled = false;
+            if (error || !data?.hosted_url) {
+              backStatus.textContent =
+                data?.error ?? "Could not start checkout — try again.";
+              return;
+            }
+            window.location.href = data.hosted_url;
+          });
         }
-        if (!selectedAmount) {
-          backStatus.textContent = 'Pick an amount first.';
-          return;
-        }
-        backBtn.disabled = true;
-        backStatus.textContent = 'Redirecting to checkout…';
-        const { data, error } = await supabase.functions.invoke('create-charge', {
-          body: { kind: 'backing', artist_id: artist.id, amount_usd_cents: selectedAmount, slug },
-        });
-        backBtn.disabled = false;
-        if (error || !data?.hosted_url) {
-          backStatus.textContent = data?.error ?? 'Could not start checkout — try again.';
-          return;
-        }
-        window.location.href = data.hosted_url;
-      });
-    }
-  }
-</script>
-
-</body>
+      }
+    </script>
+  </body>
 </html>

@@ -3,7 +3,11 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const WEBHOOK_SECRET = Deno.env.get("COMMERCE_WEBHOOK_SECRET");
 
-async function verifySignature(rawBody: string, signature: string | null, secret: string): Promise<boolean> {
+async function verifySignature(
+  rawBody: string,
+  signature: string | null,
+  secret: string,
+): Promise<boolean> {
   if (!signature) return false;
   const key = await crypto.subtle.importKey(
     "raw",
@@ -12,11 +16,18 @@ async function verifySignature(rawBody: string, signature: string | null, secret
     false,
     ["sign"],
   );
-  const mac = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(rawBody));
-  const expected = Array.from(new Uint8Array(mac)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  const mac = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(rawBody),
+  );
+  const expected = Array.from(new Uint8Array(mac))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
   if (expected.length !== signature.length) return false;
   let diff = 0;
-  for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ signature.charCodeAt(i);
+  for (let i = 0; i < expected.length; i++)
+    diff |= expected.charCodeAt(i) ^ signature.charCodeAt(i);
   return diff === 0;
 }
 
@@ -62,10 +73,11 @@ Deno.serve(async (req) => {
 
   if (eventType === "charge:failed" || eventType === "charge:delayed") {
     if (chargeRow.status === "pending") {
-      await supabase.from("crypto_charges").update({ status: "failed" }).eq("id", chargeRow.id).eq(
-        "status",
-        "pending",
-      );
+      await supabase
+        .from("crypto_charges")
+        .update({ status: "failed" })
+        .eq("id", chargeRow.id)
+        .eq("status", "pending");
     }
     return new Response("ok", { status: 200 });
   }

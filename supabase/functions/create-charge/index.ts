@@ -35,7 +35,10 @@ Deno.serve(async (req) => {
     { global: { headers: { Authorization: authHeader } } },
   );
 
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
   if (userError || !user) {
     return jsonResponse({ error: "Not signed in" }, 401);
   }
@@ -63,7 +66,10 @@ Deno.serve(async (req) => {
     }
     const rawAmount = Number(body.amount_usd_cents);
     if (!Number.isInteger(rawAmount) || rawAmount < 2500) {
-      return jsonResponse({ error: "amount_usd_cents must be an integer >= 2500" }, 400);
+      return jsonResponse(
+        { error: "amount_usd_cents must be an integer >= 2500" },
+        400,
+      );
     }
     const { data: artist, error: artistError } = await supabase
       .from("artists")
@@ -103,7 +109,10 @@ Deno.serve(async (req) => {
 
   if (!COMMERCE_API_KEY) {
     return jsonResponse(
-      { error: "Crypto payments aren't configured yet. Set COMMERCE_API_KEY to enable checkout." },
+      {
+        error:
+          "Crypto payments aren't configured yet. Set COMMERCE_API_KEY to enable checkout.",
+      },
       503,
     );
   }
@@ -120,7 +129,12 @@ Deno.serve(async (req) => {
       description,
       pricing_type: "fixed_price",
       local_price: { amount: (amountCents / 100).toFixed(2), currency: "USD" },
-      metadata: { user_id: user.id, kind, artist_id: artist_id ?? "", track_id: track_id ?? "" },
+      metadata: {
+        user_id: user.id,
+        kind,
+        artist_id: artist_id ?? "",
+        track_id: track_id ?? "",
+      },
       redirect_url: `${SITE_URL}/artist.html?slug=${encodeURIComponent(slug ?? "")}&charge=success`,
       cancel_url: `${SITE_URL}/artist.html?slug=${encodeURIComponent(slug ?? "")}&charge=cancelled`,
     }),
