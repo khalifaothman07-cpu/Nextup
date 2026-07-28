@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artist — Nextup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <a href="index.html#top" class="mark">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="26" cy="74" r="13" fill="#F3F1EC"/>
+        <path d="M39 74V22L74 12V52" stroke="#F3F1EC" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M74 52L86 40" stroke="#F3F1EC" stroke-width="7" stroke-linecap="round"/>
+        <path d="M86 40L86 26" stroke="#F3F1EC" stroke-width="7" stroke-linecap="round"/>
+        <path d="M86 40L72 40" stroke="#F3F1EC" stroke-width="7" stroke-linecap="round"/>
+      </svg>
+      <span>Nextup</span>
+    </a>
+    <div class="nav-right">
+      <div class="auth-widget" id="authWidget"></div>
+      <a href="index.html#waitlist" class="nav-cta">Get Early Access</a>
+    </div>
+  </nav>
+</header>
+
+<main class="wrap" style="padding-top:56px;">
+  <a href="index.html#top" class="breadcrumb">← Back to Nextup</a>
+
+  <div id="artistContent">
+    <p class="muted">Loading artist…</p>
+  </div>
+</main>
+
+<footer style="margin-top:80px;">
+  <div class="wrap foot-bottom" style="border-top:1px solid var(--line); padding-top:24px;">
+    <div class="legal">Nextup involves financial risk, including possible loss of your full contribution. Nothing on this page is investment advice or a solicitation.</div>
+    <div class="copy">© 2026 NEXTUP</div>
+  </div>
+</footer>
+
+<script type="module">
+  import { supabase } from './js/supabase-client.js';
+  import { formatUSD, initAuthWidget } from './js/app.js';
+
+  const content = document.getElementById('artistContent');
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get('slug');
+
+  let session = null;
+  initAuthWidget(document.getElementById('authWidget'), (s) => { session = s; });
+
+  if (!slug) {
+    content.innerHTML = '<p class="muted">No artist specified. <a href="index.html#top">Back to Nextup →</a></p>';
+  } else {
+    const { data: artist, error: artistError } = await supabase
+      .from('artists')
+      .select('*')
+      .eq('slug', slug)
+      .single();
+
+    if (artistError || !artist) {
+      content.innerHTML = '<p class="muted">Couldn\'t find that artist. <a href="index.html#top">Back to Nextup →</a></p>';
+    } else {
+      const { data: tracks } = await supabase
+        .from('tracks')
+        .select('id, title, price_cents')
+        .eq('artist_id', artist.id)
+        .order('sort_order', { ascending: true });
+
+      const trackIds = (tracks ?? []).map(t => t.id);
+      const { data: owned } = trackIds.length
+        ? await supabase.from('track_ownership_public').select('track_id').in('track_id', trackIds)
+        : { data: [] };
+      const ownedSet = new Set((owned ?? []).map(o => o.track_id));
+
+      content.innerHTML = `
+        <div class="artist-hero" data-reveal>
+          <div class="artist-swatch" style="background:linear-gradient(155deg,${artist.accent_from},${artist.accent_to});"></div>
+          <div class="artist-meta">
+            <div class="genre-city">${artist.genre.toUpperCase()} · ${artist.city.toUpperCase()}</div>
+            <h1>${artist.name}</h1>
+            <p class="tagline">${artist.tagline}</p>
+            <p class="bio">${artist.bio}</p>
+            <div class="artist-stat-pill">▲ ${artist.stat_30d_pct}% last 30 days</div>
+          </div>
+        </div>
+
+        <section style="border-bottom:none; padding-bottom:0;">
+          <div class="two-col" style="margin-top:64px;">
+            <div>
+              <div class="section-head" style="margin-bottom:24px;">
+                <div class="eyebrow">Side B</div>
+                <h2 style="font-size:28px; margin-top:12px;">Own a song</h2>
+              </div>
+              <div class="track-list" id="trackList"></div>
+            </div>
+
+            <div>
+              <div class="section-head" style="margin-bottom:24px;">
+                <div class="eyebrow">Side A</div>
+                <h2 style="font-size:28px; margin-top:12px;">Back ${artist.name}</h2>
+              </div>
+              <div class="backing-panel">
+                <h3>Put a stake behind their career</h3>
+                <p class="lede">Tied to ${artist.name}'s whole catalogue, not one release. You'll show up on this page as an early backer.</p>
+                <div class="amount-row" id="amountRow">
+                  <button type="button" class="amount-chip" data-amount="2500">$25</button>
+                  <button type="button" class="amount-chip" data-amount="5000">$50</button>
+                  <button type="button" class="amount-chip" data-amount="10000">$100</button>
+                </div>
+                <button type="button" class="back-btn" id="backBtn">Back this artist</button>
+                <div class="action-status" id="backStatus"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      `;
+
+      // track list
+      const trackList = document.getElementById('trackList');
+      trackList.innerHTML = (tracks ?? []).map(t => `
+        <div class="track-row" data-track-id="${t.id}">
+          <div>
+            <div class="track-title">${t.title}</div>
+            <div class="track-price">${formatUSD(t.price_cents)}</div>
+          </div>
+          ${ownedSet.has(t.id)
+            ? `<span class="track-owned">Owned</span>`
+            : `<button type="button" class="track-buy" data-track-id="${t.id}" data-price="${t.price_cents}">Own this song</button>`}
+        </div>
+      `).join('') || '<p class="muted" style="padding:20px 0;">No tracks listed yet.</p>';
+
+      trackList.querySelectorAll('.track-buy').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!session) {
+            alert('Sign in at the top of the page first, then come back and try again.');
+            return;
+          }
+          btn.disabled = true;
+          btn.textContent = 'Processing…';
+          const trackId = btn.dataset.trackId;
+          const price = Number(btn.dataset.price);
+          const { error } = await supabase.from('song_ownership').insert({
+            track_id: trackId,
+            user_id: session.user.id,
+            price_cents: price,
+          });
+          if (error) {
+            btn.disabled = false;
+            btn.textContent = 'Own this song';
+            alert(error.code === '23505' ? 'Someone already owns this track.' : 'Could not complete purchase — try again.');
+            return;
+          }
+          btn.outerHTML = '<span class="track-owned">Owned</span>';
+        });
+      });
+
+      // backing panel
+      let selectedAmount = null;
+      const amountRow = document.getElementById('amountRow');
+      const backBtn = document.getElementById('backBtn');
+      const backStatus = document.getElementById('backStatus');
+      amountRow.querySelectorAll('.amount-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          amountRow.querySelectorAll('.amount-chip').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          selectedAmount = Number(chip.dataset.amount);
+        });
+      });
+      backBtn.addEventListener('click', async () => {
+        if (!session) {
+          backStatus.textContent = 'Sign in at the top of the page first.';
+          return;
+        }
+        if (!selectedAmount) {
+          backStatus.textContent = 'Pick an amount first.';
+          return;
+        }
+        backBtn.disabled = true;
+        backStatus.textContent = 'Processing…';
+        const { error } = await supabase.from('backings').insert({
+          artist_id: artist.id,
+          user_id: session.user.id,
+          amount_cents: selectedAmount,
+        });
+        backBtn.disabled = false;
+        backStatus.textContent = error
+          ? 'Could not complete — try again.'
+          : `You're backing ${artist.name} with ${formatUSD(selectedAmount)}.`;
+      });
+    }
+  }
+</script>
+
+</body>
+</html>
