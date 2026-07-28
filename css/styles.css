@@ -67,7 +67,10 @@ header{
   position:sticky; top:0; z-index:50;
   background:rgba(11,11,12,0.82);
   backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
   border-bottom:1px solid var(--line);
+  transform:translateZ(0);
+  will-change:transform;
 }
 nav.wrap{
   display:flex; align-items:center; justify-content:space-between;
@@ -371,7 +374,8 @@ section{ padding:88px 0; border-bottom:1px solid var(--line); }
 /* roster */
 .roster-row{
   display:flex; gap:18px; overflow-x:auto; padding-bottom:8px;
-  scroll-snap-type:x mandatory;
+  scroll-snap-type:x proximity;
+  overscroll-behavior-x:contain;
 }
 .roster-row::-webkit-scrollbar{ height:6px; }
 .roster-row::-webkit-scrollbar-thumb{ background:var(--line); border-radius:10px;}
