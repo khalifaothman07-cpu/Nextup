@@ -4,6 +4,31 @@ Newest entry first. Each entry follows the master prompt's §31 working-cycle fo
 
 ---
 
+## Cycle 3 — Reverse the tier model: deposit/withdraw is the backing flow
+
+**Slice**: Direct founder correction of Cycle 2 — "We're not doing subs we're doing deposit and withdraws." Confirmed scope via two quick questions: remove the tier/subscription model entirely, and keep the bonding-curve Buy/Sell system (not a plain transfer) as what "backing" means, with deposit/withdraw as its wallet funding/cashout layer.
+
+**Files changed**:
+
+- Dropped `support_tiers`, `support_subscriptions`, `support_payments` and the `record_support_payment_confirmed` function (migration `remove_tier_subscription_model`) — all three tables held zero real user data (only fictional seed rows), so this is a clean revert, not a destructive one.
+- New tables/functions (migration `wallet_withdrawals`): `withdrawal_requests`, `request_withdrawal()`, `cancel_withdrawal_request()` — same locked-down `SECURITY DEFINER`/`service_role`-only pattern as every other money-moving function here.
+- Removed `supabase/functions/support-artist/`; added `supabase/functions/withdraw/` and `supabase/functions/cancel-withdrawal/`.
+- `supabase/functions/coinbase-webhook/index.ts` — removed the `support_payments` branch, back to two flows (song purchase, wallet deposit).
+- `artist.html` — removed `renderTierPanel` entirely; `renderBackingPanel` is back to a simple dispatcher (trading panel if the flag is on, an honest "not open yet" message if it's off — no tier UI in between anymore). `renderTradingPanel`'s wallet bar gained a Withdraw button and a pending-withdrawals list with cancel.
+- `docs/DATA_MODEL.md`, `docs/API.md`, `docs/ASSUMPTIONS.md` (#7 rewritten to record the reversal, new #8), `docs/DEPLOYMENT.md`, `README.md` — updated to match.
+
+**What changed and why**: Cycle 2's tiered/subscription model was a reasonable reading of the master prompt's §9/§11 in isolation, but the founder's actual intent was simpler and different: no tiers, no subscriptions — fund a wallet with crypto, trade positions on artists from that balance, withdraw later. Reversing it cleanly (drop, don't deprecate-in-place) keeps the schema honest about what's actually in use, per this project's own standing rule against dead code paths.
+
+**Withdrawals, done honestly**: Coinbase Commerce can accept payments but has no API to send crypto out. Rather than fake a "withdraw" button that does nothing real, `request_withdrawal` genuinely debits the wallet and creates a real, trackable `pending` request; turning that into an actual crypto transfer is a manual step (documented in `docs/DEPLOYMENT.md`), not a missing feature dressed up as done.
+
+**Verified**: security advisor clean after both migrations (no repeat of the Cycle 1 `SECURITY DEFINER` exposure near-miss — the explicit `revoke ... from anon, authenticated, public` pattern has now held on the first try twice in a row). Confirmed via direct REST calls: `support_tiers` now 404s (table gone), `withdrawal_requests` correctly hidden from anon by RLS, `request_withdrawal` RPC correctly rejects anon callers, `feature_flags.regulated_offerings` still `false`.
+
+**Remaining limitations**: same deployment blocker as every prior cycle (Edge Functions not deployed, no Coinbase Commerce credentials configured) — now seven functions waiting on that. `regulated_offerings` is still off, which means **there is currently no visible way to back an artist on the live UI at all** — the only backing mechanism that exists (trading) is gated behind a flag the founder hasn't turned on. That's not an oversight to fix by flipping it; per `docs/DEPLOYMENT.md` it's a deliberate legal/jurisdiction go/no-go the founder should make explicitly. Worth flagging directly rather than leaving implicit.
+
+**Recommended next slice**: decide on the `regulated_offerings` flag (turn it on to make backing visible, or explicitly keep it off while other product surfaces get built first) — this determines whether the next slice is "polish the now-visible trading UI" or "build something else while backing stays dark."
+
+---
+
 ## Cycle 2 — Default tiered "Back Artist" flow
 
 **Slice**: Cycle 1's recommended next step — a working default support mechanism for artist pages, since `regulatedOfferings` being gated off left every visitor with no way to back an artist at all.

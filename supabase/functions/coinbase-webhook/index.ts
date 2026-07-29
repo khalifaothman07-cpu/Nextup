@@ -110,57 +110,6 @@ async function handleDeposit(
   if (error) console.error("Failed to credit wallet:", error);
 }
 
-// deno-lint-ignore no-explicit-any
-async function handleSupportPayment(
-  supabase: SupabaseClient,
-  payment: any,
-  eventType: string,
-) {
-  if (eventType === "charge:failed" || eventType === "charge:delayed") {
-    if (payment.status === "pending") {
-      await supabase
-        .from("support_payments")
-        .update({ status: "failed" })
-        .eq("id", payment.id)
-        .eq("status", "pending");
-    }
-    return;
-  }
-  if (eventType !== "charge:confirmed" || payment.status === "confirmed") {
-    return;
-  }
-
-  const { data: updated, error: updateError } = await supabase
-    .from("support_payments")
-    .update({ status: "confirmed", confirmed_at: new Date().toISOString() })
-    .eq("id", payment.id)
-    .eq("status", "pending")
-    .select();
-  if (updateError) {
-    console.error("Failed to update support_payments:", updateError);
-    return;
-  }
-  if (!updated || updated.length === 0) return; // already processed
-
-  const { data: tier, error: tierError } = await supabase
-    .from("support_tiers")
-    .select("billing_frequency")
-    .eq("id", payment.tier_id)
-    .single();
-  if (tierError || !tier) {
-    console.error("Failed to look up tier for support payment:", tierError);
-    return;
-  }
-
-  const { error } = await supabase.rpc("record_support_payment_confirmed", {
-    p_user_id: payment.user_id,
-    p_artist_id: payment.artist_id,
-    p_tier_id: payment.tier_id,
-    p_billing_frequency: tier.billing_frequency,
-  });
-  if (error) console.error("Failed to record support subscription:", error);
-}
-
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
@@ -190,7 +139,7 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  // A charge.code is unique across all three flows, so exactly one of these
+  // A charge.code is unique across both flows, so exactly one of these
   // lookups will hit — check which flow this charge belongs to.
   const { data: songCharge } = await supabase
     .from("crypto_charges")
@@ -211,17 +160,6 @@ Deno.serve(async (req) => {
 
   if (deposit) {
     await handleDeposit(supabase, deposit, eventType);
-    return new Response("ok", { status: 200 });
-  }
-
-  const { data: supportPayment } = await supabase
-    .from("support_payments")
-    .select("*")
-    .eq("commerce_charge_id", charge.code)
-    .maybeSingle();
-
-  if (supportPayment) {
-    await handleSupportPayment(supabase, supportPayment, eventType);
     return new Response("ok", { status: 200 });
   }
 

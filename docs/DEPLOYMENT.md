@@ -14,15 +14,21 @@ Project `nextup` (ref `djnsjtlkjgjqmfcucjqp`, org `khalifaothman07-cpu's Org`, r
 
 ### Edge Functions — blocked
 
-`create-charge`, `deposit`, `coinbase-webhook`, `trade`, and `close-position` are committed under `supabase/functions/` but **not deployed**. The `deploy_edge_function` tool call has required manual approval every time it's been attempted in this session and approval hasn't been granted. To deploy manually:
+`create-charge`, `deposit`, `withdraw`, `cancel-withdrawal`, `coinbase-webhook`, `trade`, and `close-position` are committed under `supabase/functions/` but **not deployed**. The `deploy_edge_function` tool call has required manual approval every time it's been attempted in this session and approval hasn't been granted. To deploy manually:
 
 ```
 supabase functions deploy create-charge
 supabase functions deploy deposit
+supabase functions deploy withdraw
+supabase functions deploy cancel-withdrawal
 supabase functions deploy trade
 supabase functions deploy close-position
 supabase functions deploy coinbase-webhook --no-verify-jwt
 ```
+
+### Withdrawals require a manual step — always
+
+Unlike the Edge Function deployment above (a one-time setup blocker), processing withdrawals is an **ongoing manual step**, not something that becomes automatic once configured: Coinbase Commerce has no API for sending crypto out, only for accepting it. When a `withdrawal_requests` row is `pending`, someone has to actually send the crypto to `destination_address` and then mark it `paid` (currently no admin UI for this — direct DB access, e.g. `update withdrawal_requests set status='paid', processed_at=now() where id=...`, until one exists). See `docs/ASSUMPTIONS.md` #8.
 
 ### Required secrets (not yet set)
 

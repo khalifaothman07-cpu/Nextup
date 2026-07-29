@@ -11,8 +11,8 @@ A static two-page site (`index.html`, `artist.html`) plus a Supabase backend:
 - Landing page: roster, pricing/tiers copy, FAQ, waitlist capture.
 - Artist profile pages: bio, track list, song-ownership purchase (crypto checkout via Coinbase Commerce).
 - Magic-link auth (no passwords).
-- Default "Back Artist" flow: tiered one-time/monthly support (`support_tiers` — Early Supporter/Core Supporter/Inner Circle, seeded per artist), paid via Coinbase Commerce. "Monthly" tracks a period, it does not auto-charge — see `docs/ASSUMPTIONS.md` #8.
-- A feature-flagged `regulatedOfferings` module (continuous bonding-curve Buy/Sell trading on artist momentum) — **disabled by default**, see `docs/ASSUMPTIONS.md` #1 for why it exists and `docs/SECURITY.md` for how it's locked down.
+- Backing an artist = deposit into your Nextup wallet (crypto, via Coinbase Commerce), then trade Buy/Sell positions on the artist's live bonding-curve price from that balance, and withdraw later (a request, not an instant payout — see `docs/ASSUMPTIONS.md` #8). No tiers, no subscriptions.
+- The whole backing/trading system is a feature-flagged `regulatedOfferings` module — **disabled by default**, see `docs/ASSUMPTIONS.md` #1 for why and `docs/SECURITY.md` for how it's locked down. With the flag off (current state), artist pages show an honest "not open yet" message instead.
 - RBAC foundation (`profiles`, `user_roles`, `artist_members`, `feature_flags`) — schema only; no admin UI to manage it yet.
 
 Everything else in the product spec (marketplace, community, momentum engine, A&R pipeline, admin console, ledger/credits) is **not built** — see `docs/ARCHITECTURE.md`'s "Missing functionality" section rather than assuming partial/hidden implementations exist.

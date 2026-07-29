@@ -226,6 +226,7 @@
       // docs/ASSUMPTIONS.md, and only renders once the regulated_offerings
       // feature flag is turned on.
       async function renderBackingPanel(artist) {
+        const slot = document.getElementById("backingPanelSlot");
         const { data: flag } = await supabase
           .from("feature_flags")
           .select("enabled")
@@ -235,111 +236,13 @@
         if (flag?.enabled) {
           await renderTradingPanel(artist);
         } else {
-          await renderTierPanel(artist);
+          slot.innerHTML = `
+            <div class="backing-panel">
+              <h3>Backing isn't open yet</h3>
+              <p class="lede">Support for ${artist.name} is still being built. Join the waitlist on the homepage and we'll let you know when it's ready.</p>
+            </div>
+          `;
         }
-      }
-
-      async function renderTierPanel(artist) {
-        const slot = document.getElementById("backingPanelSlot");
-
-        const { data: tiers } = await supabase
-          .from("support_tiers")
-          .select(
-            "id, name, price_cents, billing_frequency, description, benefits",
-          )
-          .eq("artist_id", artist.id)
-          .eq("active", true)
-          .order("sort_order", { ascending: true });
-
-        const mySub = session
-          ? (
-              await supabase
-                .from("support_subscriptions")
-                .select(
-                  "id, tier_id, status, billing_frequency, current_period_end",
-                )
-                .eq("user_id", session.user.id)
-                .eq("artist_id", artist.id)
-                .maybeSingle()
-            ).data
-          : null;
-
-        const noteHtml =
-          mySub && mySub.status === "active"
-            ? `
-          <div class="wallet-bar" style="margin-bottom:16px;">
-            <span>You're backing ${artist.name}${mySub.current_period_end ? ` — renews ${new Date(mySub.current_period_end).toLocaleDateString()}` : ""}.</span>
-            <button type="button" class="wallet-add-btn" id="cancelSubBtn">Cancel</button>
-          </div>
-        `
-            : "";
-
-        slot.innerHTML = `
-          ${noteHtml}
-          <div class="tiers" id="tierGrid" style="grid-template-columns:1fr; gap:16px;">
-            ${
-              (tiers ?? [])
-                .map((tier) => {
-                  const isCurrent =
-                    mySub?.status === "active" && mySub.tier_id === tier.id;
-                  return `
-                <div class="tier${isCurrent ? " featured" : ""}">
-                  <div class="tk">${tier.billing_frequency === "monthly" ? "MONTHLY" : "ONE-TIME"}</div>
-                  <div class="amount">${formatUSD(tier.price_cents)}<span>${tier.billing_frequency === "monthly" ? "/mo" : ""}</span></div>
-                  <p>${tier.name}</p>
-                  ${tier.description ? `<p class="track-price" style="margin:-4px 0 4px;">${tier.description}</p>` : ""}
-                  <ul>${(tier.benefits ?? []).map((b) => `<li>${b}</li>`).join("")}</ul>
-                  <button type="button" class="track-buy tier-btn" data-tier-id="${tier.id}" style="width:100%; margin-top:14px;" ${isCurrent ? "disabled" : ""}>${isCurrent ? "Current tier" : "Back this tier"}</button>
-                </div>
-              `;
-                })
-                .join("") || '<p class="muted">No support tiers set up yet.</p>'
-            }
-          </div>
-          <div class="action-status" id="tierStatus"></div>
-        `;
-
-        const tierStatus = document.getElementById("tierStatus");
-
-        document
-          .getElementById("cancelSubBtn")
-          ?.addEventListener("click", async () => {
-            const { error } = await supabase
-              .from("support_subscriptions")
-              .update({
-                status: "canceled",
-                canceled_at: new Date().toISOString(),
-              })
-              .eq("id", mySub.id);
-            if (error) {
-              tierStatus.textContent = "Could not cancel — try again.";
-              return;
-            }
-            await renderTierPanel(artist);
-          });
-
-        slot.querySelectorAll(".tier-btn").forEach((btn) => {
-          btn.addEventListener("click", async () => {
-            if (!session) {
-              tierStatus.textContent = "Sign in at the top of the page first.";
-              return;
-            }
-            btn.disabled = true;
-            btn.textContent = "Redirecting to checkout…";
-            const { data, error } = await supabase.functions.invoke(
-              "support-artist",
-              { body: { tier_id: btn.dataset.tierId, slug } },
-            );
-            if (error || !data?.hosted_url) {
-              btn.disabled = false;
-              btn.textContent = "Back this tier";
-              tierStatus.textContent =
-                data?.error ?? "Could not start checkout — try again.";
-              return;
-            }
-            window.location.href = data.hosted_url;
-          });
-        });
       }
 
       async function renderTradingPanel(artist) {
@@ -374,6 +277,7 @@
             <div class="action-status" id="tradeStatus"></div>
           </div>
           <div class="positions-list" id="positionsList"></div>
+          <div class="positions-list" id="withdrawalsList"></div>
         `;
 
         let direction = "positive";
@@ -382,6 +286,7 @@
         const tradeBtn = document.getElementById("tradeBtn");
         const tradeStatus = document.getElementById("tradeStatus");
         const positionsList = document.getElementById("positionsList");
+        const withdrawalsList = document.getElementById("withdrawalsList");
 
         document
           .getElementById("directionToggle")
@@ -419,6 +324,7 @@
             walletBar.innerHTML = "";
             tradeBtn.textContent = "Sign in to trade";
             positionsList.innerHTML = "";
+            withdrawalsList.innerHTML = "";
             return;
           }
           const { data: wallet } = await supabase
@@ -429,7 +335,10 @@
           const balance = wallet?.balance_cents ?? 0;
           walletBar.innerHTML = `
             <span>Wallet: ${formatUSD(balance)}</span>
-            <button type="button" class="wallet-add-btn" id="addFundsBtn">Add funds</button>
+            <span style="display:flex; gap:8px;">
+              <button type="button" class="wallet-add-btn" id="addFundsBtn">Add funds</button>
+              <button type="button" class="wallet-add-btn" id="withdrawBtn">Withdraw</button>
+            </span>
           `;
           document
             .getElementById("addFundsBtn")
@@ -449,7 +358,81 @@
               }
               window.location.href = data.hosted_url;
             });
+          document
+            .getElementById("withdrawBtn")
+            .addEventListener("click", async () => {
+              const amount = prompt(
+                "Withdraw how many US dollars? Minimum $10. This submits a request — it's paid out manually, not instantly.",
+              );
+              const cents = Math.round(Number(amount) * 100);
+              if (!Number.isInteger(cents) || cents < 1000) return;
+              const destination = prompt(
+                "Destination crypto address to receive the funds:",
+              );
+              if (!destination || !destination.trim()) return;
+              const { data, error } = await supabase.functions.invoke(
+                "withdraw",
+                {
+                  body: {
+                    amount_cents: cents,
+                    destination_address: destination.trim(),
+                  },
+                },
+              );
+              if (error || !data?.request) {
+                alert(
+                  data?.error ?? "Could not submit withdrawal — try again.",
+                );
+                return;
+              }
+              await refreshWallet();
+            });
           tradeBtn.textContent = direction === "positive" ? "Buy" : "Sell";
+
+          const { data: withdrawals } = await supabase
+            .from("withdrawal_requests")
+            .select(
+              "id, amount_cents, destination_address, status, requested_at",
+            )
+            .eq("user_id", session.user.id)
+            .eq("status", "pending")
+            .order("requested_at", { ascending: false });
+
+          withdrawalsList.innerHTML = (withdrawals ?? [])
+            .map(
+              (w) => `
+            <div class="position-row" data-withdrawal-id="${w.id}">
+              <div>
+                <div class="track-title">Withdrawal · ${formatUSD(w.amount_cents)}</div>
+                <div class="track-price">Pending — to ${w.destination_address.slice(0, 10)}…</div>
+              </div>
+              <button type="button" class="track-buy cancel-withdrawal-btn">Cancel</button>
+            </div>
+          `,
+            )
+            .join("");
+
+          withdrawalsList
+            .querySelectorAll(".cancel-withdrawal-btn")
+            .forEach((btn) => {
+              btn.addEventListener("click", async () => {
+                const requestId =
+                  btn.closest(".position-row").dataset.withdrawalId;
+                btn.disabled = true;
+                btn.textContent = "Cancelling…";
+                const { data, error } = await supabase.functions.invoke(
+                  "cancel-withdrawal",
+                  { body: { request_id: requestId } },
+                );
+                if (error || !data?.request) {
+                  btn.disabled = false;
+                  btn.textContent = "Cancel";
+                  alert(data?.error ?? "Could not cancel — try again.");
+                  return;
+                }
+                await refreshWallet();
+              });
+            });
 
           const { data: positions } = await supabase
             .from("positions")

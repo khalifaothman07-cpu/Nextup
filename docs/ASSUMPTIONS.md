@@ -8,9 +8,9 @@ Earlier in this session (before the master prompt was given), the user asked to 
 
 The master prompt's §11 then describes almost exactly that mechanic — "a cultural stock exchange without presenting regulated securities," continuously priced, tradable — and explicitly requires it to live in a separate `regulatedOfferings` domain that is **disabled by default and inaccessible unless explicitly configured**, distinct from the default `supportSubscriptions`/`supportPayments`/`benefitEntitlements` flow.
 
-**Assumption**: rather than discard the trading system, it _is_ the `regulatedOfferings` module. This pass adds a `feature_flags` row (`regulated_offerings`, default `false`) and will gate the trading UI behind it. The default "Back Artist" flow described in §9/§11 (tiered, one-time/recurring, benefit entitlements) does not exist yet and is queued as the next slice — it was not what got built first, because the explicit request that produced it came before the master prompt did.
+**Assumption**: rather than discard the trading system, it _is_ the `regulatedOfferings` module. This pass adds a `feature_flags` row (`regulated_offerings`, default `false`) and will gate the trading UI behind it.
 
-**If wrong**: if the trading system should instead be removed/archived rather than reclassified, that's a small change (flip the flag's default meaning, or drop the schema) — no data depends on it yet (all trading tables are empty).
+**Update (superseding the rest of this entry)**: a tiered/subscription default flow was subsequently built (`support_tiers`/`support_subscriptions`/`support_payments`) per §9/§11, then explicitly reversed by the founder — see #7. The bonding-curve trading system is now the **only** backing mechanism, still gated behind `regulated_offerings` (default `false`); deposit/withdraw is its funding/cashout layer, not a separate flow. **`regulated_offerings` is still `false`** — flipping it is the one remaining step to make backing visible/usable at all, and per `docs/DEPLOYMENT.md` that's a deliberate go/no-go the founder should make, not something to flip silently.
 
 ## 2. Stack continuation vs. framework rewrite
 
@@ -42,16 +42,18 @@ The master prompt describes what is genuinely a multi-month platform (RBAC, mome
 
 Payments remain in the same state as before this pass: `COMMERCE_API_KEY`/`COMMERCE_WEBHOOK_SECRET` are not configured (real business account setup is outside what an agent can do), and Edge Function deployment is pending manual tool approval. Both are called out again in `docs/DEPLOYMENT.md` rather than silently left unmentioned.
 
-## 7. Benefit/BenefitEntitlement collapsed into `support_tiers.benefits`
+## 7. Tiered/subscription model built, then explicitly reversed by the founder
 
-§19's data model lists `Benefit` and `BenefitEntitlement` as separate entities. There is no gated content yet (no community posts, no drops) that would need to check "does this specific user have this specific benefit" — the only thing that currently matters is "does this user have an active subscription to a tier that lists this benefit," which is fully answerable from `support_subscriptions.status` + `support_tiers.benefits` with no extra table.
+A default tiered support flow (`support_tiers`/`support_subscriptions`/`support_payments`, following §9/§11's spec — see the original #7/#8 reasoning below, kept for the record) was built, then the founder explicitly overrode it: "We're not doing subs we're doing deposit and withdraws." All three tables were dropped (they held no real user data — only fictional seed rows) and the `support-artist` Edge Function removed.
 
-**Assumption**: model benefits as a plain JSON text array on `support_tiers` for now, and treat "entitled" as synonymous with "has an active subscription to a tier listing that benefit," rather than building relational plumbing with zero current consumers.
+**Current state**: the bonding-curve trading system (Assumption #1) is the sole backing mechanism. There is no tiered/benefits model and no recurring billing of any kind. Deposit and withdraw (both against `wallets.balance_cents`) are the wallet's funding/cashout layer around that trading system, not a separate product surface.
 
-**If wrong / when this breaks down**: the moment a benefit needs individual tracking (e.g. "redeemed" merch credit, a benefit that outlives a canceled subscription, or per-user overrides), split it into real `benefits` + `benefit_entitlements` tables — straightforward migration, no data loss, since the tier's benefit list is still the source of truth for what to migrate.
+Original reasoning, kept for context on why the tier model looked like a good idea at the time — no longer applicable, superseded by the founder's direction above:
 
-## 8. No real recurring billing
+> §19's data model lists `Benefit` and `BenefitEntitlement` as separate entities. There was no gated content that would need to check "does this specific user have this specific benefit" — the only thing that mattered was "does this user have an active subscription to a tier that lists this benefit," answerable from `support_subscriptions.status` + `support_tiers.benefits` with no extra table. And: `support_tiers.billing_frequency = 'monthly'` tracked a period but nothing auto-charged when it ended, since Coinbase Commerce has no stored-payment-method mechanism — "monthly" tiers would have required a manual fresh checkout each period.
 
-`support_tiers.billing_frequency = 'monthly'` and `support_subscriptions.current_period_end` exist, but nothing auto-charges when a period ends — Coinbase Commerce's hosted checkout has no stored-payment-method mechanism to charge later without the supporter present. `record_support_payment_confirmed` only extends `current_period_end` when a _new_ checkout is completed and confirmed.
+## 8. Withdrawals are requests, not instant payouts
 
-**Assumption**: this is fine to ship as "monthly" tiers that require the supporter to manually complete a fresh checkout each period, as long as the UI is honest about it — not fine to silently imply auto-renewal exists. **Not yet built**: a renew prompt/reminder when `current_period_end` has passed (currently a lapsed monthly subscription just sits with a stale `current_period_end` and no visible nudge) — flagged as a gap, not hidden.
+Coinbase Commerce only accepts payments — it has no API for sending crypto out. `request_withdrawal` debits the wallet immediately (so a balance can't be withdrawn twice) and records a `pending` row in `withdrawal_requests`; actually sending the funds and marking the request `paid` is a manual step outside the app, until a real payout provider is integrated.
+
+**Assumption**: this is honest and complete as far as the app's own state goes (the request is real, the debit is real, canceling correctly refunds) — the gap is entirely on the "someone/something needs to actually send the crypto" side, which is operational, not a missing feature to fake. Flagged in `docs/DEPLOYMENT.md` alongside the other manual steps (Coinbase Commerce account setup, Edge Function deployment).

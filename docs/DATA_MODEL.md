@@ -25,22 +25,16 @@ Reflects the actual deployed schema in Supabase project `nextup` (ref `djnsjtlkj
 - **`song_ownership`** — `id, user_id, track_id (unique), price_cents, created_at`. One owner per track, written only by the webhook after a confirmed charge.
 - **`track_ownership_public`** (view) — `track_id, owned_at`. Public read, exposes ownership state without the buyer's identity. `SECURITY DEFINER` intentionally (documented, accepted advisory).
 
-## Commerce — default support flow (tiered "Back Artist")
-
-- **`support_tiers`** — `id, artist_id, name, price_cents, billing_frequency ('one_time'|'monthly'), description, benefits (jsonb text array), sort_order, active, created_at`. Public read (active tiers only). Seeded with 3 tiers per artist (Early Supporter / Core Supporter / Inner Circle). Benefits are a plain text array on the tier rather than a separate `Benefit`/`BenefitEntitlement` join table — see `docs/ASSUMPTIONS.md` #7 for why.
-- **`support_subscriptions`** — `id, user_id, artist_id, tier_id, billing_frequency, status ('active'|'canceled'|'past_due'|'expired'), started_at, current_period_end, canceled_at`. One row per `(user_id, artist_id)` — supporting a new tier for the same artist replaces the existing subscription rather than stacking. Owner read only. Owner may `UPDATE` their own row but only to set `status = 'canceled'`; everything else (creation, renewal, tier changes) is written only by `record_support_payment_confirmed`.
-- **`support_payments`** — `id, user_id, artist_id, tier_id, amount_usd_cents, commerce_charge_id, status, created_at, confirmed_at`. Same shape/flow as `crypto_charges`/`wallet_deposits`. Owner read only; only the webhook writes `status`/`confirmed_at`.
-- **`record_support_payment_confirmed(user_id, artist_id, tier_id, billing_frequency)`** — `SECURITY DEFINER`, `service_role`-only. Upserts the `(user_id, artist_id)` subscription. For monthly tiers, extends `current_period_end` from the later of "now" or the existing period end, so renewing early doesn't forfeit already-paid-for time.
-
-**Important limitation**: "monthly" billing is period-tracking only, not auto-charging. Coinbase Commerce has no stored-payment-method mechanism, so there is no way to charge a supporter automatically when their period ends — see `docs/ASSUMPTIONS.md` #7. The UI must prompt for a fresh checkout each period; this is not built yet (a subscription whose `current_period_end` has passed currently just sits there without a renew prompt).
-
 ## Commerce — regulatedOfferings (feature-flagged, off by default)
 
-- **`wallets`** — `user_id (pk), balance_cents, updated_at`. Off-chain trading balance. Owner read only; balance mutated only by `open_position`/`close_position`/`credit_wallet` (all `SECURITY DEFINER`, `service_role`-only execute).
+This is the only backing mechanism — there is no separate tiered/subscription flow (a tiered model was built and then removed; see `docs/ASSUMPTIONS.md` #7 for why).
+
+- **`wallets`** — `user_id (pk), balance_cents, updated_at`. Off-chain trading balance. Owner read only; balance mutated only by `open_position`/`close_position`/`credit_wallet`/`request_withdrawal`/`cancel_withdrawal_request` (all `SECURITY DEFINER`, `service_role`-only execute).
 - **`wallet_deposits`** — `id, user_id, amount_usd_cents, commerce_charge_id, status, created_at, confirmed_at`. Same shape/flow as `crypto_charges`, but confirming credits `wallets.balance_cents` (via `credit_wallet`) instead of a direct entitlement.
+- **`withdrawal_requests`** — `id, user_id, amount_cents, destination_address, status ('pending'|'paid'|'rejected'|'canceled'), requested_at, processed_at, notes`. Owner read only. Requesting a withdrawal (`request_withdrawal`) debits the wallet immediately and inserts a `pending` row; canceling (`cancel_withdrawal_request`, owner-only, only while still `pending`) credits the balance back. There is no automated payout — moving a request from `pending` to `paid` is a manual step, see `docs/DEPLOYMENT.md`.
 - **`artist_curves`** — `artist_id (pk), supply, base_price_cents, k, updated_at`. One continuous bonding curve per artist: `price(s) = base_price_cents * exp(k * s)`. Public read (needed to display a live price).
 - **`positions`** — `id, user_id, artist_id, direction ('positive'|'negative'), units, stake_cents, escrow_cents, status ('open'|'closed'|'liquidated'), entry_price_cents, close_price_cents, proceeds_cents, opened_at, closed_at`. Owner read only; written only by `open_position`/`close_position`.
-- **`open_position(user_id, artist_id, direction, stake_cents)`** and **`close_position(user_id, position_id)`** — `SECURITY DEFINER` Postgres functions, row-locked on the curve and wallet to serialize concurrent trades. `EXECUTE` granted only to `service_role` (see `docs/SECURITY.md` for why this needed a follow-up fix).
+- **`open_position(user_id, artist_id, direction, stake_cents)`**, **`close_position(user_id, position_id)`**, **`request_withdrawal(user_id, amount_cents, destination_address)`**, **`cancel_withdrawal_request(user_id, request_id)`** — `SECURITY DEFINER` Postgres functions, row-locked to serialize concurrent operations on the same wallet/curve. `EXECUTE` granted only to `service_role` (see `docs/SECURITY.md` for why this needed a follow-up fix the first time).
 
 ## Growth
 
