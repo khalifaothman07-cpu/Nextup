@@ -11,6 +11,9 @@ export function Header() {
           <span>Nextup</span>
         </Link>
         <div className="nav-right">
+          <Link to="/discover" className="nav-link">
+            Discover
+          </Link>
           <div className="auth-widget">
             <AuthWidget />
           </div>

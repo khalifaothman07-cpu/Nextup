@@ -1,15 +1,20 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient.js";
+import { fetchArtistMomentum } from "../lib/momentum.js";
 import { useReveal } from "../hooks/useReveal.js";
 import { usePageTitle } from "../hooks/usePageTitle.js";
 import { TrackList } from "../components/TrackList.jsx";
 import { BackingPanel } from "../components/BackingPanel.jsx";
+import { FollowButton } from "../components/FollowButton.jsx";
+import { MomentumPanel } from "../components/MomentumPanel.jsx";
 
 export function Artist() {
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
   const [state, setState] = useState({ status: "loading" });
+  const [momentum, setMomentum] = useState(null);
+  const [followerCount, setFollowerCount] = useState(0);
 
   usePageTitle(
     state.status === "loaded"
@@ -53,7 +58,11 @@ export function Artist() {
             .in("track_id", trackIds)
         : { data: [] };
 
+      const momentumRow = await fetchArtistMomentum(artist.id);
+
       if (cancelled) return;
+      setFollowerCount(artist.follower_count ?? 0);
+      setMomentum(momentumRow);
       setState({
         status: "loaded",
         artist,
@@ -66,6 +75,16 @@ export function Artist() {
       cancelled = true;
     };
   }, [slug]);
+
+  const refreshFollowerCount = useCallback(async () => {
+    if (state.status !== "loaded") return;
+    const { data } = await supabase
+      .from("artists")
+      .select("follower_count")
+      .eq("id", state.artist.id)
+      .single();
+    if (data) setFollowerCount(data.follower_count);
+  }, [state]);
 
   useReveal([state.status]);
 
@@ -134,11 +153,19 @@ export function Artist() {
               <h1>{state.artist.name}</h1>
               <p className="tagline">{state.artist.tagline}</p>
               <p className="bio">{state.artist.bio}</p>
-              <div className="artist-stat-pill">
-                ▲ {state.artist.stat_30d_pct}% last 30 days
+              <div className="artist-actions">
+                <div className="artist-stat-pill">
+                  {followerCount} follower{followerCount === 1 ? "" : "s"}
+                </div>
+                <FollowButton
+                  artistId={state.artist.id}
+                  onToggled={refreshFollowerCount}
+                />
               </div>
             </div>
           </div>
+
+          <MomentumPanel momentum={momentum} />
 
           <section style={{ borderBottom: "none", paddingBottom: 0 }}>
             <div className="two-col" style={{ marginTop: 64 }}>

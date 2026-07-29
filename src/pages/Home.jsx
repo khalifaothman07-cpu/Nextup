@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient.js";
+import { fetchLatestMomentum } from "../lib/momentum.js";
+import { ArtistCard } from "../components/ArtistCard.jsx";
 import { WaitlistForm } from "../components/WaitlistForm.jsx";
 import { useReveal } from "../hooks/useReveal.js";
 import { usePageTitle } from "../hooks/usePageTitle.js";
@@ -32,20 +34,25 @@ export function Home() {
     return () => io.disconnect();
   }, []);
 
+  const [momentum, setMomentum] = useState(new Map());
+
   useEffect(() => {
     let cancelled = false;
-    supabase
-      .from("artists")
-      .select("slug, name, genre, accent_from, accent_to, stat_30d_pct")
-      .order("sort_order", { ascending: true })
-      .then(({ data, error }) => {
-        if (cancelled) return;
-        if (error || !data?.length) {
-          setRosterError(true);
-        } else {
-          setArtists(data);
-        }
-      });
+    Promise.all([
+      supabase
+        .from("artists")
+        .select("id, slug, name, genre, accent_from, accent_to, follower_count")
+        .order("sort_order", { ascending: true }),
+      fetchLatestMomentum(),
+    ]).then(([{ data, error }, momentumMap]) => {
+      if (cancelled) return;
+      if (error || !data?.length) {
+        setRosterError(true);
+      } else {
+        setArtists(data);
+        setMomentum(momentumMap);
+      }
+    });
     return () => {
       cancelled = true;
     };
@@ -211,24 +218,11 @@ export function Home() {
           <div className={`roster-row${artists ? "" : " loading"}`} data-reveal>
             {artists
               ? artists.map((a) => (
-                  <Link
-                    key={a.slug}
-                    className="rcard"
-                    to={`/artist/${encodeURIComponent(a.slug)}`}
-                  >
-                    <div
-                      className="swatch"
-                      style={{
-                        background: `linear-gradient(155deg,${a.accent_from},${a.accent_to})`,
-                      }}
-                    ></div>
-                    <h4>{a.name}</h4>
-                    <div className="genre">{a.genre.toUpperCase()}</div>
-                    <div className="stat">
-                      <span className="muted">30-day</span>
-                      <span className="g">▲ {a.stat_30d_pct}%</span>
-                    </div>
-                  </Link>
+                  <ArtistCard
+                    key={a.id}
+                    artist={a}
+                    momentum={momentum.get(a.id)}
+                  />
                 ))
               : rosterError
                 ? "Roster is loading slowly — refresh in a moment."

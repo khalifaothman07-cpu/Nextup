@@ -4,6 +4,32 @@ Newest entry first. Each entry follows the master prompt's §31 working-cycle fo
 
 ---
 
+## Cycle 7 — Phase 2, Discovery vertical slice: follows, search/filter/sort, real momentum
+
+**Slice**: First post-migration slice per the founder's "bit by bit, cohesive" direction and `docs/ARCHITECTURE.md`'s sequence: make discovery real. Three connected pieces — follows, roster search/filter/sort, and an honestly-computed momentum engine replacing the fabricated seeded stats.
+
+**Database** (project `djnsjtlkjgjqmfcucjqp`, two migrations: `discovery_follows`, `discovery_momentum_engine`):
+
+- `artist_follows` — own-rows-only RLS on select/insert/delete; the public never sees who follows whom, only the aggregate. `artists.follower_count` added as a public counter maintained solely by the `private.bump_follower_count()` SECURITY DEFINER trigger (standard revoke pattern applied on creation).
+- `artist_momentum_daily` — historized daily snapshots, public read, written only by `private.compute_momentum()` (SECURITY DEFINER, execute revoked from `anon`/`authenticated`/`public`). Score = `follows_7d×3 + trades_7d×5 + purchases_7d×8 + $10-blocks traded`, with every component stored so the UI can show exactly why a score is what it is. Scheduled via pg_cron (`compute-momentum-daily`, 00:15 UTC daily; pg_cron extension installed this cycle) and run once immediately — first snapshot verified in-database: all five seed artists at score 0, which is the honest state (no real activity exists yet).
+- Post-DDL security advisor check: no new findings; the only ERROR-level lint remains the pre-existing, deliberate `track_ownership_public` view, whose definition was re-verified this cycle to expose only `track_id`/`owned_at` (no user identity).
+
+**Frontend**:
+
+- `Discover` page rebuilt: text search (name/genre/city), genre filter chips derived from live data, sort by Momentum (default) / Name / Newest / Featured. Filtering is client-side over the fetched roster — correct and honest at 5 artists; revisit server-side filtering with pagination when the roster is big enough for it to matter.
+- New shared `ArtistCard` used by both Home's roster row and Discover's grid (previously duplicated markup, one of which showed the fabricated `stat_30d_pct`). Cards now show two real numbers only: 7-day momentum score and follower count.
+- Artist page: fabricated "▲ X% last 30 days" pill replaced with live follower count + `FollowButton` (direct RLS-guarded writes to `artist_follows` — no Edge Function needed, users can only touch their own rows; count refetches after toggle since the trigger owns the increment). New `MomentumPanel` shows the score with its full component breakdown and the "computed from real activity only" provenance note.
+- Header gains a Discover nav link (site previously had no top-level nav to the roster).
+- The one remaining "▲ 212%" on the site is the Home hero's stylized tap-demo card — an illustrative mock of the profile concept, not a data surface; left as-is deliberately and noted here.
+
+**Verified**: `npm run build` clean (110 modules). Because the sandbox proxy blocks live Supabase calls, the headless-Chromium smoke against `npm run preview` fulfilled the `/rest/v1/*` requests in-page with the same row shapes the real database returned via SQL — exercising the actual UI wiring end-to-end: Home and Discover render shared cards showing real momentum ("▲ 14") and follower counts; Discover's genre chips derive from data, search ("lagos" → 1 card) and momentum sort (highest first) behave correctly; the artist page renders the follower pill, Follow button, momentum panel with full breakdown, and trading panel; the fabricated "% last 30 days" string appears nowhere. Live data path separately verified in SQL (first snapshot present for all 5 artists, all score 0 — honest). One smoke false-alarm worth recording: a first mock returned 2 rows for a `limit=1` `maybeSingle` query, which supabase-js correctly rejects — mock artifact, not an app bug. `npx prettier --write .` clean.
+
+**Not done / explicitly deferred**: `ArtistSave` folded into follow rather than built as a near-duplicate; trend-over-time momentum charts (needs multiple daily snapshots to exist first — the data starts accruing now); a "following" feed/dashboard for listeners (belongs with the RBAC-aware UI slice); server-side search pagination (pointless at 5 artists).
+
+**Recommended next step**: Phase 2.5 — RBAC-aware UI (role display, gated routes for admin/curator/artist-team, and a "following" view for listeners), now that discovery generates the activity those surfaces would show.
+
+---
+
 ## Cycle 6 — Framework migration: React + Vite
 
 **Slice**: Founder instruction: "Build everything that's scoped out." Nearly everything still missing (RBAC role UI, ledger, marketplace, community, artist dashboard, A&R pipeline, admin console, momentum engine) needs role-gated dashboards, kanban boards, and feeds — genuinely hard to build cleanly in hand-written vanilla JS/`innerHTML`. `docs/ASSUMPTIONS.md` #2 had already flagged this fork as something to confirm with the founder before Phase 2, not decide silently, so asked via `AskUserQuestion` before writing any code: (1) introduce a framework now vs. keep vanilla JS — founder chose framework; (2) work the documented sequence one real slice at a time vs. pick a single highest-priority feature — founder chose the sequence. This cycle is that first slice: the framework migration itself, since it blocks everything else in the sequence.
