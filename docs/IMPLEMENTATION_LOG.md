@@ -4,6 +4,34 @@ Newest entry first. Each entry follows the master prompt's §31 working-cycle fo
 
 ---
 
+## Cycle 11 — The nav blob: four layout defects, two of them mine from the previous cycle
+
+**Slice**: The founder sent a photo of the header on their phone: "GET EARLY ACCESS" wrapped onto three lines, the `border-radius: 100px` pill ballooned into a blob, sitting on top of the sign-out link. Not a subtle regression — a photograph of it was the bug report.
+
+**Root cause**: `.nav-cta` never had `white-space: nowrap`. Harmless while the nav held only a logo, the auth widget and one button; I then added Discover (Cycle 7), Account (Cycle 8) and Dashboard (Cycle 9) links **without re-checking narrow widths**, the row ran out of space, and the button wrapped.
+
+**Four defects, found by widening the check rather than guessing:**
+
+1. **The blob** — no `nowrap` on `.nav-cta`/`.nav-link`. Fixed.
+2. **Signed-in email collapsed to 0px** on mobile, so the account state was invisible. The old `@media (max-width:480px)` rule set `min-width: 0` on the auth widget and let flex crush it. Now truncates via `max-width: 42vw` with the links on their own row.
+3. **Sign-in input crushed** to "yo" at 430px and to an empty circle at 390px — only visible _after_ fixing the blob, since the signed-out path renders the CTA and the input side by side. Same root cause as the blob: a 100px radius on an element squeezed to ~40px. Fixed with a hard `min-width: 132px` floor plus hiding the CTA below 620px (it only scrolls to a waitlist form already on screen in the hero at that width, so it is the redundant element, not the sign-in field).
+4. **A cascade collision I introduced during this very fix** — the `@media (max-width:620px) { .nav-cta { display:none } }` block landed _before_ the base `.nav-cta { display:inline-block }`. Equal specificity, so source order decided and the base won: the fix silently did nothing. Caught by checking rule order in the output file rather than assuming the rule applied. This is exactly the "watch your selector specificities / structure the cascade so it doesn't silently undo your spacing" failure mode.
+
+**Structural change**: nav links moved out of `.nav-right` into their own `.nav-links` group, a direct child of `nav.wrap`. Desktop: right-aligned beside the auth cluster via `margin-left:auto`. Below 700px: `order: 3; flex: 1 0 100%` drops them to a full-width second row, so nothing in the nav has to shrink below its natural width. "Get Early Access" is now also hidden whenever a session exists — offering early access to someone who already has an account was always nonsense, and it removes the widest element from the crowded case.
+
+**Process failure worth naming**: the blob was in `shot-account-mobile.png`, generated and reviewed by me one cycle earlier. I looked at that image and missed it, because I checked the content sections I had just written and treated the header as background furniture. Building the harness was not sufficient; "look more carefully" is not a control.
+
+**So the harness now asserts on chrome** (`navStrip` in `scripts/screenshot.mjs`): renders the header at 1280/900/700/560/430/390/360, stitches the strips into one reviewable image, and **fails the run** on CTA wrap, horizontal page overflow, collapsed auth email, or a sign-in input under 120px — in **both** signed-in and signed-out states.
+
+**Two harness bugs found and fixed while building it** (a check you cannot trust is worse than no check, because it trains you to ignore output):
+
+- Line counting by `height / 18` counted the button's 11px padding as a second line and reported a wrap at 1280px, which is impossible. Replaced with real rendered line-box counting via `Range.getClientRects().length`, then **validated against a control** (`nowrap` button → 1 line, force-wrapped button → 3) before trusting it.
+- The first version of the strip only ran signed-in — where the CTA is now hidden — so it could not have caught the founder's actual bug. Added a second, session-free browser context specifically to exercise the CTA.
+
+**Verified**: all assertions pass at all 7 widths in both auth states, `hOverflow=false` throughout, zero page errors; both stitched strips reviewed by eye. `npm run build` clean, `npx prettier --write .` clean.
+
+---
+
 ## Cycle 10 — Actually looking at the screens: four defects, and a harness so it can't recur
 
 **Slice**: The founder said "you're saying these are built but I'm not seeing anything actually visual." Entirely fair, and two failures on my side: (1) the published preview artifacts were Cycle-7 snapshots, so Cycles 8–9 were literally invisible to them; (2) `/account` and `/dashboard` sit behind auth, which a static snapshot can never show — so "here's a preview link" was never going to work for them. I had been reporting `npm run build` + a DOM-presence smoke as verification, which proves a page _mounts_, not that it's _right_.

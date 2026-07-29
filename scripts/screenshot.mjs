@@ -486,6 +486,129 @@ async function shot(path, file, { width = 1280 } = {}) {
   console.log(`${file.padEnd(28)} ${path.padEnd(22)} h1="${h1}"`);
 }
 
+/**
+ * Header strip across breakpoints, stitched into one image.
+ *
+ * This exists because a wrapped "Get Early Access" pill ballooned into a blob
+ * over the sign-out link at phone width, and it was sitting in plain sight in
+ * a full-page screenshot that had already been reviewed — the eye goes to the
+ * content that just changed, not the chrome that has "always been fine".
+ * Chrome gets its own deliberate look now, at every width where it reflows.
+ */
+async function navStrip(pg, path, file, widths, label) {
+  const shots = [];
+  for (const width of widths) {
+    await pg.setViewportSize({ width, height: 420 });
+    await pg.goto(`http://localhost:8200${path}`, {
+      waitUntil: "domcontentloaded",
+      timeout: 20000,
+    });
+    await pg.waitForTimeout(900);
+    const header = pg.locator("header");
+    const box = await header.boundingBox();
+    const buf = await pg.screenshot({
+      clip: { x: 0, y: 0, width, height: Math.ceil((box?.height ?? 80) + 8) },
+    });
+    shots.push({ width, buf, h: Math.ceil((box?.height ?? 80) + 8) });
+    // Flag the actual failure mode rather than trusting a later eyeball pass.
+    const overflow = await pg.evaluate(() => {
+      const n = document.querySelector("nav.wrap");
+      const cta = document.querySelector(".nav-cta");
+      const email = document.querySelector(".auth-email");
+      const r = (el) => (el ? el.getBoundingClientRect() : null);
+      const ctaR = r(cta);
+      const emailR = r(email);
+      // Scope to the nav: /account also has an .auth-input (display name).
+      const input = document.querySelector("nav .auth-input");
+      const inputR = r(input);
+      // Count real rendered line boxes. Dividing height by a guessed
+      // line-height counts the button's padding as an extra line and reports
+      // a wrap at 1280px, which is nonsense.
+      const lineCount = (el) => {
+        if (!el) return 0;
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        return range.getClientRects().length;
+      };
+      return {
+        navH: Math.round(r(n).height),
+        ctaLines: lineCount(cta),
+        ctaW: ctaR ? Math.round(ctaR.width) : 0,
+        hasEmail: !!email,
+        hasInput: !!input,
+        inputW: inputR ? Math.round(inputR.width) : 0,
+        emailW: emailR ? Math.round(emailR.width) : 0,
+        bodyOverflowX:
+          document.documentElement.scrollWidth >
+          document.documentElement.clientWidth,
+      };
+    });
+    console.log(
+      `  ${String(width).padStart(5)}px  navH=${String(overflow.navH).padStart(3)}  ` +
+        `cta=${overflow.ctaW}w/${overflow.ctaLines}line(s)  email=${overflow.emailW}w  input=${overflow.inputW}w  ` +
+        `hOverflow=${overflow.bodyOverflowX}`,
+    );
+    if (overflow.ctaLines > 1)
+      errors.push(
+        `nav-cta wrapped to ${overflow.ctaLines} lines at ${width}px`,
+      );
+    if (overflow.bodyOverflowX)
+      errors.push(`[${label}] horizontal page overflow at ${width}px`);
+    if (overflow.hasEmail && overflow.emailW === 0)
+      errors.push(`[${label}] auth email collapsed to 0px at ${width}px`);
+    // An email field narrower than this cannot show even a short address.
+    if (overflow.hasInput && overflow.inputW < 120)
+      errors.push(
+        `[${label}] sign-in input only ${overflow.inputW}px at ${width}px`,
+      );
+  }
+  // stitch vertically
+  const totalH = shots.reduce((a, s2) => a + s2.h, 0);
+  const maxW = Math.max(...shots.map((s2) => s2.width));
+  const canvasPage = await pg.context().newPage();
+  await canvasPage.setViewportSize({ width: maxW, height: totalH });
+  const imgs = shots
+    .map(
+      (s2) =>
+        `<div style="width:${s2.width}px"><img src="data:image/png;base64,${s2.buf.toString("base64")}" style="display:block;width:${s2.width}px"><div style="font:11px monospace;color:#c6a15b;padding:2px 6px">${s2.width}px</div></div>`,
+    )
+    .join("");
+  await canvasPage.setContent(
+    `<body style="margin:0;background:#0b0b0c">${imgs}</body>`,
+  );
+  await canvasPage.waitForTimeout(300);
+  await canvasPage.screenshot({ path: `${OUT}/${file}`, fullPage: true });
+  await canvasPage.close();
+  console.log(`${file} written`);
+}
+
+const WIDTHS = [1280, 900, 700, 560, 430, 390, 360];
+
+console.log("\nheader across breakpoints (signed in):");
+await navStrip(page, "/account", "shot-nav-widths.png", WIDTHS, "signed-in");
+
+// The blob was a "Get Early Access" pill wrapping. That pill only renders when
+// signed OUT now, so the signed-in strip above cannot exercise it — this
+// second context (no seeded session) is what guards the original defect.
+const ctxOut = await browser.newContext({
+  viewport: { width: 1280, height: 900 },
+  deviceScaleFactor: 2,
+});
+await ctxOut.route("**/rest/v1/**", (route) =>
+  route.fulfill({ contentType: "application/json", body: "[]" }),
+);
+const pageOut = await ctxOut.newPage();
+pageOut.on("pageerror", (e) => errors.push(`[signed-out] ${e.message}`));
+console.log("\nheader across breakpoints (signed out — CTA visible):");
+await navStrip(
+  pageOut,
+  "/",
+  "shot-nav-widths-signedout.png",
+  WIDTHS,
+  "signed-out",
+);
+await ctxOut.close();
+
 await shot("/account", "shot-account-desktop.png");
 await shot("/dashboard", "shot-dashboard-desktop.png");
 await shot("/artist/marra-vale", "shot-artist-desktop.png");

@@ -104,44 +104,73 @@ header {
 nav.wrap {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   height: 76px;
   gap: 20px;
+  flex-wrap: wrap;
+}
+/* Links sit right-aligned next to the auth cluster on desktop; on narrow
+   screens they drop to their own full-width row (order: 3) so nothing in the
+   nav ever has to shrink below its natural width. */
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
 }
 .nav-right {
   display: flex;
   align-items: center;
   gap: 16px;
 }
-@media (max-width: 480px) {
+@media (max-width: 700px) {
   nav.wrap {
-    flex-wrap: wrap;
     height: auto;
-    padding-top: 14px;
-    padding-bottom: 14px;
-    row-gap: 12px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    row-gap: 10px;
+  }
+  .nav-links {
+    order: 3;
+    flex: 1 0 100%;
+    margin-left: 0;
+    gap: 18px;
+    overflow-x: auto;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+  }
+  .nav-links::-webkit-scrollbar {
+    display: none;
   }
   .nav-right {
-    width: 100%;
-    justify-content: space-between;
+    margin-left: auto;
+    min-width: 0;
   }
+  /* Truncate a long address instead of letting it collapse to zero width. */
+  .auth-email {
+    max-width: 42vw;
+  }
+}
+@media (max-width: 480px) {
   .auth-widget {
-    flex: 1;
     min-width: 0;
   }
   .auth-form {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
   }
   .auth-input {
-    flex: 1;
+    flex: 1 1 auto;
     width: auto;
-    min-width: 0;
+    /* A floor, never 0: an input too narrow to read is not a smaller input,
+       it is a broken one. */
+    min-width: 132px;
   }
 }
 .nav-cta {
   font-family: "Archivo", sans-serif;
   font-weight: 600;
   font-size: 13px;
+  white-space: nowrap;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   background: var(--paper);
@@ -159,6 +188,15 @@ nav.wrap {
 .nav-cta:hover {
   background: var(--brass);
   transform: translateY(-1px);
+}
+
+@media (max-width: 620px) {
+  /* The CTA only scrolls to the waitlist form, which is already on screen in
+     the hero at this width — dropping it here is what leaves the sign-in
+     field usable instead of crushing it to an empty circle. */
+  .nav-cta {
+    display: none;
+  }
 }
 
 /* auth widget */
@@ -1396,6 +1434,7 @@ footer {
   text-transform: uppercase;
   color: var(--paper-dim);
   text-decoration: none;
+  white-space: nowrap;
 }
 .nav-link:hover {
   color: var(--paper);
