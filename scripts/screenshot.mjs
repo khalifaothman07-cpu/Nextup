@@ -283,12 +283,15 @@ const SESSION = {
   user: USER,
 };
 
+// Flipped per-shot so /apply can be captured in both of its signed-in states.
+let applicationRow = null;
+
 const browser = await chromium.launch({
   executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
 });
 const ctx = await browser.newContext({
   viewport: { width: 1280, height: 900 },
-  deviceScaleFactor: 2,
+  deviceScaleFactor: 1.5,
 });
 const errors = [];
 const unmatched = [];
@@ -362,6 +365,8 @@ await ctx.route("**/rest/v1/**", (route) => {
       );
     case "user_roles":
       return send(one([{ user_id: UID, role: "curator" }]));
+    case "artist_applications":
+      return send(one(applicationRow ? [applicationRow] : []));
     case "profiles":
       return send(one([{ id: UID, display_name: "K. Othman" }]));
     case "artist_follows": {
@@ -486,6 +491,16 @@ async function shot(path, file, { width = 1280 } = {}) {
   console.log(`${file.padEnd(28)} ${path.padEnd(22)} h1="${h1}"`);
 }
 
+/** Never let one crashed capture swallow the rest of the run's findings. */
+async function tryShot(...args) {
+  try {
+    await shot(...args);
+  } catch (e) {
+    errors.push(`shot ${args[1]} failed: ${e.message}`);
+    console.log(`${String(args[1]).padEnd(28)} FAILED: ${e.message}`);
+  }
+}
+
 /**
  * Header strip across breakpoints, stitched into one image.
  *
@@ -592,7 +607,7 @@ await navStrip(page, "/account", "shot-nav-widths.png", WIDTHS, "signed-in");
 // second context (no seeded session) is what guards the original defect.
 const ctxOut = await browser.newContext({
   viewport: { width: 1280, height: 900 },
-  deviceScaleFactor: 2,
+  deviceScaleFactor: 1.5,
 });
 await ctxOut.route("**/rest/v1/**", (route) =>
   route.fulfill({ contentType: "application/json", body: "[]" }),
@@ -609,12 +624,31 @@ await navStrip(
 );
 await ctxOut.close();
 
-await shot("/account", "shot-account-desktop.png");
-await shot("/dashboard", "shot-dashboard-desktop.png");
-await shot("/artist/marra-vale", "shot-artist-desktop.png");
-await shot("/discover", "shot-discover-desktop.png");
-await shot("/account", "shot-account-mobile.png", { width: 390 });
-await shot("/dashboard", "shot-dashboard-mobile.png", { width: 390 });
+applicationRow = null;
+await tryShot("/apply", "shot-apply-form.png");
+applicationRow = {
+  id: "app-1",
+  user_id: UID,
+  artist_name: "Kite Season",
+  city: "Lisbon",
+  genre: "Alt R&B",
+  links:
+    "https://soundcloud.com/kiteseason\nhttps://open.spotify.com/artist/xxxx",
+  about:
+    "Two singles out, an EP mixed and waiting on masters. I've been selling out 200-cap rooms in Lisbon on word of mouth and want somewhere the people who found me first actually count for something.",
+  status: "reviewing",
+  created_at: "2026-07-26T11:20:00Z",
+  review_notes: "",
+};
+await tryShot("/apply", "shot-apply-status.png");
+applicationRow = null;
+
+await tryShot("/account", "shot-account-desktop.png");
+await tryShot("/dashboard", "shot-dashboard-desktop.png");
+await tryShot("/artist/marra-vale", "shot-artist-desktop.png");
+await tryShot("/discover", "shot-discover-desktop.png");
+await tryShot("/account", "shot-account-mobile.png", { width: 390 });
+await tryShot("/dashboard", "shot-dashboard-mobile.png", { width: 390 });
 
 console.log("\nunmatched REST:", JSON.stringify([...new Set(unmatched)]));
 console.log("pageerrors:", JSON.stringify(errors));

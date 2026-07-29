@@ -16,6 +16,7 @@ export function Footer() {
               <Link to="/how-it-works">How it works</Link>
               <Link to="/pricing">Pricing</Link>
               <Link to="/discover">Discover artists</Link>
+              <Link to="/apply">Apply as an artist</Link>
               <Link to="/#waitlist">Early access</Link>
             </div>
             <div className="foot-col">

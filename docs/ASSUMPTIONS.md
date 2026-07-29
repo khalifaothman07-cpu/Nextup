@@ -75,3 +75,9 @@ The founder flagged two problems with `index.html` directly: (1) it still had a 
 Phase 4 calls for artist onboarding (self-serve signup, verification submission). Building that honestly requires a verification review flow and an admin surface to process it (Phase 6 territory) — a self-serve form whose submissions nobody can review would be fake functionality.
 
 **Assumption**: during pre-launch, artist-team memberships (`artist_members`) are granted manually by the founder/operator via SQL (`insert into artist_members (artist_id, user_id, role) values (...)`), and the dashboard's empty state says exactly that instead of pretending an onboarding flow exists. Self-serve onboarding + verification becomes its own slice once the admin console exists to review submissions.
+
+**Update (Cycle 12) — the deferral was wrong, and it left a dead end.** The founder asked "where's the apply as an artist page". It didn't exist, and worse: the FAQ answer and the dashboard's empty state both told artists to "join the waitlist and note that you're an artist", while `waitlist_signups` collects nothing but an email. Two on-site instructions that could not be followed — a direct violation of §1.9–1.10.
+
+The original reasoning ("a form nobody can review would be fake functionality") was also wrong on its own terms: `withdrawal_requests` had already established the honest pattern for exactly this shape of problem — real row, real state machine, manual fulfillment documented rather than pretended. Applications fit it precisely, so there was never a reason to wait for Phase 6.
+
+`/apply` now exists with a real `artist_applications` table. Manual review remains a manual step (documented, not hidden), and acceptance still doesn't auto-grant a dashboard — an `artist_members` row does, which stays a deliberate operator action.

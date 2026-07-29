@@ -4,6 +4,33 @@ Newest entry first. Each entry follows the master prompt's §31 working-cycle fo
 
 ---
 
+## Cycle 12 — `/apply`: artist applications, and a dead end I had created
+
+**Slice**: Founder: "Where's the apply as an artist page". It didn't exist — I deferred artist onboarding in Cycle 9 (`docs/ASSUMPTIONS.md` #10). But the deferral had a consequence I hadn't checked: **the FAQ answer and the dashboard's empty state both told artists to "join the waitlist and note that you're an artist", and the waitlist form is a single email field with nowhere to note anything.** Two instructions on the live site that could not be followed. That is the "every visible action must work" rule broken by my own copy, not by a missing feature.
+
+**The deferral reasoning was also wrong.** I had argued a form nobody can review would be fake functionality until Phase 6's admin console existed. But `withdrawal_requests` had already established the honest pattern for this exact shape: a real row, a real state machine, and a manual fulfillment step that is documented rather than pretended. Applications fit it precisely. There was no reason to wait.
+
+**Database** (migration `artist_applications`): `artist_applications` with one row per account (`user_id` unique), length `CHECK`s on every text field, status in `pending|reviewing|accepted|declined`, plus `reviewed_at`/`review_notes`. Applicant inserts and reads their own; admin/curator read all via `private.has_role` so Phase 6 inherits a real review queue. `UPDATE`/`DELETE` revoked from `anon`/`authenticated` on top of having no policy — belt and braces on the one field that matters.
+
+**Verified with four probes** (rolled-back transactions, `set local role authenticated` + forged JWT claims):
+
+- Submit own application → **1 row**. ✓
+- Read another user's application → **0 rows**. ✓
+- Insert an application in another user's name → **`new row violates row-level security policy`**. ✓
+- Applicant sets their own `status = 'accepted'` → **`permission denied for table artist_applications`** (grant rejects it before RLS is consulted). ✓
+
+**Frontend**: `/apply` with three honest states — signed out (explains that an account is what lets you check status later and receive the dashboard), no application yet (the form: artist name, city, genre, where to hear you, what you're working on), and already applied (status pill, any review note, and exactly what was submitted). No invented SLA: it says a person reads it and replies by email, because that is what happens. Accepted **and** on a team → link to the dashboard; accepted but not yet set up says so rather than linking somewhere broken. Duplicate submit (23505) reloads into the status view instead of surfacing an error, since it isn't one.
+
+**Dead ends closed**: FAQ answer now links to `/apply`; dashboard empty state points artists at `/apply` and offers a status check; "Apply as an artist" added to the footer. The preview template's hand-authored FAQ carried the same stale copy and was fixed too — verified by asserting the string "note that you're an artist" no longer appears anywhere in the preview.
+
+**Harness hardening** (it is load-bearing now, so its own failures matter): the run OOM'd Chromium on the last of 8 full-page 2× captures. Dropped to 1.5× (still crisp, ~44% fewer pixels) and wrapped every capture in `tryShot`, so one crashed screenshot reports itself as an error instead of aborting the run and hiding every later result.
+
+**Verified**: advisor clean (same two accepted lints); `npm run build` clean; both new `/apply` states screenshotted and reviewed by eye; preview asserts pass with zero page errors; `npx prettier --write .` clean.
+
+**Still deferred, honestly**: accepting an application does not auto-create the artist page or grant `artist_members` — that stays a deliberate operator action, and Phase 6's console is where reviewing/accepting gets a UI instead of SQL.
+
+---
+
 ## Cycle 11 — The nav blob: four layout defects, two of them mine from the previous cycle
 
 **Slice**: The founder sent a photo of the header on their phone: "GET EARLY ACCESS" wrapped onto three lines, the `border-radius: 100px` pill ballooned into a blob, sitting on top of the sign-out link. Not a subtle regression — a photograph of it was the bug report.

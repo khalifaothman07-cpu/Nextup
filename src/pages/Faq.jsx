@@ -82,8 +82,10 @@ export function Faq() {
             <details>
               <summary>How do I get on the platform as an artist?</summary>
               <div className="faq-a">
-                Artist onboarding isn't open yet — join the waitlist and note
-                that you're an artist when we reach out.
+                <Link to="/apply">Apply here</Link> — artist name, city, genre,
+                somewhere to hear you, and what you're working on. A person
+                reads every one and replies by email. We're taking a small
+                number pre-launch; there's no follower minimum.
               </div>
             </details>
           </div>

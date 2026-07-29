@@ -42,6 +42,11 @@ This is the only backing mechanism — there is no separate tiered/subscription 
 - **`positions`** — `id, user_id, artist_id, direction ('positive'|'negative'), units, stake_cents, escrow_cents, status ('open'|'closed'|'liquidated'), entry_price_cents, close_price_cents, proceeds_cents, opened_at, closed_at`. Owner read only; written only by `open_position`/`close_position`.
 - **`open_position(user_id, artist_id, direction, stake_cents)`**, **`close_position(user_id, position_id)`**, **`request_withdrawal(user_id, amount_cents, destination_address)`**, **`cancel_withdrawal_request(user_id, request_id)`** — `SECURITY DEFINER` Postgres functions, row-locked to serialize concurrent operations on the same wallet/curve. `EXECUTE` granted only to `service_role` (see `docs/SECURITY.md` for why this needed a follow-up fix the first time).
 
+## Artist onboarding (Cycle 12)
+
+- **`artist_applications`** — `id, user_id (unique, → auth.users), artist_name, city, genre, links, about, status ('pending'|'reviewing'|'accepted'|'declined'), created_at, reviewed_at, review_notes`. One application per account. Applicant can `INSERT` and `SELECT` their own; admins/curators can `SELECT` all (via `private.has_role`) so Phase 6's console has real rows to review. `UPDATE`/`DELETE` are **revoked from `anon`/`authenticated`** — no policy exists for them either, so an applicant cannot move their own application to `accepted`. Length `CHECK`s on every text column. Indexed on `(status, created_at desc)` for the review queue.
+- **Review is a documented manual step**, exactly like `withdrawal_requests`: the row and its state are real, and a person moves it and emails the applicant. Nothing about it is automated or pretended to be. Accepting an application does **not** itself grant a dashboard — that still requires an `artist_members` row (see `docs/ASSUMPTIONS.md` #10's update).
+
 ## Growth
 
 - **`waitlist_signups`** — `id, email (unique), source, created_at`. Public insert-only (intentionally permissive — a lead-capture form), no read.

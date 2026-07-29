@@ -1736,3 +1736,78 @@ footer {
 .app-shell .results-note {
   margin-top: 18px;
 }
+
+/* ---- artist application ---- */
+.apply-status {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.status-pill {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  padding: 8px 16px;
+  white-space: nowrap;
+  color: var(--paper-dim);
+}
+.status-pill.pending,
+.status-pill.reviewing {
+  border-color: var(--brass);
+  color: var(--brass);
+}
+.status-pill.accepted {
+  border-color: var(--good);
+  color: var(--good);
+}
+.status-pill.declined {
+  border-color: var(--coral);
+  color: var(--coral);
+}
+.apply-status-copy {
+  font-size: 15px;
+  color: var(--paper);
+}
+.apply-summary {
+  margin-top: 36px;
+  border-top: 1px solid var(--line);
+  padding-top: 28px;
+  max-width: 640px;
+}
+.apply-summary dl {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 10px 20px;
+  margin: 0 0 18px;
+}
+@media (max-width: 560px) {
+  .apply-summary dl {
+    grid-template-columns: 1fr;
+    gap: 2px 0;
+  }
+  .apply-summary dd {
+    margin-bottom: 14px;
+  }
+}
+.apply-summary dt {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-top: 2px;
+}
+.apply-summary dd {
+  margin: 0;
+  font-size: 15px;
+  color: var(--paper-dim);
+  line-height: 1.6;
+}
+.apply-pre {
+  white-space: pre-wrap;
+}

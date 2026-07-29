@@ -160,10 +160,10 @@ export function Dashboard() {
           style={{ borderBottom: "none" }}
         >
           <p>
-            Artist onboarding isn't open during pre-launch — team access is
-            granted by Nextup directly. If you're an artist,{" "}
-            <Link to="/#waitlist">join the waitlist</Link> and note that you're
-            an artist when we reach out.
+            Dashboards belong to artist teams. If you're an artist,{" "}
+            <Link to="/apply">apply to be on Nextup</Link> — once you're
+            accepted and your page is set up, it shows up here. Already applied?{" "}
+            <Link to="/apply">Check your status</Link>.
           </p>
         </PageHero>
       </main>

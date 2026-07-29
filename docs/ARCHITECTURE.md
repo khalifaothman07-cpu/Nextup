@@ -29,7 +29,7 @@ Nearly everything outside "discover an artist, back them with a simple flow, buy
 - **NextUp Credits / ledger**: no double-entry ledger, no promotional credits, no reconciliation.
 - **Marketplace/drops**: no products, variants, inventory, orders.
 - **Community**: no posts, comments, reactions, polls.
-- **Artist dashboard**: no artist-facing analytics, content publishing, or team management.
+- **Artist dashboard**: analytics + profile editing built (Cycle 9); artist onboarding/application built (Cycle 12, `/apply`). Still missing: content publishing and team management.
 - **A&R pipeline**: no leads, pipeline stages, kanban.
 - **Admin**: no moderation, audit log, feature-flag UI, jurisdiction rules.
 - **Momentum engine**: ~~`stat_30d_pct` on `artists` is a single static seeded number~~ **built (Cycle 7)** — `artist_momentum_daily` holds historized daily scores computed by pg_cron exclusively from real activity (follows, trades, purchases), with the component breakdown stored and shown in the UI. The seeded `stat_30d_pct` is no longer displayed anywhere. What's still missing versus the full spec: richer input signals (there are no streaming/show-attendance integrations to draw from yet) and trend-over-time visualization.
