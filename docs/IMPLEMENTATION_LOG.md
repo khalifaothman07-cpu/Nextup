@@ -4,6 +4,27 @@ Newest entry first. Each entry follows the master prompt's §31 working-cycle fo
 
 ---
 
+## Cycle 10 — Actually looking at the screens: four defects, and a harness so it can't recur
+
+**Slice**: The founder said "you're saying these are built but I'm not seeing anything actually visual." Entirely fair, and two failures on my side: (1) the published preview artifacts were Cycle-7 snapshots, so Cycles 8–9 were literally invisible to them; (2) `/account` and `/dashboard` sit behind auth, which a static snapshot can never show — so "here's a preview link" was never going to work for them. I had been reporting `npm run build` + a DOM-presence smoke as verification, which proves a page _mounts_, not that it's _right_.
+
+**Fix**: built `scripts/screenshot.mjs` (`npm run shots`) — renders the real production build in headless Chromium, fakes a Supabase session in `localStorage`, and fulfils `/rest/v1/*` with realistically-shaped rows, so the signed-in pages render from the actual React code. Documented in `README.md` as part of finishing a UI change, not an optional extra.
+
+**Four real defects it caught immediately, all already committed:**
+
+1. **Money was rounded to whole dollars.** `formatUSD` used `maximumFractionDigits: 0` — fine for whole-dollar track prices, wrong everywhere else it had since been reused: a $47.50 wallet balance displayed as "$48", a $2.01 curve price as "$2", a $1.04 entry price as "$1". The curve price hiding cents is the worst of it, since cent-level movement is the entire point of the bonding curve. Fixed with a cents-when-nonzero rule ($49 stays "$49", $47.50 shows "$47.50").
+2. **`"content_editor".replace("_", "&")`** in `Account.jsx` rendered the role chip as "CONTENT&EDITOR". A typo; `Dashboard.jsx` had the correct `" "` two files over.
+3. **"1 songs purchased"** in the dashboard's momentum sentence. Added a `plural()` helper.
+4. **Tool pages inherited marketing-page spacing** (88px sections, 48px headings), so Account and Dashboard read sparse and document-like instead of dense and operable. Added an `.app-shell` scope tightening rhythm on signed-in pages.
+
+**Three false alarms worth recording**, all caused by my mock being less faithful than PostgREST: it ignored `id=in.(...)` (so Account appeared to list 3 owned songs when the app correctly queries and renders 1), ignored `?limit=`(so the artist page's momentum panel appeared missing when `limit(1).maybeSingle()` was handed 7 rows), and I initially matched against the raw percent-encoded query string. Each was verified as a mock artifact — not an app bug — before changing anything. **A low-fidelity mock invents bugs that don't exist and hides ones that do**; the harness now honours limit, `in.()`, and the single-object Accept header, and says so in its header comment.
+
+**Verified**: `npm run build` clean; six full-page screenshots (Account, Dashboard, Artist, Discover at desktop; Account + Dashboard at 390px) reviewed by eye, zero page errors, every fix confirmed visually rather than assumed. `npx prettier --write .` clean.
+
+**Process change**: "the build passes" is no longer an acceptable verification claim for a UI change in this log. Screens get looked at.
+
+---
+
 ## Cycle 9 — Phase 4 (first part): artist dashboard + team profile editing
 
 **Slice**: Artist operations per §15 and the founder's "go on" — the artist-facing dashboard and the first role-gated **write** in the system (artist profile editing by team members). Artist onboarding/verification explicitly deferred (`docs/ASSUMPTIONS.md` #10): a self-serve submission form nobody can review would be fake functionality until Phase 6's admin console exists; pre-launch team memberships are granted manually.

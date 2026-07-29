@@ -177,7 +177,7 @@ export function Account() {
     data && (data.positions.length > 0 || data.owned.length > 0);
 
   return (
-    <main>
+    <main className="app-shell">
       <Breadcrumb />
 
       <PageHero eyebrow="Account" title="Your Nextup.">
@@ -255,7 +255,7 @@ export function Account() {
                         className="role-chip on"
                       >
                         {m.artist?.name ?? "Artist"} ·{" "}
-                        {m.role.replace("_", "&")}
+                        {m.role.replace(/_/g, " ")}
                       </span>
                     ))}
                   </div>

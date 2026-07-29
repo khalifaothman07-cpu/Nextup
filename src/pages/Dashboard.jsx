@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient.js";
-import { formatUSD } from "../lib/format.js";
+import { formatUSD, plural } from "../lib/format.js";
 import { useSession } from "../context/SessionContext.jsx";
 import { useMemberships } from "../hooks/useMemberships.js";
 import { Breadcrumb } from "../components/Breadcrumb.jsx";
@@ -171,7 +171,7 @@ export function Dashboard() {
   }
 
   return (
-    <main>
+    <main className="app-shell">
       <Breadcrumb />
 
       <PageHero eyebrow="Artist dashboard" title={data?.artist.name ?? "…"}>
@@ -247,9 +247,10 @@ export function Dashboard() {
 
               {data.momentum[0] && (
                 <p className="results-note" data-reveal>
-                  Momentum this week: {data.momentum[0].follows_7d} new follows,{" "}
-                  {data.momentum[0].trades_7d} positions opened,{" "}
-                  {data.momentum[0].purchases_7d} songs purchased,{" "}
+                  Momentum this week:{" "}
+                  {plural(data.momentum[0].follows_7d, "new follow")},{" "}
+                  {plural(data.momentum[0].trades_7d, "position")} opened,{" "}
+                  {plural(data.momentum[0].purchases_7d, "song")} purchased,{" "}
                   {formatUSD(data.momentum[0].trade_volume_cents_7d)} traded.
                   Recomputed daily from real platform activity only.
                 </p>

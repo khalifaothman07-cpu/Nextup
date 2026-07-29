@@ -1674,3 +1674,26 @@ footer {
 .dash-field textarea:focus {
   border-color: var(--brass);
 }
+
+/* ---- app shell: signed-in tool pages are scanned and operated, not read
+   top-to-bottom, so they get tighter rhythm than the marketing pages ---- */
+.app-shell .page-hero {
+  padding: 52px 0 28px;
+}
+.app-shell .page-hero h1 {
+  font-size: clamp(30px, 4vw, 44px);
+  margin: 14px 0 12px;
+}
+.app-shell section {
+  padding: 40px 0;
+}
+.app-shell .section-head {
+  margin-bottom: 26px;
+}
+.app-shell .section-head h2 {
+  font-size: clamp(22px, 2.6vw, 28px);
+  margin-top: 10px;
+}
+.app-shell .results-note {
+  margin-top: 18px;
+}

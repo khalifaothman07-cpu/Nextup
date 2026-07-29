@@ -45,6 +45,16 @@ npm run format         # npx prettier --write .
 npm run format:check   # check only, for CI
 ```
 
+### Look at the screens before claiming they work
+
+```
+npm run build
+npm run preview -- --port 8200 --strictPort &
+npm run shots          # writes full-page screenshots, then open them
+```
+
+`npm run shots` renders the real production build in headless Chromium, including the signed-in pages (`/account`, `/dashboard`) that a static preview can't reach — it fakes a Supabase session and fulfils `/rest/v1/*` with realistically-shaped rows, so you're looking at the actual React code. A passing build says nothing about whether a screen is right: the first run of this caught four already-committed defects (money rounded to whole dollars so a $47.50 balance read "$48", a role label rendering as "content&editor", "1 songs purchased", and marketing-page spacing on tool pages). Treat it as part of finishing a UI change, not an optional extra.
+
 ## Feature flags
 
 `regulated_offerings` (in the `feature_flags` table) gates the entire Buy/Sell trading UI — **currently `true`**, per explicit founder instruction (legal/jurisdiction ownership confirmed on their end). See `docs/DEPLOYMENT.md`.
