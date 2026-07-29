@@ -130,12 +130,10 @@ export function Account() {
     if (!session) return;
     setSavingName(true);
     setNameStatus("Saving…");
-    const { error } = await supabase
-      .from("profiles")
-      .upsert({
-        id: session.user.id,
-        display_name: displayName.trim() || null,
-      });
+    const { error } = await supabase.from("profiles").upsert({
+      id: session.user.id,
+      display_name: displayName.trim() || null,
+    });
     setSavingName(false);
     setNameStatus(error ? "Could not save — try again." : "Saved.");
   }

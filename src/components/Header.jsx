@@ -2,9 +2,11 @@ import { Link } from "react-router-dom";
 import { Logo } from "./Logo.jsx";
 import { AuthWidget } from "./AuthWidget.jsx";
 import { useSession } from "../context/SessionContext.jsx";
+import { useMemberships } from "../hooks/useMemberships.js";
 
 export function Header() {
   const { session } = useSession();
+  const memberships = useMemberships();
   return (
     <header>
       <nav className="wrap">
@@ -19,6 +21,11 @@ export function Header() {
           {session && (
             <Link to="/account" className="nav-link">
               Account
+            </Link>
+          )}
+          {session && memberships?.length > 0 && (
+            <Link to="/dashboard" className="nav-link">
+              Dashboard
             </Link>
           )}
           <div className="auth-widget">

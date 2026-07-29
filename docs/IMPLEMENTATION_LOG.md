@@ -4,6 +4,31 @@ Newest entry first. Each entry follows the master prompt's §31 working-cycle fo
 
 ---
 
+## Cycle 9 — Phase 4 (first part): artist dashboard + team profile editing
+
+**Slice**: Artist operations per §15 and the founder's "go on" — the artist-facing dashboard and the first role-gated **write** in the system (artist profile editing by team members). Artist onboarding/verification explicitly deferred (`docs/ASSUMPTIONS.md` #10): a self-serve submission form nobody can review would be fake functionality until Phase 6's admin console exists; pre-launch team memberships are granted manually.
+
+**Database** (migration `artist_team_profile_editing`): two-layer write control on `artists` —
+
+1. Column-level grants: blanket `UPDATE` revoked from `anon`/`authenticated` (Supabase grants it by default), re-granted only on the profile columns (`name, tagline, bio, genre, city, accent_from, accent_to`). RLS can't restrict columns; grants can. Structural/financial columns (`slug`, `follower_count`, `sort_order`, `stat_30d_pct`, `claimed_by_user_id`) are un-updatable from any client role. The `follower_count` trigger is unaffected (runs as function owner).
+2. RLS policy: update allowed only where an `artist_members` row exists for `auth.uid()` with role `owner`/`manager`/`content_editor`. The membership subquery evaluates under the caller's own-rows RLS on `artist_members`, which is exactly the visibility the check needs.
+
+**Verified at the DB level with three probes** (all inside rolled-back transactions, run under `set local role authenticated` + forged JWT claims):
+
+- Non-member update → **0 rows** (RLS blocks silently). ✓
+- `follower_count` update → **`permission denied for table artists`** (column grant rejects before RLS is even consulted). ✓
+- Synthetic `content_editor` member updating `tagline` → **1 row**. ✓ (First attempt at this probe returned a false negative — the identity-lookup subquery ran after the role switch and was blinded by RLS; probe was fixed to capture identity before switching. Noted so future probes don't repeat it. `auth.users` is empty in this project — nobody has signed in yet — so the positive probe required a synthetic user, rolled back.)
+
+**Frontend**: new `/dashboard` route (`src/pages/Dashboard.jsx`) + `useMemberships` hook; Header shows a Dashboard link only for users with team memberships. Signed-out and no-membership states are honest prompts (the latter explains manual pre-launch granting and points artists at the waitlist). With membership: artist switcher (multi-team users), stat tiles from real data only (followers, momentum score + weekly component sentence, live curve price, songs sold + gross **labeled** as at list price since actual sale prices are buyer-private), day-by-day momentum history with deltas (up/down colored, "first snapshot" for the oldest), and the profile editor (shown only to editing roles; non-editing roles like `a_r`/`finance_viewer` see read-only with an explanation — and the DB enforces it regardless of what the client shows). CSS: `.dash-stats`/`.dash-stat`, `.momentum-history`/`.mh-row`, `.dash-form`/`.dash-field`.
+
+**Verified (frontend)**: `npm run build` clean. Headless-Chromium smoke: signed-out `/dashboard` renders the sign-in prompt, no Dashboard nav link without membership, zero page errors. `npx prettier --write .` clean. Advisor: clean (same two accepted lints).
+
+**Not done / explicitly deferred**: artist onboarding + verification submission (needs Phase 6 review surface — see `docs/ASSUMPTIONS.md` #10); content publishing/timeline (community territory, Phase 5); team management UI (adding/removing members — needs the same admin/owner write-policy design as Phase 6); accent-color editing (grant exists; left out of the form until there's a color-input treatment that fits the design system rather than two raw hex fields).
+
+**Recommended next step**: Phase 5 (community: artist posts + timeline on the profile page, supporter-gated where appropriate) or Phase 6 (admin console: memberships, verification review, feature flags, audit log) — Phase 6 unblocks artist onboarding, so it's the better pick if cohesion stays the priority.
+
+---
+
 ## Cycle 8 — Phase 2.5, Account & role surface (+ a real security fix)
 
 **Slice**: The master prompt arrived as a document this cycle (now the standing spec file; contents match what's been executed since it was first pasted — the two founder overrides on record still supersede it: no subscriptions, crypto-only payments). Per its §4 Listener requirements ("build a profile, track personal discovery history") and the working sequence: an `/account` page and role-aware navigation — the prerequisite for Phase 4's artist dashboard.
