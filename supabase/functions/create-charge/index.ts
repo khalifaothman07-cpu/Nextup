@@ -95,8 +95,8 @@ Deno.serve(async (req) => {
         currency: "USD",
       },
       metadata: { user_id: user.id, track_id },
-      redirect_url: `${SITE_URL}/artist.html?slug=${encodeURIComponent(slug ?? "")}&charge=success`,
-      cancel_url: `${SITE_URL}/artist.html?slug=${encodeURIComponent(slug ?? "")}&charge=cancelled`,
+      redirect_url: `${SITE_URL}/artist/${encodeURIComponent(slug ?? "")}?charge=success`,
+      cancel_url: `${SITE_URL}/artist/${encodeURIComponent(slug ?? "")}?charge=cancelled`,
     }),
   });
 

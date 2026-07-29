@@ -79,8 +79,8 @@ Deno.serve(async (req) => {
       pricing_type: "fixed_price",
       local_price: { amount: (amountCents / 100).toFixed(2), currency: "USD" },
       metadata: { user_id: user.id, purpose: "wallet_deposit" },
-      redirect_url: `${SITE_URL}/artist.html?slug=${encodeURIComponent(body.slug ?? "")}&deposit=success`,
-      cancel_url: `${SITE_URL}/artist.html?slug=${encodeURIComponent(body.slug ?? "")}&deposit=cancelled`,
+      redirect_url: `${SITE_URL}/artist/${encodeURIComponent(body.slug ?? "")}?deposit=success`,
+      cancel_url: `${SITE_URL}/artist/${encodeURIComponent(body.slug ?? "")}?deposit=cancelled`,
     }),
   });
 

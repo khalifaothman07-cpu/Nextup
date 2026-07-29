@@ -6,7 +6,7 @@ Per explicit instruction earlier in this project, nothing goes live without the 
 
 ## Site
 
-Static files (`index.html`, `artist.html`, `css/`, `js/`) can be hosted anywhere that serves static assets — no build step, no server-side rendering. Domain `nextup.exchange` is acquired but not pointed at anything.
+`npm run build` produces a static `dist/` bundle (React + Vite, see `docs/ASSUMPTIONS.md` #2) that can be hosted anywhere that serves static assets — no server-side rendering, but there **is** now a build step, unlike the original hand-written HTML. Because routing is client-side (`react-router-dom`), the host must rewrite unknown paths to `/index.html` (a history-API fallback) or deep links like `/artist/marra-vale` will 404 on direct load/refresh. `public/_redirects` (Netlify's convention: `/*  /index.html  200`) is committed for that; other hosts (Vercel, S3+CloudFront, etc.) need their own equivalent rewrite rule. Domain `nextup.exchange` is acquired but not pointed at anything.
 
 ## Supabase
 
@@ -36,13 +36,13 @@ Real payments cannot work until these are set (`supabase secrets set KEY=value -
 
 - `COMMERCE_API_KEY` — from a real Coinbase Commerce business account (commerce.coinbase.com). This requires the founder to actually create that account; an agent cannot do this step.
 - `COMMERCE_WEBHOOK_SECRET` — from the same dashboard, after adding a webhook endpoint pointing at `https://djnsjtlkjgjqmfcucjqp.supabase.co/functions/v1/coinbase-webhook`.
-- `SITE_URL` (optional) — defaults to `https://nextup.exchange`; override for testing against a different checkout redirect target.
+- `SITE_URL` (optional) — defaults to `https://nextup.exchange`; override for testing against a different checkout redirect target. Both `create-charge` and `deposit` build their Coinbase Commerce `redirect_url`/`cancel_url` as `${SITE_URL}/artist/<slug>?charge=success|cancelled` and `${SITE_URL}/artist/<slug>?deposit=success|cancelled` respectively — these must match the SPA route shape (`/artist/:slug`), not the old `artist.html?slug=` query-param scheme from before the Cycle 6 framework migration.
 
 Until these are set, `create-charge`/`deposit` return a clear `503 "Crypto payments aren't configured yet"` instead of silently pretending to work — this is intentional, not a bug to "fix" by hardcoding test values.
 
 ## Environment variables
 
-See `.env.example` at the repo root. The site's Supabase URL and publishable key are currently hardcoded in `js/supabase-client.js` rather than injected at build time, because there is no build step — this is consistent with the "no build step" architecture choice, not an oversight. If a real build pipeline is introduced (see the framework decision in `docs/ASSUMPTIONS.md` #2), move these to real env vars at that point.
+See `.env.example` at the repo root. The site's Supabase URL and publishable key are currently hardcoded in `src/lib/supabaseClient.js` rather than injected at build time — a real build pipeline exists now (Vite, see `docs/ASSUMPTIONS.md` #2), but moving these to Vite env vars (`import.meta.env.VITE_*`) hasn't been done yet since neither value is secret (both are meant to be public/client-side) and there's no per-environment (staging/prod) split yet to make it worthwhile. Revisit if that changes.
 
 ## Feature flags
 
