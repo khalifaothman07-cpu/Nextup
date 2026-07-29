@@ -1272,3 +1272,118 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---- dedicated content pages ---- */
+.page-hero {
+  padding: 96px 0 56px;
+  border-bottom: 1px solid var(--line);
+}
+.page-hero .eyebrow {
+  justify-content: flex-start;
+}
+.page-hero h1 {
+  font-size: clamp(36px, 5.6vw, 60px);
+  margin: 16px 0 20px;
+}
+.page-hero p {
+  color: var(--paper-dim);
+  font-size: 17px;
+  line-height: 1.6;
+  max-width: 640px;
+}
+
+.teaser-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+@media (max-width: 860px) {
+  .teaser-row {
+    grid-template-columns: 1fr;
+  }
+}
+.teaser-card {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 28px 26px;
+  background: var(--ink-2);
+  text-decoration: none;
+  color: var(--paper);
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+.teaser-card:hover {
+  border-color: var(--brass);
+  transform: translateY(-2px);
+}
+.teaser-card .tk {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--brass);
+  text-transform: uppercase;
+}
+.teaser-card h3 {
+  font-size: 20px;
+  margin: 10px 0 8px;
+}
+.teaser-card p {
+  color: var(--paper-dim);
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+.teaser-card .go {
+  display: inline-block;
+  margin-top: 14px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  color: var(--paper);
+}
+
+.discover-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+.discover-grid .rcard {
+  flex: unset;
+  width: 100%;
+  scroll-snap-align: unset;
+}
+
+.content-page {
+  max-width: 720px;
+}
+.content-page h2 {
+  font-size: 24px;
+  margin: 40px 0 14px;
+}
+.content-page h2:first-child {
+  margin-top: 0;
+}
+.content-page p {
+  color: var(--paper-dim);
+  font-size: 15.5px;
+  line-height: 1.7;
+  margin-bottom: 14px;
+}
+.content-page ul {
+  color: var(--paper-dim);
+  font-size: 15.5px;
+  line-height: 1.7;
+  margin: 0 0 14px 20px;
+}
+.content-page li {
+  margin-bottom: 6px;
+}
+.content-page .updated {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 32px;
+}
+.content-page strong {
+  color: var(--paper);
+}

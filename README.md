@@ -6,10 +6,12 @@ An artist discovery, support, and commerce platform — not a generic streaming 
 
 ## What's actually built right now
 
-A static two-page site (`index.html`, `artist.html`) plus a Supabase backend:
+A static multi-page site plus a Supabase backend:
 
-- Landing page: roster, pricing/tiers copy, FAQ, waitlist capture.
-- Artist profile pages: bio, track list, song-ownership purchase (crypto checkout via Coinbase Commerce).
+- `index.html` — landing page: hero, waitlist capture, a live roster teaser, and short teasers linking out to a dedicated page per topic rather than one long scroll.
+- `how-it-works.html`, `pricing.html`, `discover.html` (full roster), `about.html`, `faq.html`, `press.html` — each topic gets its own real page, not an anchor into `index.html`.
+- `terms.html`, `risk-disclosure.html`, `privacy.html` — real (pre-launch draft, not yet reviewed by counsel) pages behind the footer's LEGAL links, replacing what were previously dead `#` links.
+- `artist.html` — per-artist profile: bio, track list, song-ownership purchase (crypto checkout via Coinbase Commerce).
 - Magic-link auth (no passwords).
 - Backing an artist = deposit into your Nextup wallet (crypto, via Coinbase Commerce), then trade Buy/Sell positions on the artist's live bonding-curve price from that balance, and withdraw later (a request, not an instant payout — see `docs/ASSUMPTIONS.md` #8). No tiers, no subscriptions.
 - The whole backing/trading system is a feature-flagged `regulatedOfferings` module — **disabled by default**, see `docs/ASSUMPTIONS.md` #1 for why and `docs/SECURITY.md` for how it's locked down. With the flag off (current state), artist pages show an honest "not open yet" message instead.

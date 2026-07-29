@@ -4,7 +4,7 @@ Written at the start of the "master prompt" implementation pass (see `docs/IMPLE
 
 ## Current stack (as of this assessment)
 
-- **Frontend**: static multi-page HTML (`index.html`, `artist.html`) + vanilla JS ES modules (`js/app.js`, `js/supabase-client.js`). No build step, no framework, no router. Styling is a single hand-written `css/styles.css` (custom properties, no design-token build pipeline).
+- **Frontend**: static multi-page HTML — a landing page (`index.html`) that links out to dedicated pages per topic (`how-it-works.html`, `pricing.html`, `discover.html`, `about.html`, `faq.html`, `press.html`, `terms.html`, `risk-disclosure.html`, `privacy.html`) plus the per-artist profile page (`artist.html`) — + vanilla JS ES modules (`js/app.js`, `js/supabase-client.js`). No build step, no framework, no router; navigation is plain `<a href>` between real files. Styling is a single hand-written `css/styles.css` (custom properties, no design-token build pipeline).
 - **Backend**: Supabase (Postgres + Auth + Edge Functions). Project `nextup` (ref `djnsjtlkjgjqmfcucjqp`), separate from the unrelated "Unbeatable" project in the same org.
 - **Auth**: Supabase email magic-link (OTP). No passwords, no social sign-in, no roles beyond "signed in / not signed in."
 - **Payments**: Coinbase Commerce (hosted checkout) is the only payment method — crypto-only, no cards. Two flows exist: (1) direct song-ownership purchase, (2) wallet deposit that funds an internal trading balance.

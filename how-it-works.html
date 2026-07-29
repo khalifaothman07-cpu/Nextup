@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NEXTUP — Back artists before everyone else does</title>
+    <title>How it works — Nextup</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -15,7 +15,7 @@
   <body>
     <header>
       <nav class="wrap">
-        <a href="#top" class="mark">
+        <a href="index.html#top" class="mark">
           <svg
             viewBox="0 0 100 100"
             fill="none"
@@ -52,40 +52,117 @@
         </a>
         <div class="nav-right">
           <div class="auth-widget" id="authWidget"></div>
-          <a href="#waitlist" class="nav-cta">Get Early Access</a>
+          <a href="index.html#waitlist" class="nav-cta">Get Early Access</a>
         </div>
       </nav>
     </header>
 
-    <main id="top">
-      <section class="hero">
-        <div class="hero-grain"></div>
-        <div class="wrap hero-inner">
-          <div class="eyebrow">Music, before the drop</div>
-          <h1>Back artists <em>before</em> everyone else does.</h1>
-          <p class="lede">
-            Nextup surfaces unsigned and rising artists before the industry
-            does. Back the ones you believe in — or own their songs outright —
-            and hold a piece of what happens next.
+    <main>
+      <a
+        href="index.html#top"
+        class="breadcrumb wrap"
+        style="display: inline-flex; margin-top: 28px"
+        >← Back to Nextup</a
+      >
+
+      <section class="page-hero">
+        <div class="wrap">
+          <div class="eyebrow">How it actually works</div>
+          <h1>Discover. Spin. Own.</h1>
+          <p>
+            Three steps, in the order you'll actually use them — not a sales
+            funnel dressed up as a process.
           </p>
-          <form class="waitlist" id="heroForm">
-            <input
-              type="email"
-              required
-              placeholder="your@email.com"
-              aria-label="Email address"
-            />
-            <button type="submit">Get Early Access</button>
-          </form>
-          <div class="wl-status" id="heroStatus"></div>
-          <div class="fineprint">
-            AVAILABLE WORLDWIDE — CRYPTO PAYMENTS ONLY
+        </div>
+      </section>
+
+      <section>
+        <div class="wrap">
+          <div class="flow">
+            <div class="flow-item" data-reveal>
+              <div class="fk">DISCOVER</div>
+              <h3>Ranked by momentum, not marketing budget</h3>
+              <p>
+                Every week Nextup surfaces artists gaining real traction —
+                plays, saves, show turnout — before a label's A&amp;R team ever
+                sees the numbers.
+              </p>
+            </div>
+            <div class="flow-item" data-reveal>
+              <div class="fk">SPIN</div>
+              <h3>Hear it before you back it</h3>
+              <p>
+                Each profile plays an artist's top three tracks on the spot.
+                You're never deciding on a bio and a press photo alone.
+              </p>
+            </div>
+            <div class="flow-item" data-reveal>
+              <div class="fk">OWN</div>
+              <h3>Back the artist, or own the song</h3>
+              <p>
+                Put money behind their career, or buy a specific track as a
+                collectible. Either way, you were there before the rise — not
+                after it.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      <section id="how">
+      <section>
         <div class="wrap">
+          <div class="section-head" data-reveal>
+            <div class="eyebrow">Two ways in</div>
+            <h2>Every record has two sides.</h2>
+            <p>
+              Nextup gives you the same choice — back the artist's whole career,
+              or own one song outright. Full pricing for both:
+              <a href="pricing.html">see pricing →</a>
+            </p>
+          </div>
+          <div class="sides" data-reveal>
+            <div class="side a">
+              <div class="letter">SIDE A</div>
+              <h3>Back the Artist</h3>
+              <p>
+                Fund your Nextup wallet and open a position on an artist's live,
+                continuously-priced bonding curve. As their catalogue and
+                audience grow, your position moves with it.
+              </p>
+              <ul>
+                <li>Tied to the artist, not one release</li>
+                <li>No fixed tiers — trade in and out at the live price</li>
+                <li>You show up on their page as an early backer</li>
+              </ul>
+            </div>
+            <div class="side b">
+              <div class="letter">SIDE B</div>
+              <h3>Own the Song</h3>
+              <p>
+                Buy a specific track as a collectible, at a flat price the
+                artist sets. It's yours — provably, permanently — whether or not
+                the artist ever releases another one.
+              </p>
+              <ul>
+                <li>Tied to one track, not the artist's future</li>
+                <li>One-time price, set by the artist</li>
+                <li>Your name in the credits, permanently</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section style="border-bottom: none">
+        <div class="wrap">
+          <div class="section-head" data-reveal>
+            <div class="eyebrow">See it live</div>
+            <h2>Every profile plays before you decide.</h2>
+            <p>
+              This is a live preview of that exact screen — open a real artist
+              profile to try it yourself.
+            </p>
+          </div>
           <div class="signature">
             <div
               class="card"
@@ -119,18 +196,14 @@
                 </div>
               </div>
             </div>
-
             <div class="signature-copy" data-reveal>
               <div class="eyebrow">The moment</div>
-              <h3>Every artist has a profile that plays before you decide.</h3>
+              <h3>No streaming app detour, no guesswork.</h3>
               <p>
-                Open a profile and their three biggest tracks are already
-                spinning. No streaming app detour, no guesswork — you hear
-                exactly what you'd be backing, right where you decide to back
-                it.
+                You hear exactly what you'd be backing, right where you decide
+                to back it.
               </p>
               <p class="muted">
-                This is a live preview of that exact screen.
                 <a href="artist.html?slug=marra-vale"
                   >Open Marra Vale's real profile →</a
                 >
@@ -139,105 +212,12 @@
           </div>
         </div>
       </section>
-
-      <section>
-        <div class="wrap">
-          <div class="section-head" data-reveal>
-            <div class="eyebrow">Explore Nextup</div>
-            <h2>Everything, one click deeper.</h2>
-            <p>
-              Each of these is its own full page — not a summary standing in for
-              one.
-            </p>
-          </div>
-          <div class="teaser-row" data-reveal style="margin-bottom: 20px">
-            <a class="teaser-card" href="how-it-works.html">
-              <div class="tk">Product</div>
-              <h3>How it works</h3>
-              <p>
-                Discover, spin, and the two ways to own a piece of an artist's
-                rise.
-              </p>
-              <span class="go">Read more →</span>
-            </a>
-            <a class="teaser-card" href="pricing.html">
-              <div class="tk">Product</div>
-              <h3>Pricing</h3>
-              <p>
-                No tiers — a flat price per song, live-priced backing, and the
-                real minimums.
-              </p>
-              <span class="go">See pricing →</span>
-            </a>
-            <a class="teaser-card" href="discover.html">
-              <div class="tk">Product</div>
-              <h3>Discover artists</h3>
-              <p>The full roster, live from the platform.</p>
-              <span class="go">Browse roster →</span>
-            </a>
-          </div>
-          <div class="teaser-row" data-reveal>
-            <a class="teaser-card" href="about.html">
-              <div class="tk">Company</div>
-              <h3>About Nextup</h3>
-              <p>Why we built this instead of another streaming app.</p>
-              <span class="go">Read more →</span>
-            </a>
-            <a class="teaser-card" href="faq.html">
-              <div class="tk">Company</div>
-              <h3>FAQ</h3>
-              <p>
-                Backing, ownership, deposits, withdrawals — answered plainly.
-              </p>
-              <span class="go">Read FAQ →</span>
-            </a>
-            <a class="teaser-card" href="press.html">
-              <div class="tk">Company</div>
-              <h3>Press &amp; media</h3>
-              <p>Writing about Nextup? Start here.</p>
-              <span class="go">Get in touch →</span>
-            </a>
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <div class="wrap">
-          <div class="section-head" data-reveal>
-            <div class="eyebrow">On Nextup right now</div>
-            <h2>A few artists getting backed early.</h2>
-            <p><a href="discover.html">Browse the full roster →</a></p>
-          </div>
-          <div class="roster-row loading" id="rosterRow" data-reveal>
-            Loading roster…
-          </div>
-        </div>
-      </section>
-
-      <section class="band" id="waitlist">
-        <div class="wrap">
-          <div class="eyebrow" style="justify-content: center">
-            Limited early access
-          </div>
-          <h2 data-reveal>Get in before it's obvious.</h2>
-          <form class="waitlist" id="bandForm" style="margin-top: 34px">
-            <input
-              type="email"
-              required
-              placeholder="your@email.com"
-              aria-label="Email address"
-            />
-            <button type="submit">Get Early Access</button>
-          </form>
-          <div class="wl-status" id="bandStatus"></div>
-        </div>
-      </section>
     </main>
 
     <footer>
       <div class="wrap">
         <div class="foot-top">
-          <a href="#top" class="mark">
+          <a href="index.html#top" class="mark">
             <svg
               viewBox="0 0 100 100"
               fill="none"
@@ -278,7 +258,7 @@
               <a href="how-it-works.html">How it works</a>
               <a href="pricing.html">Pricing</a>
               <a href="discover.html">Discover artists</a>
-              <a href="#waitlist">Early access</a>
+              <a href="index.html#waitlist">Early access</a>
             </div>
             <div class="foot-col">
               <h5>COMPANY</h5>
@@ -308,14 +288,8 @@
     </footer>
 
     <script type="module">
-      import { supabase } from "./js/supabase-client.js";
-      import {
-        wireWaitlistForm,
-        initAuthWidget,
-        wireReveal,
-      } from "./js/app.js";
+      import { initAuthWidget, wireReveal } from "./js/app.js";
 
-      // signature card interaction
       const card = document.getElementById("artistCard");
       const toggleCard = () => card.classList.toggle("spin");
       card.addEventListener("click", toggleCard);
@@ -339,35 +313,7 @@
       io1.observe(card);
 
       wireReveal();
-      wireWaitlistForm("heroForm", "heroStatus", "hero");
-      wireWaitlistForm("bandForm", "bandStatus", "band");
       initAuthWidget(document.getElementById("authWidget"));
-
-      // roster, live from Supabase
-      const rosterRow = document.getElementById("rosterRow");
-      const { data: artists, error } = await supabase
-        .from("artists")
-        .select("slug, name, genre, accent_from, accent_to, stat_30d_pct")
-        .order("sort_order", { ascending: true });
-
-      if (error || !artists?.length) {
-        rosterRow.textContent =
-          "Roster is loading slowly — refresh in a moment.";
-      } else {
-        rosterRow.classList.remove("loading");
-        rosterRow.innerHTML = artists
-          .map(
-            (a) => `
-      <a class="rcard" href="artist.html?slug=${encodeURIComponent(a.slug)}">
-        <div class="swatch" style="background:linear-gradient(155deg,${a.accent_from},${a.accent_to});"></div>
-        <h4>${a.name}</h4>
-        <div class="genre">${a.genre.toUpperCase()}</div>
-        <div class="stat"><span class="muted">30-day</span><span class="g">▲ ${a.stat_30d_pct}%</span></div>
-      </a>
-    `,
-          )
-          .join("");
-      }
     </script>
   </body>
 </html>

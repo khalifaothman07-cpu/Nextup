@@ -4,6 +4,28 @@ Newest entry first. Each entry follows the master prompt's §31 working-cycle fo
 
 ---
 
+## Cycle 5 — Split the site into dedicated pages, fix stale pricing, kill dead legal links
+
+**Slice**: Founder feedback: "There's still tiers and don't take the easy way out of putting everything into two pages create a separate detail landing page for each thing." Two problems: `index.html`'s `#pricing` section still described the $25/$50/$100 Supporter/Believer/Insider tiers removed in Cycle 3, and the whole site was two anchor-linked mega-pages, including three footer LEGAL links (Terms, Risk disclosure, Privacy) that went nowhere (`href="#"`).
+
+**Files changed**:
+
+- New pages: `how-it-works.html`, `pricing.html`, `discover.html`, `about.html`, `faq.html`, `press.html`, `terms.html`, `risk-disclosure.html`, `privacy.html`.
+- `index.html` — rewritten to a real landing page: hero, the Marra Vale interactive demo (kept as the flagship hook), a live roster teaser linking to `discover.html`, and two rows of teaser cards linking to the six topic pages, instead of holding all of their full content inline. Footer LEGAL links now point at the three new pages instead of `#`.
+- `artist.html` — footer expanded from a bare legal blurb to the same full PRODUCT/COMPANY/LEGAL nav used everywhere else, so an artist profile isn't a navigation dead end.
+- `css/styles.css` — added `.page-hero`, `.teaser-row`/`.teaser-card`, `.discover-grid`, and `.content-page` (legal-page typography) to support the new page shapes; reused existing `.tiers`, `.sides`, `.faq`, `.about-grid`, `.press-contact` classes rather than duplicating them.
+- `docs/ARCHITECTURE.md`, `README.md`, `docs/ASSUMPTIONS.md` (#9) — updated to describe the multi-page structure and flag that `terms.html`/`risk-disclosure.html`/`privacy.html` are agent-drafted, not lawyer-reviewed.
+
+**Pricing fix specifics**: `pricing.html` replaces the stale tier cards with what's actually built — a flat per-track price for Song Ownership (artist-set, ~$34–$59) and no-fixed-tier bonding-curve trading for Backing — plus the three real hard minimums pulled straight from the Edge Function validation: $10 minimum deposit (`deposit`, `MIN_DEPOSIT_CENTS`), $1 minimum trade stake (`trade`, `stakeCents >= 100`), $10 minimum withdrawal (`withdraw`, `amountCents >= 1000`).
+
+**Verified**: `npx prettier --write .` clean; `node --check` on every extracted inline `<script type="module">` across all 11 HTML files; `python3 -m http.server` + `curl` returned `200` for every page including `artist.html?slug=marra-vale`; grepped the whole site for `href="#"` and stale tier copy ("Supporter"/"Believer"/"Insider"/"TIER 0") — zero matches.
+
+**Not done / explicitly deferred**: `terms.html`, `risk-disclosure.html`, and `privacy.html` are substantive, product-accurate drafts, not legal advice, and have not been reviewed by counsel — flagged in `docs/ASSUMPTIONS.md` #9 rather than treated as launch-ready. Edge Function deployment and real Coinbase Commerce credentials remain unchanged blockers from prior cycles (`docs/DEPLOYMENT.md`).
+
+**Recommended next step**: same standing blockers as Cycle 4 — deploy the seven Edge Functions and configure real Coinbase Commerce credentials — plus a legal review pass on the three new policy pages before Nextup opens to the public.
+
+---
+
 ## Cycle 4 — Enable `regulated_offerings`
 
 **Slice**: Founder instruction: "Flip the switch and go well deal with all legal issues and licenses on our end." Flipped `feature_flags.regulated_offerings` from `false` to `true` via direct SQL update (`update feature_flags set enabled = true ... where key = 'regulated_offerings'`) — no code change, no migration needed.
