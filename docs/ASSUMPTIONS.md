@@ -41,3 +41,17 @@ The master prompt describes what is genuinely a multi-month platform (RBAC, mome
 ## 6. No real Coinbase Commerce credentials
 
 Payments remain in the same state as before this pass: `COMMERCE_API_KEY`/`COMMERCE_WEBHOOK_SECRET` are not configured (real business account setup is outside what an agent can do), and Edge Function deployment is pending manual tool approval. Both are called out again in `docs/DEPLOYMENT.md` rather than silently left unmentioned.
+
+## 7. Benefit/BenefitEntitlement collapsed into `support_tiers.benefits`
+
+§19's data model lists `Benefit` and `BenefitEntitlement` as separate entities. There is no gated content yet (no community posts, no drops) that would need to check "does this specific user have this specific benefit" — the only thing that currently matters is "does this user have an active subscription to a tier that lists this benefit," which is fully answerable from `support_subscriptions.status` + `support_tiers.benefits` with no extra table.
+
+**Assumption**: model benefits as a plain JSON text array on `support_tiers` for now, and treat "entitled" as synonymous with "has an active subscription to a tier listing that benefit," rather than building relational plumbing with zero current consumers.
+
+**If wrong / when this breaks down**: the moment a benefit needs individual tracking (e.g. "redeemed" merch credit, a benefit that outlives a canceled subscription, or per-user overrides), split it into real `benefits` + `benefit_entitlements` tables — straightforward migration, no data loss, since the tier's benefit list is still the source of truth for what to migrate.
+
+## 8. No real recurring billing
+
+`support_tiers.billing_frequency = 'monthly'` and `support_subscriptions.current_period_end` exist, but nothing auto-charges when a period ends — Coinbase Commerce's hosted checkout has no stored-payment-method mechanism to charge later without the supporter present. `record_support_payment_confirmed` only extends `current_period_end` when a _new_ checkout is completed and confirmed.
+
+**Assumption**: this is fine to ship as "monthly" tiers that require the supporter to manually complete a fresh checkout each period, as long as the UI is honest about it — not fine to silently imply auto-renewal exists. **Not yet built**: a renew prompt/reminder when `current_period_end` has passed (currently a lapsed monthly subscription just sits with a stale `current_period_end` and no visible nudge) — flagged as a gap, not hidden.

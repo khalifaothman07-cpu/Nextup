@@ -11,6 +11,7 @@ A static two-page site (`index.html`, `artist.html`) plus a Supabase backend:
 - Landing page: roster, pricing/tiers copy, FAQ, waitlist capture.
 - Artist profile pages: bio, track list, song-ownership purchase (crypto checkout via Coinbase Commerce).
 - Magic-link auth (no passwords).
+- Default "Back Artist" flow: tiered one-time/monthly support (`support_tiers` — Early Supporter/Core Supporter/Inner Circle, seeded per artist), paid via Coinbase Commerce. "Monthly" tracks a period, it does not auto-charge — see `docs/ASSUMPTIONS.md` #8.
 - A feature-flagged `regulatedOfferings` module (continuous bonding-curve Buy/Sell trading on artist momentum) — **disabled by default**, see `docs/ASSUMPTIONS.md` #1 for why it exists and `docs/SECURITY.md` for how it's locked down.
 - RBAC foundation (`profiles`, `user_roles`, `artist_members`, `feature_flags`) — schema only; no admin UI to manage it yet.
 

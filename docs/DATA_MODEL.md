@@ -25,6 +25,15 @@ Reflects the actual deployed schema in Supabase project `nextup` (ref `djnsjtlkj
 - **`song_ownership`** — `id, user_id, track_id (unique), price_cents, created_at`. One owner per track, written only by the webhook after a confirmed charge.
 - **`track_ownership_public`** (view) — `track_id, owned_at`. Public read, exposes ownership state without the buyer's identity. `SECURITY DEFINER` intentionally (documented, accepted advisory).
 
+## Commerce — default support flow (tiered "Back Artist")
+
+- **`support_tiers`** — `id, artist_id, name, price_cents, billing_frequency ('one_time'|'monthly'), description, benefits (jsonb text array), sort_order, active, created_at`. Public read (active tiers only). Seeded with 3 tiers per artist (Early Supporter / Core Supporter / Inner Circle). Benefits are a plain text array on the tier rather than a separate `Benefit`/`BenefitEntitlement` join table — see `docs/ASSUMPTIONS.md` #7 for why.
+- **`support_subscriptions`** — `id, user_id, artist_id, tier_id, billing_frequency, status ('active'|'canceled'|'past_due'|'expired'), started_at, current_period_end, canceled_at`. One row per `(user_id, artist_id)` — supporting a new tier for the same artist replaces the existing subscription rather than stacking. Owner read only. Owner may `UPDATE` their own row but only to set `status = 'canceled'`; everything else (creation, renewal, tier changes) is written only by `record_support_payment_confirmed`.
+- **`support_payments`** — `id, user_id, artist_id, tier_id, amount_usd_cents, commerce_charge_id, status, created_at, confirmed_at`. Same shape/flow as `crypto_charges`/`wallet_deposits`. Owner read only; only the webhook writes `status`/`confirmed_at`.
+- **`record_support_payment_confirmed(user_id, artist_id, tier_id, billing_frequency)`** — `SECURITY DEFINER`, `service_role`-only. Upserts the `(user_id, artist_id)` subscription. For monthly tiers, extends `current_period_end` from the later of "now" or the existing period end, so renewing early doesn't forfeit already-paid-for time.
+
+**Important limitation**: "monthly" billing is period-tracking only, not auto-charging. Coinbase Commerce has no stored-payment-method mechanism, so there is no way to charge a supporter automatically when their period ends — see `docs/ASSUMPTIONS.md` #7. The UI must prompt for a fresh checkout each period; this is not built yet (a subscription whose `current_period_end` has passed currently just sits there without a renew prompt).
+
 ## Commerce — regulatedOfferings (feature-flagged, off by default)
 
 - **`wallets`** — `user_id (pk), balance_cents, updated_at`. Off-chain trading balance. Owner read only; balance mutated only by `open_position`/`close_position`/`credit_wallet` (all `SECURITY DEFINER`, `service_role`-only execute).

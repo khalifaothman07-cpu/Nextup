@@ -91,7 +91,7 @@
       const slug = params.get("slug");
 
       const chargeNotice = document.getElementById("chargeNotice");
-      const chargeState = params.get("charge");
+      const chargeState = params.get("charge") ?? params.get("support");
       if (chargeState === "success") {
         chargeNotice.innerHTML =
           "<p style=\"color:var(--good); font-family:'JetBrains Mono', monospace; font-size:13px; margin-bottom:24px;\">Payment received — confirming on-chain. This can take a few minutes; refresh this page once it confirms.</p>";
@@ -220,28 +220,130 @@
         }
       }
 
-      // Backing an artist is a "regulatedOfferings" surface (continuous
-      // bonding-curve Buy/Sell trading, see docs/ASSUMPTIONS.md) and stays
-      // hidden until the regulated_offerings feature flag is turned on —
-      // no disabled/fake trading UI shown in the meantime.
+      // The default backing flow is a tiered one-time/monthly support tier
+      // (renderTierPanel). The continuous bonding-curve Buy/Sell trading
+      // system (renderTradingPanel) is a "regulatedOfferings" surface, see
+      // docs/ASSUMPTIONS.md, and only renders once the regulated_offerings
+      // feature flag is turned on.
       async function renderBackingPanel(artist) {
-        const slot = document.getElementById("backingPanelSlot");
         const { data: flag } = await supabase
           .from("feature_flags")
           .select("enabled")
           .eq("key", "regulated_offerings")
           .maybeSingle();
 
-        if (!flag?.enabled) {
-          slot.innerHTML = `
-            <div class="backing-panel">
-              <h3>Backing isn't open yet</h3>
-              <p class="lede">Support for ${artist.name} is still being built. Join the waitlist on the homepage and we'll let you know when it's ready.</p>
-            </div>
-          `;
-          return;
+        if (flag?.enabled) {
+          await renderTradingPanel(artist);
+        } else {
+          await renderTierPanel(artist);
         }
+      }
 
+      async function renderTierPanel(artist) {
+        const slot = document.getElementById("backingPanelSlot");
+
+        const { data: tiers } = await supabase
+          .from("support_tiers")
+          .select(
+            "id, name, price_cents, billing_frequency, description, benefits",
+          )
+          .eq("artist_id", artist.id)
+          .eq("active", true)
+          .order("sort_order", { ascending: true });
+
+        const mySub = session
+          ? (
+              await supabase
+                .from("support_subscriptions")
+                .select(
+                  "id, tier_id, status, billing_frequency, current_period_end",
+                )
+                .eq("user_id", session.user.id)
+                .eq("artist_id", artist.id)
+                .maybeSingle()
+            ).data
+          : null;
+
+        const noteHtml =
+          mySub && mySub.status === "active"
+            ? `
+          <div class="wallet-bar" style="margin-bottom:16px;">
+            <span>You're backing ${artist.name}${mySub.current_period_end ? ` — renews ${new Date(mySub.current_period_end).toLocaleDateString()}` : ""}.</span>
+            <button type="button" class="wallet-add-btn" id="cancelSubBtn">Cancel</button>
+          </div>
+        `
+            : "";
+
+        slot.innerHTML = `
+          ${noteHtml}
+          <div class="tiers" id="tierGrid" style="grid-template-columns:1fr; gap:16px;">
+            ${
+              (tiers ?? [])
+                .map((tier) => {
+                  const isCurrent =
+                    mySub?.status === "active" && mySub.tier_id === tier.id;
+                  return `
+                <div class="tier${isCurrent ? " featured" : ""}">
+                  <div class="tk">${tier.billing_frequency === "monthly" ? "MONTHLY" : "ONE-TIME"}</div>
+                  <div class="amount">${formatUSD(tier.price_cents)}<span>${tier.billing_frequency === "monthly" ? "/mo" : ""}</span></div>
+                  <p>${tier.name}</p>
+                  ${tier.description ? `<p class="track-price" style="margin:-4px 0 4px;">${tier.description}</p>` : ""}
+                  <ul>${(tier.benefits ?? []).map((b) => `<li>${b}</li>`).join("")}</ul>
+                  <button type="button" class="track-buy tier-btn" data-tier-id="${tier.id}" style="width:100%; margin-top:14px;" ${isCurrent ? "disabled" : ""}>${isCurrent ? "Current tier" : "Back this tier"}</button>
+                </div>
+              `;
+                })
+                .join("") || '<p class="muted">No support tiers set up yet.</p>'
+            }
+          </div>
+          <div class="action-status" id="tierStatus"></div>
+        `;
+
+        const tierStatus = document.getElementById("tierStatus");
+
+        document
+          .getElementById("cancelSubBtn")
+          ?.addEventListener("click", async () => {
+            const { error } = await supabase
+              .from("support_subscriptions")
+              .update({
+                status: "canceled",
+                canceled_at: new Date().toISOString(),
+              })
+              .eq("id", mySub.id);
+            if (error) {
+              tierStatus.textContent = "Could not cancel — try again.";
+              return;
+            }
+            await renderTierPanel(artist);
+          });
+
+        slot.querySelectorAll(".tier-btn").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            if (!session) {
+              tierStatus.textContent = "Sign in at the top of the page first.";
+              return;
+            }
+            btn.disabled = true;
+            btn.textContent = "Redirecting to checkout…";
+            const { data, error } = await supabase.functions.invoke(
+              "support-artist",
+              { body: { tier_id: btn.dataset.tierId, slug } },
+            );
+            if (error || !data?.hosted_url) {
+              btn.disabled = false;
+              btn.textContent = "Back this tier";
+              tierStatus.textContent =
+                data?.error ?? "Could not start checkout — try again.";
+              return;
+            }
+            window.location.href = data.hosted_url;
+          });
+        });
+      }
+
+      async function renderTradingPanel(artist) {
+        const slot = document.getElementById("backingPanelSlot");
         const { data: curve } = await supabase
           .from("artist_curves")
           .select("supply, base_price_cents, k")

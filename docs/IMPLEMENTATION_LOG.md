@@ -4,6 +4,34 @@ Newest entry first. Each entry follows the master prompt's §31 working-cycle fo
 
 ---
 
+## Cycle 2 — Default tiered "Back Artist" flow
+
+**Slice**: Cycle 1's recommended next step — a working default support mechanism for artist pages, since `regulatedOfferings` being gated off left every visitor with no way to back an artist at all.
+
+**Files changed**:
+
+- `artist.html` — `renderBackingPanel` is now a dispatcher: `renderTierPanel` (default) renders real tier cards, checkout, current-subscription status, and cancel; `renderTradingPanel` (the pre-existing bonding-curve UI, renamed) still only renders when `regulated_offerings` is on.
+- `supabase/functions/support-artist/` — new Edge Function, same JWT-verify-then-service-role pattern as every other write path in this project.
+- `supabase/functions/coinbase-webhook/index.ts` — added a third charge-lookup branch (`support_payments`) alongside the existing two.
+- `docs/DATA_MODEL.md`, `docs/API.md`, `docs/ASSUMPTIONS.md` (#7, #8), `README.md` — updated to match.
+
+**Database migrations**: `default_support_flow` (`support_tiers`, `support_subscriptions`, `support_payments`), `seed_support_tiers` (3 tiers × 5 artists), `record_support_payment_confirmed_function` (the atomic create-or-renew RPC the webhook calls).
+
+**What changed and why**: artist pages now have a real, working default backing mechanism again — pick a tier, pay via Coinbase Commerce, get a `support_subscriptions` row once the webhook confirms. Benefits are a plain array on the tier rather than a separate `Benefit`/`BenefitEntitlement` table (§19) — no gated content exists yet to need per-benefit tracking; see `docs/ASSUMPTIONS.md` #7 for the reasoning and the migration path if that stops being true. "Monthly" tiers track a period but do not auto-charge — Coinbase Commerce has no stored-payment-method mechanism, so real recurring billing isn't possible with the current payment provider (§8).
+
+**Verified**: every migration checked against the security advisor (clean — the explicit `revoke ... from anon, authenticated, public` pattern from Cycle 1 held up on the first try this time, no repeat of that near-miss). Data paths verified via direct REST calls against the anon key (tier list matches exactly what the UI queries for; `support_subscriptions`/`support_payments` correctly return empty to anon). Browser-based end-to-end testing was attempted but blocked by proxy flakiness in this sandbox (consistent with earlier in this session) — code review + syntax checks + REST verification stood in for it, same as prior cycles when this happened.
+
+**Remaining limitations**:
+
+- No renew prompt/reminder when a monthly subscription's `current_period_end` has passed — it just goes stale silently. Flagged, not hidden.
+- Edge Functions (now five of them) are still not deployed — blocked on tool approval, unchanged across every cycle so far.
+- No way to browse/compare tiers across artists, no artist-side tier management UI (tiers are seeded via SQL, same as the artist roster itself).
+- A user can only back one tier per artist at a time (`unique(user_id, artist_id)`) — switching tiers replaces the old subscription rather than stacking. Not explicitly surfaced in the UI copy yet.
+
+**Recommended next slice**: either (a) the framework decision flagged in Cycle 1 (needed before Phase 2 Discovery can build role-gated, componentized UI at any real scale), or (b) `ArtistFollow`/`ArtistSave` — small, self-contained, and the most natural next piece of the Phase 2 discovery loop given Phase 1/1.5 are now both genuinely done.
+
+---
+
 ## Cycle 1 — Phase 1 Foundation: RBAC, feature flags, docs, `regulatedOfferings` gating
 
 **Slice**: Inspect the repo, produce the required assessment docs, then implement the highest-priority piece of Phase 1 Foundation that was still missing — role-based access control and the feature-flag mechanism needed to correctly scope the trading system that predates this master prompt.

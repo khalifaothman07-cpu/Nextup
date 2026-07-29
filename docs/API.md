@@ -12,9 +12,13 @@ Authenticated. Body: `{ track_id, slug }`. Creates a Coinbase Commerce charge fo
 
 Authenticated. Body: `{ amount_usd_cents (>= 1000), slug }`. Creates a Coinbase Commerce charge to fund the caller's wallet, records a `pending` row in `wallet_deposits`, returns `{ hosted_url }`.
 
+## `support-artist` (`verify_jwt: true`)
+
+Authenticated. Body: `{ tier_id, slug }`. Looks up the tier (must be `active`), creates a Coinbase Commerce charge for `tier.price_cents`, records a `pending` row in `support_payments`, returns `{ hosted_url }`. This is the default "Back Artist" flow (master prompt §9/§11) — not the `regulatedOfferings` trading module.
+
 ## `coinbase-webhook` (`verify_jwt: false`, signature-verified instead)
 
-Public endpoint Coinbase Commerce calls directly. Verifies `X-CC-Webhook-Signature` via HMAC-SHA256 against `COMMERCE_WEBHOOK_SECRET` (constant-time compare) before trusting anything in the body. On `charge:confirmed`, looks the charge up in `crypto_charges` first, then `wallet_deposits` (a charge code is unique across both), and either inserts the `song_ownership` row or calls `credit_wallet` accordingly. Idempotent — a charge already in `confirmed` status is a no-op, and `.eq("status","pending")` on the update means only one concurrent webhook delivery wins.
+Public endpoint Coinbase Commerce calls directly. Verifies `X-CC-Webhook-Signature` via HMAC-SHA256 against `COMMERCE_WEBHOOK_SECRET` (constant-time compare) before trusting anything in the body. On `charge:confirmed`, looks the charge up in `crypto_charges`, then `wallet_deposits`, then `support_payments` (a charge code is unique across all three), and dispatches accordingly: inserts `song_ownership`, calls `credit_wallet`, or calls `record_support_payment_confirmed`. Idempotent — a charge already in `confirmed` status is a no-op, and `.eq("status","pending")` on the update means only one concurrent webhook delivery wins.
 
 ## `trade` (`verify_jwt: true`) — part of the `regulatedOfferings` module
 
