@@ -10,7 +10,9 @@ The master prompt's §11 then describes almost exactly that mechanic — "a cult
 
 **Assumption**: rather than discard the trading system, it _is_ the `regulatedOfferings` module. This pass adds a `feature_flags` row (`regulated_offerings`, default `false`) and will gate the trading UI behind it.
 
-**Update (superseding the rest of this entry)**: a tiered/subscription default flow was subsequently built (`support_tiers`/`support_subscriptions`/`support_payments`) per §9/§11, then explicitly reversed by the founder — see #7. The bonding-curve trading system is now the **only** backing mechanism, still gated behind `regulated_offerings` (default `false`); deposit/withdraw is its funding/cashout layer, not a separate flow. **`regulated_offerings` is still `false`** — flipping it is the one remaining step to make backing visible/usable at all, and per `docs/DEPLOYMENT.md` that's a deliberate go/no-go the founder should make, not something to flip silently.
+**Update (superseding the rest of this entry)**: a tiered/subscription default flow was subsequently built (`support_tiers`/`support_subscriptions`/`support_payments`) per §9/§11, then explicitly reversed by the founder — see #7. The bonding-curve trading system is now the **only** backing mechanism, gated behind `regulated_offerings`; deposit/withdraw is its funding/cashout layer, not a separate flow.
+
+**Update 2**: the founder explicitly instructed flipping `regulated_offerings` to `true` and stated they will handle legal/licensing on their end ("go well deal with all legal issues and licenses on our end"). Flag is now `true` as of Cycle 4. This was the founder's call to make, not mine — flagged here rather than silently normalized, same as the earlier "don't flip it without saying so" note now being superseded by an explicit instruction to do exactly that.
 
 ## 2. Stack continuation vs. framework rewrite
 

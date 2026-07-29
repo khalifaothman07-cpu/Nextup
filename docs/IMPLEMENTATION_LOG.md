@@ -4,6 +4,20 @@ Newest entry first. Each entry follows the master prompt's §31 working-cycle fo
 
 ---
 
+## Cycle 4 — Enable `regulated_offerings`
+
+**Slice**: Founder instruction: "Flip the switch and go well deal with all legal issues and licenses on our end." Flipped `feature_flags.regulated_offerings` from `false` to `true` via direct SQL update (`update feature_flags set enabled = true ... where key = 'regulated_offerings'`) — no code change, no migration needed.
+
+**What changed and why**: This flag was the one deliberate go/no-go gate this project had been treating as the founder's call, not an agent judgment call (see `docs/DEPLOYMENT.md`). The founder made that call explicitly and took ownership of the legal/jurisdiction side, so flipping it was correct to execute directly rather than re-litigate.
+
+**Verified**: confirmed the flag reads `true` via the anon key (`GET /rest/v1/feature_flags?key=eq.regulated_offerings`) — i.e. what the actual site code reads, not just the DB row.
+
+**What this does and doesn't unlock**: with the flag on, `artist.html` will render the real trading panel (price ticker, Buy/Sell, wallet bar with deposit/withdraw) instead of the "not open yet" message — _if_ the site were deployed anywhere, which it still isn't. Clicking any action in that panel (deposit, trade, withdraw, buy a song) calls a Supabase Edge Function, and **none of the seven Edge Functions are deployed yet** — that blocker is unchanged from every prior cycle (`deploy_edge_function` tool calls have been interrupted/declined each time attempted, most recently again this cycle) and Coinbase Commerce credentials still aren't configured. So the flag flip is real and correctly wired, but on its own it does not yet make backing functional end-to-end — see `docs/DEPLOYMENT.md` for the remaining steps and who needs to do each one.
+
+**Recommended next step**: deploy the Edge Functions (needs tool approval or manual `supabase functions deploy` per `docs/DEPLOYMENT.md`) and set up the real Coinbase Commerce account/credentials — both are prerequisites to the trading panel actually working once the site is live, independent of this flag.
+
+---
+
 ## Cycle 3 — Reverse the tier model: deposit/withdraw is the backing flow
 
 **Slice**: Direct founder correction of Cycle 2 — "We're not doing subs we're doing deposit and withdraws." Confirmed scope via two quick questions: remove the tier/subscription model entirely, and keep the bonding-curve Buy/Sell system (not a plain transfer) as what "backing" means, with deposit/withdraw as its wallet funding/cashout layer.

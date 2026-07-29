@@ -46,7 +46,7 @@ npm run format:check   # check only, for CI
 
 ## Feature flags
 
-`regulated_offerings` (in the `feature_flags` table, default `false`) gates the entire Buy/Sell trading UI. See `docs/DEPLOYMENT.md` before ever turning it on — it's a legal/jurisdiction gate, not a config toggle.
+`regulated_offerings` (in the `feature_flags` table) gates the entire Buy/Sell trading UI — **currently `true`**, per explicit founder instruction (legal/jurisdiction ownership confirmed on their end). See `docs/DEPLOYMENT.md`.
 
 ## Docs
 

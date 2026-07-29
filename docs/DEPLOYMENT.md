@@ -46,4 +46,4 @@ See `.env.example` at the repo root. The site's Supabase URL and publishable key
 
 ## Feature flags
 
-`regulated_offerings` (in the `feature_flags` table) gates the entire Buy/Sell trading UI and defaults to `false`. Do not flip it to `true` in any environment without the legal/jurisdiction review the master prompt's §11 requires — flipping the flag is the only step that makes the trading module reachable, so it is a deliberate go/no-go gate, not a config detail.
+`regulated_offerings` (in the `feature_flags` table) gates the entire Buy/Sell trading UI. **Currently `true`** — the founder explicitly instructed enabling it and confirmed they are handling legal/jurisdiction/licensing review on their end (see `docs/ASSUMPTIONS.md` #1, "Update 2"). This was a deliberate founder decision, not a default to leave alone or an agent judgment call — if that ownership changes, flip it back to `false` immediately rather than leaving the module reachable without an owner for the compliance question.
