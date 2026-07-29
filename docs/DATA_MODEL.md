@@ -15,7 +15,7 @@ Reflects the actual deployed schema in Supabase project `nextup` (ref `djnsjtlkj
 
 ## Identity & roles (new this pass)
 
-- **`profiles`** — `id (= auth.users.id), display_name, created_at`. Auto-created by the `handle_new_user` trigger on `auth.users` insert. Owner-only read/update.
+- **`profiles`** — `id (= auth.users.id), display_name, created_at`. Auto-created by the `handle_new_user` trigger on `auth.users` insert; owner-insert also allowed (Cycle 8) so the client-side upsert self-heals users that predate the trigger (existing gaps were backfilled in the same migration). Owner-only read/update.
 - **`user_roles`** — `user_id, role ('admin'|'curator'), granted_at, granted_by`. Composite PK `(user_id, role)`. Owner + admin read only. No client-side writes — grants happen server-side until an admin UI exists (backlog item).
 - **`artist_members`** — `artist_id, user_id, role ('owner'|'manager'|'a_r'|'marketing'|'content_editor'|'finance_viewer'), created_at`. Composite PK `(artist_id, user_id)`. Own-membership + admin/curator read only.
 - **`private.has_role(user_id, role) -> boolean`** — SECURITY DEFINER helper used inside RLS policies. Deliberately lives in the `private` schema (not `public`) so it isn't exposed as a callable `/rest/v1/rpc/` endpoint — see `docs/SECURITY.md`.
@@ -28,7 +28,7 @@ Reflects the actual deployed schema in Supabase project `nextup` (ref `djnsjtlkj
 ## Commerce — song ownership (flat-price, default path)
 
 - **`crypto_charges`** — `id, user_id, track_id, amount_usd_cents, commerce_charge_id, status, created_at, confirmed_at`. A Coinbase Commerce charge in flight for a specific track. Owner read only; only the `coinbase-webhook` Edge Function (service role) writes `status`/`confirmed_at`.
-- **`song_ownership`** — `id, user_id, track_id (unique), price_cents, created_at`. One owner per track, written only by the webhook after a confirmed charge.
+- **`song_ownership`** — `id, user_id, track_id (unique), price_cents, created_at`. One owner per track, written **only** by the webhook after a confirmed charge — enforced for real as of Cycle 8, which dropped a leftover client `INSERT` policy from the pre-Coinbase prototype that contradicted this line (see `docs/SECURITY.md`, "Found-and-fixed").
 - **`track_ownership_public`** (view) — `track_id, owned_at`. Public read, exposes ownership state without the buyer's identity. `SECURITY DEFINER` intentionally (documented, accepted advisory).
 
 ## Commerce — regulatedOfferings (feature-flagged, off by default)

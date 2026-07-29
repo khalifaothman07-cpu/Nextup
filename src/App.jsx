@@ -11,6 +11,7 @@ import { Press } from "./pages/Press.jsx";
 import { Terms } from "./pages/Terms.jsx";
 import { RiskDisclosure } from "./pages/RiskDisclosure.jsx";
 import { Privacy } from "./pages/Privacy.jsx";
+import { Account } from "./pages/Account.jsx";
 import { NotFound } from "./pages/NotFound.jsx";
 
 export function App() {
@@ -28,6 +29,7 @@ export function App() {
         <Route path="/terms" element={<Terms />} />
         <Route path="/risk-disclosure" element={<RiskDisclosure />} />
         <Route path="/privacy" element={<Privacy />} />
+        <Route path="/account" element={<Account />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

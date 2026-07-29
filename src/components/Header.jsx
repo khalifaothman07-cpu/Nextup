@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import { Logo } from "./Logo.jsx";
 import { AuthWidget } from "./AuthWidget.jsx";
+import { useSession } from "../context/SessionContext.jsx";
 
 export function Header() {
+  const { session } = useSession();
   return (
     <header>
       <nav className="wrap">
@@ -14,6 +16,11 @@ export function Header() {
           <Link to="/discover" className="nav-link">
             Discover
           </Link>
+          {session && (
+            <Link to="/account" className="nav-link">
+              Account
+            </Link>
+          )}
           <div className="auth-widget">
             <AuthWidget />
           </div>

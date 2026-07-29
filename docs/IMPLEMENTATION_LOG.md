@@ -4,6 +4,24 @@ Newest entry first. Each entry follows the master prompt's §31 working-cycle fo
 
 ---
 
+## Cycle 8 — Phase 2.5, Account & role surface (+ a real security fix)
+
+**Slice**: The master prompt arrived as a document this cycle (now the standing spec file; contents match what's been executed since it was first pasted — the two founder overrides on record still supersede it: no subscriptions, crypto-only payments). Per its §4 Listener requirements ("build a profile, track personal discovery history") and the working sequence: an `/account` page and role-aware navigation — the prerequisite for Phase 4's artist dashboard.
+
+**Security fix found during pre-work policy audit**: `song_ownership` still had a client `INSERT` policy ("users can buy an unowned track") left over from the pre-Coinbase prototype — since the webhook writes via service role, the policy's only real effect was letting any signed-in user insert their own ownership row for any unowned track without paying. Dropped in migration `account_slice_fixes`; recorded in `docs/SECURITY.md` as a second "found-and-fixed" entry with the general lesson (when a write path moves server-side, delete the client policy it replaced in the same change). Same migration backfilled missing `profiles` rows for pre-trigger users and added an owner-insert policy so the account page's upsert self-heals. Advisor re-checked: clean (same two known accepted lints).
+
+**Files changed**: new `src/pages/Account.jsx` (+ route in `App.jsx`); `Header.jsx` shows an Account link when signed in; `css/styles.css` gains `.role-chips`/`.role-chip`. Reused existing components/classes throughout (`ArtistCard` for the following grid, `positions-list`/`track-list` rows, `PageHero`).
+
+**What the Account page actually is**: signed-out visitors get an honest sign-in prompt (no fake content). Signed in: editable display name (profiles upsert under owner-only RLS); role chips where **Listener** is always shown, **Supporter** is derived live from actually holding a position or owning a song (per the spec: derived, never a stored role), and any granted `user_roles`/`artist_members` roles appear as chips; following grid (reuses ArtistCard + momentum); wallet balance with pending-withdrawal cancel (same `cancel-withdrawal` Edge Function as the artist page); open positions across all artists with a Manage link to each artist page (closing stays on the artist page next to the live price, deliberately); owned songs with purchase price. Empty states link to Discover instead of dead-ending.
+
+**Verified**: `npm run build` clean. Headless-Chromium smoke with mocked `/rest/v1/*` responses (same technique as Cycle 7, sandbox blocks live Supabase): signed-out `/account` renders the sign-in prompt; the header omits the Account link when signed out. Signed-in state paths exercised at the query level against real RLS policies (`pg_policies` audit above confirms every table the page reads is owner-scoped). `npx prettier --write .` clean.
+
+**Not done / explicitly deferred**: gated admin/curator routes (their surfaces are Phases 4–6; empty gated routes would be dead navigation, which the spec forbids); artist-team dashboards (Phase 4); notification preferences (Phase 6 territory).
+
+**Recommended next step**: Phase 4 — artist operations (artist onboarding + profile editor + the artist-facing dashboard reading real analytics), now that roles have a visible surface to hang off.
+
+---
+
 ## Cycle 7 — Phase 2, Discovery vertical slice: follows, search/filter/sort, real momentum
 
 **Slice**: First post-migration slice per the founder's "bit by bit, cohesive" direction and `docs/ARCHITECTURE.md`'s sequence: make discovery real. Three connected pieces — follows, roster search/filter/sort, and an honestly-computed momentum engine replacing the fabricated seeded stats.

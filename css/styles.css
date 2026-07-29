@@ -1557,3 +1557,24 @@ footer {
   margin-top: 16px;
   line-height: 1.55;
 }
+
+/* ---- account page ---- */
+.role-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.role-chip {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid var(--line);
+  color: var(--paper-dim);
+  border-radius: 100px;
+  padding: 8px 14px;
+}
+.role-chip.on {
+  border-color: var(--brass);
+  color: var(--brass);
+}

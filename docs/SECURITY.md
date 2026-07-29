@@ -19,6 +19,10 @@ The Supabase security advisor caught that this **did not work** — `anon` and `
 
 A second, smaller version of the same lesson: `private.has_role()` needs `EXECUTE` granted to `anon`/`authenticated` (RLS policies that call it run as those roles), but it doesn't need to be reachable as a direct `/rpc/` endpoint (which would let anyone probe an arbitrary uuid's role membership). Fix was structural, not a grant: put it in a `private` schema that PostgREST doesn't expose, rather than `public`. RLS policy evaluation happens inside Postgres and can call functions in any schema; only PostgREST's HTTP surface cares about schema exposure.
 
+## Found-and-fixed: free song-ownership via leftover INSERT policy (Cycle 8)
+
+A routine policy audit before building the Account page found `song_ownership` still carried an `INSERT` policy — `"users can buy an unowned track"` `WITH CHECK (auth.uid() = user_id)` — left over from the pre-Coinbase prototype where purchases were client-side. Since the webhook writes via service role (which bypasses RLS), the policy served no legitimate caller; what it actually did was let any signed-in user insert their own ownership row for any unowned track, at any self-declared price, without paying. Dropped in migration `account_slice_fixes`. Lesson recorded: when a write path moves server-side, **delete** the client-side policy it replaced in the same change — the old policy doesn't break anything visibly, which is exactly why it survives. Worth a periodic `pg_policies` sweep against the "who is supposed to write this table" list in `docs/DATA_MODEL.md`.
+
 ## RLS policy audit (as of this pass)
 
 Every table has RLS enabled. Two intentionally permissive policies exist, both reviewed and accepted rather than accidental:
