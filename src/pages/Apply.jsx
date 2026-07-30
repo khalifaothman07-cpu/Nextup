@@ -211,7 +211,7 @@ export function Apply() {
               </dl>
               <p className="results-note">
                 Need to change something? Email{" "}
-                <a href="mailto:press@nextup.exchange">press@nextup.exchange</a>{" "}
+                <a href="mailto:admin@nextup.exchange">admin@nextup.exchange</a>{" "}
                 — applications can't be edited once sent, so we'd rather you
                 talk to us than start a second one.
               </p>

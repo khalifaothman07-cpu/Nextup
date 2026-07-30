@@ -86,7 +86,7 @@ export function Privacy() {
           <h2>Contact</h2>
           <p>
             Questions about this policy or your data:{" "}
-            <a href="mailto:press@nextup.exchange">press@nextup.exchange</a>.
+            <a href="mailto:admin@nextup.exchange">admin@nextup.exchange</a>.
           </p>
         </div>
       </section>

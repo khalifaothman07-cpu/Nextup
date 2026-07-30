@@ -27,8 +27,8 @@ export function Press() {
                 opens — happy to talk to press under embargo. Reach out below.
               </p>
             </div>
-            <a href="mailto:press@nextup.exchange" className="nav-cta">
-              press@nextup.exchange
+            <a href="mailto:admin@nextup.exchange" className="nav-cta">
+              admin@nextup.exchange
             </a>
           </div>
         </div>

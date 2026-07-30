@@ -123,7 +123,7 @@ export function Terms() {
           <h2>11. Contact</h2>
           <p>
             Questions about these Terms:{" "}
-            <a href="mailto:press@nextup.exchange">press@nextup.exchange</a>.
+            <a href="mailto:admin@nextup.exchange">admin@nextup.exchange</a>.
           </p>
         </div>
       </section>
