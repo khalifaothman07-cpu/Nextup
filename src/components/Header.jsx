@@ -3,10 +3,12 @@ import { Logo } from "./Logo.jsx";
 import { AuthWidget } from "./AuthWidget.jsx";
 import { useSession } from "../context/SessionContext.jsx";
 import { useMemberships } from "../hooks/useMemberships.js";
+import { useRoles } from "../hooks/useRoles.js";
 
 export function Header() {
   const { session } = useSession();
   const memberships = useMemberships();
+  const roles = useRoles();
 
   return (
     <header>
@@ -28,6 +30,11 @@ export function Header() {
           {session && memberships?.length > 0 && (
             <Link to="/dashboard" className="nav-link">
               Dashboard
+            </Link>
+          )}
+          {session && roles?.includes("admin") && (
+            <Link to="/admin" className="nav-link">
+              Admin
             </Link>
           )}
         </div>

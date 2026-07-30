@@ -14,6 +14,7 @@ import { Privacy } from "./pages/Privacy.jsx";
 import { Account } from "./pages/Account.jsx";
 import { Apply } from "./pages/Apply.jsx";
 import { Dashboard } from "./pages/Dashboard.jsx";
+import { Admin } from "./pages/Admin.jsx";
 import { NotFound } from "./pages/NotFound.jsx";
 
 export function App() {
@@ -34,6 +35,7 @@ export function App() {
         <Route path="/apply" element={<Apply />} />
         <Route path="/account" element={<Account />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/admin" element={<Admin />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

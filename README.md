@@ -14,10 +14,14 @@ A React + Vite single-page app (as of Cycle 6 — see `docs/ASSUMPTIONS.md` #2) 
 - `Artist` (`/artist/:slug`) — per-artist profile: bio, track list, song-ownership purchase (crypto checkout via Coinbase Commerce).
 - Magic-link auth (no passwords), via `SessionContext`/`AuthWidget`.
 - Backing an artist = deposit into your Nextup wallet (crypto, via Coinbase Commerce), then trade Buy/Sell positions on the artist's live bonding-curve price from that balance, and withdraw later (a request, not an instant payout — see `docs/ASSUMPTIONS.md` #8). No tiers, no subscriptions.
-- The whole backing/trading system is a feature-flagged `regulatedOfferings` module — **disabled by default**, see `docs/ASSUMPTIONS.md` #1 for why and `docs/SECURITY.md` for how it's locked down. With the flag off (current state), artist pages show an honest "not open yet" message instead.
-- RBAC foundation (`profiles`, `user_roles`, `artist_members`, `feature_flags`) — schema only; no admin UI to manage it yet.
+- The whole backing/trading system is a feature-flagged `regulatedOfferings` module — ships **disabled by default**, see `docs/ASSUMPTIONS.md` #1 for why and `docs/SECURITY.md` for how it's locked down. It is currently **on**, per explicit founder instruction; with it off, artist pages show an honest "not open yet" message instead of the Buy/Sell panel.
+- `Apply` (`/apply`) — artist applications: one real row per account, with its real status visible on return. Reviewed by a person, not an autoresponder.
+- `Account` (`/account`) — display name, derived roles, following, wallet balance and withdrawals, open positions, owned songs.
+- `Dashboard` (`/dashboard`) — role-gated to artist-team members: real analytics from platform activity, momentum history, and a profile editor gated to owner/manager/content editor.
+- `Admin` (`/admin`) — role-gated to admins: the artist-application review queue, one-press artist onboarding, feature-flag toggles, and an audit log of every admin action. Granting the `admin` role itself is deliberately SQL-only — see `docs/DEPLOYMENT.md` for how to grant the first one.
+- RBAC (`profiles`, `user_roles`, `artist_members`, `feature_flags`) — real, and enforced in RLS policies and role-gated routes rather than schema-only.
 
-Everything else in the product spec (marketplace, community, momentum engine, A&R pipeline, admin console, ledger/credits) is **not built** — see `docs/ARCHITECTURE.md`'s "Missing functionality" section rather than assuming partial/hidden implementations exist.
+Everything else in the product spec (marketplace, community, A&R pipeline, moderation, ledger/credits) is **not built** — see `docs/ARCHITECTURE.md`'s "Missing functionality" section rather than assuming partial/hidden implementations exist.
 
 ## Install / run locally
 
@@ -53,7 +57,7 @@ npm run preview -- --port 8200 --strictPort &
 npm run shots          # writes full-page screenshots, then open them
 ```
 
-`npm run shots` renders the real production build in headless Chromium, including the signed-in pages (`/account`, `/dashboard`) that a static preview can't reach — it fakes a Supabase session and fulfils `/rest/v1/*` with realistically-shaped rows, so you're looking at the actual React code. A passing build says nothing about whether a screen is right: the first run of this caught four already-committed defects (money rounded to whole dollars so a $47.50 balance read "$48", a role label rendering as "content&editor", "1 songs purchased", and marketing-page spacing on tool pages). Treat it as part of finishing a UI change, not an optional extra.
+`npm run shots` renders the real production build in headless Chromium, including the role-gated pages (`/account`, `/apply`, `/dashboard`, `/admin`) that a static preview can't reach — it fakes a Supabase session and fulfils `/rest/v1/*` with realistically-shaped rows, so you're looking at the actual React code. A passing build says nothing about whether a screen is right: the first run of this caught four already-committed defects (money rounded to whole dollars so a $47.50 balance read "$48", a role label rendering as "content&editor", "1 songs purchased", and marketing-page spacing on tool pages). Treat it as part of finishing a UI change, not an optional extra.
 
 ## Feature flags
 
@@ -65,7 +69,7 @@ npm run shots          # writes full-page screenshots, then open them
 - `docs/ARCHITECTURE.md` — inspection/assessment, architectural risks, implementation sequence.
 - `docs/DATA_MODEL.md` — the real deployed schema.
 - `docs/API.md` — Edge Functions.
-- `docs/SECURITY.md` — the trust model, and a documented near-miss worth reading before writing any new `SECURITY DEFINER` function.
+- `docs/SECURITY.md` — the trust model, and two documented near-misses (mirror images of each other) worth reading before writing any new `SECURITY DEFINER` function, plus why the admin functions are granted to `authenticated` when the money functions are not.
 - `docs/ASSUMPTIONS.md` — recorded assumptions and why.
 - `docs/IMPLEMENTATION_LOG.md` — running log, newest first.
 - `docs/DEPLOYMENT.md` — what deploying would involve (nothing is deployed yet).

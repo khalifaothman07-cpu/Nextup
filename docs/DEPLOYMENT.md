@@ -30,6 +30,28 @@ supabase functions deploy coinbase-webhook --no-verify-jwt
 
 Unlike the Edge Function deployment above (a one-time setup blocker), processing withdrawals is an **ongoing manual step**, not something that becomes automatic once configured: Coinbase Commerce has no API for sending crypto out, only for accepting it. When a `withdrawal_requests` row is `pending`, someone has to actually send the crypto to `destination_address` and then mark it `paid` (currently no admin UI for this — direct DB access, e.g. `update withdrawal_requests set status='paid', processed_at=now() where id=...`, until one exists). See `docs/ASSUMPTIONS.md` #8.
 
+### Granting the first admin — required before `/admin` is usable by anyone
+
+The admin console at `/admin` is gated on a `user_roles` row with `role = 'admin'`, and **nothing in the product can create the first one**. That is deliberate: a console that can mint admins is a privilege-escalation surface, and there is no second-person approval or self-demotion guard yet (see `docs/SECURITY.md`). There is also nobody to grant it to at the moment — `auth.users` is empty, because nothing is deployed and no one has ever signed in.
+
+So the order of operations is: sign in to the deployed site with the magic link once, which creates the `auth.users` row, then run this in the Supabase SQL editor:
+
+```sql
+insert into public.user_roles (user_id, role)
+select id, 'admin' from auth.users where email = 'admin@nextup.exchange'
+on conflict do nothing;
+```
+
+No re-login needed — reload the page and the Admin link appears in the nav. Every admin after the first is granted the same way; there is deliberately no UI for it.
+
+To see who currently holds it:
+
+```sql
+select u.email, r.role, r.granted_at
+from public.user_roles r join auth.users u on u.id = r.user_id
+order by r.granted_at;
+```
+
 ### Required secrets (not yet set)
 
 Real payments cannot work until these are set (`supabase secrets set KEY=value --project-ref djnsjtlkjgjqmfcucjqp`):

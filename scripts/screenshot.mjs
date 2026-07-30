@@ -286,6 +286,142 @@ const SESSION = {
 // Flipped per-shot so /apply can be captured in both of its signed-in states.
 let applicationRow = null;
 
+// Flipped per-shot so /admin can be captured both as an admin and as the
+// ordinary signed-in user who lands there by typing the URL.
+let adminMode = false;
+
+// The review queue, shaped like admin_list_applications() returns it — the
+// applicant's email comes from auth.users, which is why it's an RPC and not a
+// table read. Deliberately mixed statuses so all three queue tabs have content
+// and the onboarded/not-onboarded branch is exercised in one screen.
+const ADMIN_APPS = [
+  {
+    id: "app-1",
+    user_id: "11111111-1111-4111-8111-111111111111",
+    applicant_email: "kiteseason@example.com",
+    applicant_display_name: "Rui M.",
+    artist_name: "Kite Season",
+    city: "Lisbon",
+    genre: "Alt R&B",
+    links:
+      "https://soundcloud.com/kiteseason\nhttps://open.spotify.com/artist/xxxx",
+    about:
+      "Two singles out, an EP mixed and waiting on masters. I've been selling out 200-cap rooms in Lisbon on word of mouth and want somewhere the people who found me first actually count for something.",
+    status: "pending",
+    created_at: "2026-07-29T09:14:00Z",
+    reviewed_at: null,
+    review_notes: "",
+    onboarded_artist_id: null,
+    onboarded_artist_slug: null,
+  },
+  {
+    id: "app-2",
+    user_id: "22222222-2222-4222-8222-222222222222",
+    applicant_email: "hello@thelonghall.co",
+    applicant_display_name: null,
+    artist_name: "The Long Hall",
+    city: "Glasgow",
+    genre: "Post-punk",
+    links: "https://thelonghall.bandcamp.com",
+    about:
+      "Four of us, one van, eleven shows booked through October. Recording the album live in a church in November.",
+    status: "reviewing",
+    created_at: "2026-07-27T16:02:00Z",
+    reviewed_at: "2026-07-28T10:31:00Z",
+    review_notes: "Strong live following. Waiting on the church recording.",
+    onboarded_artist_id: null,
+    onboarded_artist_slug: null,
+  },
+  {
+    id: "app-3",
+    user_id: "33333333-3333-4333-8333-333333333333",
+    applicant_email: "marra@example.com",
+    applicant_display_name: "Marra Vale",
+    artist_name: "Marra Vale",
+    city: "São Paulo",
+    genre: "R&B / Alt",
+    links: "https://open.spotify.com/artist/marravale",
+    about: "Slow-burn R&B. Three songs about the same low tide.",
+    status: "accepted",
+    created_at: "2026-07-21T08:00:00Z",
+    reviewed_at: "2026-07-22T12:10:00Z",
+    review_notes: "Yes. Page is live.",
+    onboarded_artist_id: A.marra,
+    onboarded_artist_slug: "marra-vale",
+  },
+  {
+    id: "app-4",
+    user_id: "44444444-4444-4444-8444-444444444444",
+    applicant_email: "dm@example.net",
+    applicant_display_name: null,
+    artist_name: "Placeholder Sound",
+    city: "Austin",
+    genre: "Unspecified",
+    links: "https://example.net",
+    about: "Nothing released yet.",
+    status: "declined",
+    created_at: "2026-07-20T19:45:00Z",
+    reviewed_at: "2026-07-21T09:02:00Z",
+    review_notes:
+      "Nothing out yet — come back when there's music we can point people at.",
+    onboarded_artist_id: null,
+    onboarded_artist_slug: null,
+  },
+];
+
+const ADMIN_AUDIT = [
+  {
+    id: 4,
+    created_at: "2026-07-29T14:02:11Z",
+    actor_user_id: UID,
+    actor_email: "demo@nextup.exchange",
+    action: "application.reviewed",
+    entity: "artist_applications",
+    entity_id: "app-2",
+    detail: { status: "reviewing" },
+  },
+  {
+    id: 3,
+    created_at: "2026-07-28T09:41:55Z",
+    actor_user_id: UID,
+    actor_email: "demo@nextup.exchange",
+    action: "feature_flag.set",
+    entity: "feature_flags",
+    entity_id: "regulated_offerings",
+    detail: { enabled: true },
+  },
+  {
+    id: 2,
+    created_at: "2026-07-22T12:10:03Z",
+    actor_user_id: UID,
+    actor_email: "demo@nextup.exchange",
+    action: "application.onboarded",
+    entity: "artist_applications",
+    entity_id: "app-3",
+    detail: { artist_id: A.marra, slug: "marra-vale" },
+  },
+  {
+    id: 1,
+    created_at: "2026-07-21T09:02:40Z",
+    actor_user_id: UID,
+    actor_email: "demo@nextup.exchange",
+    action: "application.reviewed",
+    entity: "artist_applications",
+    entity_id: "app-4",
+    detail: { status: "declined" },
+  },
+];
+
+const FLAGS = [
+  {
+    key: "regulated_offerings",
+    enabled: true,
+    description:
+      "Continuous bonding-curve Buy/Sell trading on artist momentum (the Pauv-style positions/wallet system). Disabled by default — this is a regulated-offerings-style product surface and must stay opt-in until explicitly configured per docs/ASSUMPTIONS.md.",
+    updated_at: "2026-07-28T09:41:55Z",
+  },
+];
+
 const browser = await chromium.launch({
   executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
 });
@@ -341,6 +477,24 @@ await ctx.route("**/rest/v1/**", (route) => {
     return m ? decodeURIComponent(m[1]) : null;
   };
 
+  // RPC is a POST to /rest/v1/rpc/<name>, not a table read — the admin
+  // console's reads go through definer functions because they join auth.users.
+  if (t.startsWith("rpc/")) {
+    const fn = t.slice(4);
+    // Mirror the real functions' refusal, so the harness proves the non-admin
+    // page is what a non-admin actually gets rather than an empty admin page.
+    if (!adminMode)
+      return route.fulfill({
+        status: 400,
+        contentType: "application/json",
+        body: JSON.stringify({ code: "P0001", message: "not authorised" }),
+      });
+    if (fn === "admin_list_applications") return send(ADMIN_APPS);
+    if (fn === "admin_list_audit") return send(ADMIN_AUDIT);
+    unmatched.push(t);
+    return send([]);
+  }
+
   switch (t) {
     case "artists": {
       const slug = idOf("slug"),
@@ -364,7 +518,16 @@ await ctx.route("**/rest/v1/**", (route) => {
         one([{ artist_id: A.marra, user_id: UID, role: "content_editor" }]),
       );
     case "user_roles":
-      return send(one([{ user_id: UID, role: "curator" }]));
+      return send(
+        one(
+          adminMode
+            ? [
+                { user_id: UID, role: "curator" },
+                { user_id: UID, role: "admin" },
+              ]
+            : [{ user_id: UID, role: "curator" }],
+        ),
+      );
     case "artist_applications":
       return send(one(applicationRow ? [applicationRow] : []));
     case "profiles":
@@ -460,7 +623,7 @@ await ctx.route("**/rest/v1/**", (route) => {
       );
     }
     case "feature_flags":
-      return send(one([{ key: "regulated_offerings", enabled: true }]));
+      return send(one(FLAGS));
     default:
       unmatched.push(t + s);
       return send(one([]));
@@ -649,6 +812,17 @@ await tryShot("/artist/marra-vale", "shot-artist-desktop.png");
 await tryShot("/discover", "shot-discover-desktop.png");
 await tryShot("/account", "shot-account-mobile.png", { width: 390 });
 await tryShot("/dashboard", "shot-dashboard-mobile.png", { width: 390 });
+
+// /admin as a non-admin first: this is the "typed the URL" path, and the only
+// thing it should ever show is the refusal.
+adminMode = false;
+await tryShot("/admin", "shot-admin-denied.png");
+adminMode = true;
+await tryShot("/admin", "shot-admin-desktop.png");
+await tryShot("/admin", "shot-admin-mobile.png", { width: 390 });
+console.log("\nheader across breakpoints (admin — extra nav link):");
+await navStrip(page, "/admin", "shot-nav-widths-admin.png", WIDTHS, "admin");
+adminMode = false;
 
 console.log("\nunmatched REST:", JSON.stringify([...new Set(unmatched)]));
 console.log("pageerrors:", JSON.stringify(errors));

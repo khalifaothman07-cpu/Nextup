@@ -1811,3 +1811,217 @@ footer {
 .apply-pre {
   white-space: pre-wrap;
 }
+
+/* ---- admin console ---- */
+
+/* Sticky because the queue is long: an admin acting on the fifth application
+   needs the result of that action visible without scrolling anywhere. */
+.admin-status {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--ink-2);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--brass);
+}
+.admin-status .wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+.admin-status span {
+  flex: 1;
+  font-size: 14px;
+  color: var(--brass);
+}
+.admin-status button {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--paper-dim);
+  border-radius: 100px;
+  padding: 7px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin-card {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 18px;
+  background: var(--ink-2);
+}
+.admin-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.admin-card-head h3 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+.admin-meta {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.admin-dl {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 10px 20px;
+  margin: 0 0 20px;
+}
+.admin-dl dt {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-top: 2px;
+}
+.admin-dl dd {
+  margin: 0;
+  font-size: 14.5px;
+  color: var(--paper-dim);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 560px) {
+  .admin-dl {
+    grid-template-columns: 1fr;
+    gap: 2px 0;
+  }
+  .admin-dl dd {
+    margin-bottom: 12px;
+  }
+}
+.admin-notes {
+  max-width: 640px;
+  margin-bottom: 18px;
+}
+.admin-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.admin-actions .back-btn {
+  font-size: 12px;
+  padding: 10px 20px;
+}
+.admin-onboard {
+  margin-left: auto;
+}
+.admin-done {
+  margin-left: auto;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--good);
+}
+@media (max-width: 560px) {
+  .admin-onboard,
+  .admin-done {
+    margin-left: 0;
+  }
+}
+
+.admin-flags {
+  display: grid;
+  gap: 14px;
+}
+.admin-flag {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 22px 24px;
+  background: var(--ink-2);
+}
+.admin-flag-key {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: var(--paper);
+  margin-bottom: 8px;
+}
+/* At phone width the flag description was squeezed into a ~150px column by the
+   toggle sitting beside it. Stack instead — the button is small, the prose isn't. */
+@media (max-width: 560px) {
+  .admin-flag {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+}
+.admin-flag p {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: var(--paper-dim);
+  line-height: 1.6;
+  max-width: 70ch;
+}
+
+.admin-audit {
+  border-top: 1px solid var(--line);
+}
+.audit-row {
+  display: grid;
+  grid-template-columns: 190px 200px 1fr;
+  gap: 8px 20px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13.5px;
+  align-items: baseline;
+}
+.audit-when {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.audit-action {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  color: var(--brass);
+}
+.audit-actor {
+  color: var(--paper-dim);
+  overflow-wrap: anywhere;
+}
+.audit-detail {
+  grid-column: 3;
+  color: var(--muted);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11.5px;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 820px) {
+  .audit-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .audit-detail {
+    grid-column: 1;
+  }
+}
+
+/* .filter-chip doubles as an action button here, so it needs a disabled look.
+   Must stay after the base .filter-chip rules — same specificity, source order
+   decides (see the .nav-cta cascade collision in the Cycle 11 log). */
+.filter-chip:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

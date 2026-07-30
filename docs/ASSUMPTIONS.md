@@ -81,3 +81,13 @@ Phase 4 calls for artist onboarding (self-serve signup, verification submission)
 The original reasoning ("a form nobody can review would be fake functionality") was also wrong on its own terms: `withdrawal_requests` had already established the honest pattern for exactly this shape of problem — real row, real state machine, manual fulfillment documented rather than pretended. Applications fit it precisely, so there was never a reason to wait for Phase 6.
 
 `/apply` now exists with a real `artist_applications` table. Manual review remains a manual step (documented, not hidden), and acceptance still doesn't auto-grant a dashboard — an `artist_members` row does, which stays a deliberate operator action.
+
+**Update 2 (Cycle 13) — this entry is now resolved.** `/admin` exists. Reviewing an application, and turning an accepted one into a real artist page, are both buttons an admin presses rather than SQL an operator writes. "Create artist page" does the whole grant in one transaction: the `artists` row, its bonding curve, the applicant's `owner` membership, `claimed_by_user_id`, the accepted status, and an audit row. So the deliberate operator action described above is still deliberate — it's still a person deciding, and nothing happens automatically on acceptance — but it is no longer hand-written SQL, and it can no longer half-succeed. What remains manual and stated as such: emailing the applicant (the console shows the address), and granting the `admin`/`curator` roles themselves.
+
+## 11. `admin` is granted in SQL, and there is no UI for it
+
+The console can create artist teams but not admins or curators. That is a decision, not an omission: a UI that mints admins is a privilege-escalation surface, and there is no second-person approval, no self-demotion guard, and no admin-count floor to make it safe. With exactly one operator today, the feature would be all risk and no benefit.
+
+Practically, someone has to be first regardless — `auth.users` is empty right now, so there is no account to promote and no admin to do the promoting. `docs/DEPLOYMENT.md` documents the exact statement, and it stays a two-step ritual on purpose: sign in once through the real magic-link flow, then insert the row.
+
+**If wrong**: once there is more than one operator and the tedium is real, the safe version is a role-grant surface that refuses to remove your own admin role and refuses to drop the admin count below one — both cheap to add to `admin_set_role` when it's written.

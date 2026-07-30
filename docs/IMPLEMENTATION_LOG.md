@@ -4,6 +4,45 @@ Newest entry first. Each entry follows the master prompt's §31 working-cycle fo
 
 ---
 
+## Cycle 13 — Phase 6: the admin console
+
+**Slice**: Founder: "Start the next slice and keep doing it until there's a big enough change for a new preview." The next slice in `docs/ARCHITECTURE.md`'s sequence is Phase 6, the internal platform — and it was also the thing standing between Cycle 12's applications and anyone being able to act on them. `/apply` was collecting real rows into a queue nobody could open without a SQL client.
+
+**What it does**: `/admin` is the second role-gated surface, and the first gated on a granted platform role rather than team membership. Three sections:
+
+- **Application queue** — filtered by what needs a decision (open / accepted / declined, with counts). Each card shows the whole application plus the applicant's email, because the review workflow ends in "we email you" and a queue that can't tell you who to write to can't finish its job. Set a status, leave a note the applicant sees on `/apply`, or press **Create artist page**.
+- **Feature flags** — real toggles on the real `feature_flags` rows, including `regulated_offerings`, the switch that hides or shows the entire Buy/Sell surface site-wide.
+- **Audit log** — newest 50, with actor emails resolved.
+
+**"Create artist page" is the interesting one.** It is the whole onboarding step in one transaction: slugify the artist name (with a uniqueness loop for collisions), insert the `artists` row and its bonding curve, insert the applicant's `artist_members` `owner` row, set `claimed_by_user_id`, mark the application accepted, link it back via the new `onboarded_artist_id`, and write an audit row. Before this, `docs/ASSUMPTIONS.md` #10 said memberships were "granted manually by the founder/operator via SQL" — five statements that had to be right and in the right order, by hand, per artist. It's a button now, and it either does all of it or none of it.
+
+**Database** (migrations `admin_console_foundation`, `admin_functions_revoke_public`, `admin_console_reads`): `audit_log` (admin-read; `INSERT`/`UPDATE`/`DELETE` revoked from `anon`/`authenticated` with no policy granting them back — an admin cannot edit or erase their own trail through the API); `artist_applications.onboarded_artist_id`; and five `SECURITY DEFINER` functions — `admin_review_application`, `admin_onboard_application`, `admin_set_feature_flag`, `admin_list_applications`, `admin_list_audit`.
+
+**A grant pattern that had to go the opposite direction.** Every prior definer function in this project is `service_role`-only, because they take `user_id` as an argument and would otherwise let a caller act as anyone. These five take no user id at all: they read `auth.uid()` themselves and raise `not authorised` unless that user holds `admin`. That inverts the correct grant — `authenticated` needs `EXECUTE` or a real admin's browser can't call them, and the in-function check is the actual gate. The rule was never "always `service_role`"; it is **never let the caller assert who they are**. Written up properly in `docs/SECURITY.md`, because "always `service_role`" was the wrong summary sitting in that doc and following it literally would have produced either an unusable console or an unsafe one.
+
+**And the exact mirror of the Cycle 1 near-miss, made fresh.** I locked the three write functions down with `revoke execute ... from anon, authenticated` — the Cycle 1 fix minus one word — and the advisor immediately flagged all three as anon-callable, because `anon` inherits `EXECUTE` through the `PUBLIC` grant that revoke never touched. Cycle 1 was `REVOKE FROM PUBLIC` leaving the direct grants behind; this was `REVOKE FROM anon` leaving `PUBLIC` behind. Same root cause from the other side. Fixed in `admin_functions_revoke_public`, and the doc now says to name all three roles every time rather than trusting whichever one bit last.
+
+**The read functions exist for one column, not for row visibility.** RLS already lets an admin select every application and every audit row. The email isn't in either table — it's in `auth.users`, which no client-facing policy can expose — so `admin_list_applications`/`admin_list_audit` do that join inside a definer function. Worth stating because "add an RPC" is usually the lazy answer to an RLS problem, and here RLS was already right.
+
+**Verified — six probes, all in rolled-back transactions with synthetic `auth.users` rows and forged JWT claims:**
+
+- Non-admin calls `admin_review_application` → `ERROR: P0001: not authorised`. ✓
+- Non-admin calls `admin_list_applications` / `admin_list_audit` → same. ✓
+- Non-admin selects from `audit_log` → **0 rows**. ✓
+- Admin onboards end to end → `{"slug":"kite-season","curve_rows":1,"member_role":"owner","app_status":"accepted","linked":true,"audit_rows":1}` — slug correctly derived from "Kite Season!". ✓
+- Onboarding the same application twice → `ERROR: P0001: this application already has an artist page`. ✓
+- Grant table swept directly (`has_function_privilege`): all five functions `anon=false`, `authenticated=true`. ✓
+
+Advisor: the two long-accepted lints, plus five `authenticated_security_definer_function_executable` warnings that are the intended design — documented rather than silently ignored.
+
+**Frontend**: a `useRoles` hook (a display signal only — it decides whether the nav link is worth rendering; every action is re-checked server-side, so faking it in devtools yields a page of buttons that all answer "not authorised"). `/admin` route, admin-only nav link, and a sticky result bar, because an admin acting on the fifth card in a queue will not scroll to the footer to find out whether it worked. Non-admins who type the URL get an honest refusal that points artists at the dashboard — no request flow is offered, because none exists.
+
+**Screenshots**: the harness now covers `/admin` at desktop and 390px, the non-admin refusal, and a third `navStrip` run with the admin link present — the nav gained a fourth link this cycle, which is exactly the change that produced the blob in Cycle 11. Mocking RPC meant teaching the harness that `/rest/v1/rpc/*` is a POST, and returning a real `P0001` for non-admins so the denied screenshot proves the denied path rather than an empty admin page.
+
+**Deliberately not built**: a UI to grant `admin`/`curator`. A console that mints admins is a privilege-escalation surface, and there's no second-person approval, self-demotion guard, or admin-count floor to make it safe with one operator — `docs/ASSUMPTIONS.md` #11 states that, and `docs/DEPLOYMENT.md` gives the SQL for the first admin, which has to be SQL regardless since `auth.users` is empty until someone signs in. Also absent: moderation (nothing user-generated exists to moderate), a withdrawal-fulfillment queue (still the `update ... set status='paid'` documented in `docs/DEPLOYMENT.md`), and jurisdiction enforcement (`jurisdiction_rules` remains a stub nothing reads).
+
+---
+
 ## Cycle 12 — `/apply`: artist applications, and a dead end I had created
 
 **Slice**: Founder: "Where's the apply as an artist page". It didn't exist — I deferred artist onboarding in Cycle 9 (`docs/ASSUMPTIONS.md` #10). But the deferral had a consequence I hadn't checked: **the FAQ answer and the dashboard's empty state both told artists to "join the waitlist and note that you're an artist", and the waitlist form is a single email field with nowhere to note anything.** Two instructions on the live site that could not be followed. That is the "every visible action must work" rule broken by my own copy, not by a missing feature.
