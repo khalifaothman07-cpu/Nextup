@@ -41,7 +41,9 @@ export function Home() {
     Promise.all([
       supabase
         .from("artists")
-        .select("id, slug, name, genre, accent_from, accent_to, follower_count")
+        .select(
+          "id, slug, name, genre, city, accent_from, accent_to, follower_count",
+        )
         .order("sort_order", { ascending: true }),
       fetchLatestMomentum(),
     ]).then(([{ data, error }, momentumMap]) => {
@@ -70,9 +72,8 @@ export function Home() {
             Back artists <em>before</em> everyone else does.
           </h1>
           <p className="lede">
-            Nextup surfaces unsigned and rising artists before the industry
-            does. Back the ones you believe in — or own their songs outright —
-            and hold a piece of what happens next.
+            Find artists before the industry does. Back them, or own their songs
+            outright.
           </p>
           <WaitlistForm source="hero" />
           <div className="fineprint">
@@ -103,42 +104,37 @@ export function Home() {
               <div className="grad"></div>
               <div className="top">
                 <div>
-                  <div className="name">Marra Vale</div>
-                  <div className="tag">R&amp;B / ALT · SÃO PAULO</div>
+                  <div className="name">Bruno Mars</div>
+                  <div className="tag">Pop / Funk · Honolulu</div>
                 </div>
-                <div className="up">▲ 212%</div>
+                <div className="up">▲ 43</div>
               </div>
               <div className="hint">Tap to preview profile</div>
               <div className="discs">
                 <div className="disc-wrap">
                   <div className="disc"></div>
-                  <span>Salt Water</span>
+                  <span>Die With A Smile</span>
                 </div>
                 <div className="disc-wrap">
                   <div className="disc"></div>
-                  <span>Low Tide</span>
+                  <span>Leave The Door Open</span>
                 </div>
                 <div className="disc-wrap">
                   <div className="disc"></div>
-                  <span>25th &amp; Gray</span>
+                  <span>Locked Out Of Heaven</span>
                 </div>
               </div>
             </div>
 
             <div className="signature-copy" data-reveal>
               <div className="eyebrow">The moment</div>
-              <h3>Every artist has a profile that plays before you decide.</h3>
+              <h3>You hear it before you back it.</h3>
               <p>
-                Open a profile and their three biggest tracks are already
-                spinning. No streaming app detour, no guesswork — you hear
-                exactly what you'd be backing, right where you decide to back
-                it.
+                Open a profile and the tracks are already spinning — no
+                streaming-app detour between hearing an artist and backing one.
               </p>
               <p className="muted">
-                This is a live preview of that exact screen.{" "}
-                <Link to="/artist/marra-vale">
-                  Open Marra Vale's real profile →
-                </Link>
+                <Link to="/artist/bruno-mars">Open a real profile →</Link>
               </p>
             </div>
           </div>
@@ -147,62 +143,32 @@ export function Home() {
 
       <section>
         <div className="wrap">
-          <div className="section-head" data-reveal>
-            <div className="eyebrow">Explore Nextup</div>
-            <h2>Everything, one click deeper.</h2>
-            <p>
-              Each of these is its own full page — not a summary standing in for
-              one.
-            </p>
-          </div>
-          <div className="teaser-row" data-reveal style={{ marginBottom: 20 }}>
-            <Link className="teaser-card" to="/how-it-works">
-              <div className="tk">Product</div>
-              <h3>How it works</h3>
-              <p>
-                Discover, spin, and the two ways to own a piece of an artist's
-                rise.
-              </p>
-              <span className="go">Read more →</span>
+          <nav className="index-list" data-reveal aria-label="Site sections">
+            <Link to="/how-it-works">
+              <span>How it works</span>
+              <em>Discover, back, own</em>
             </Link>
-            <Link className="teaser-card" to="/pricing">
-              <div className="tk">Product</div>
-              <h3>Pricing</h3>
-              <p>
-                No tiers — a flat price per song, live-priced backing, and the
-                real minimums.
-              </p>
-              <span className="go">See pricing →</span>
+            <Link to="/pricing">
+              <span>Pricing</span>
+              <em>Flat per song, live-priced backing</em>
             </Link>
-            <Link className="teaser-card" to="/discover">
-              <div className="tk">Product</div>
-              <h3>Discover artists</h3>
-              <p>The full roster, live from the platform.</p>
-              <span className="go">Browse roster →</span>
+            <Link to="/discover">
+              <span>Discover</span>
+              <em>The full roster</em>
             </Link>
-          </div>
-          <div className="teaser-row" data-reveal>
-            <Link className="teaser-card" to="/about">
-              <div className="tk">Company</div>
-              <h3>About Nextup</h3>
-              <p>Why we built this instead of another streaming app.</p>
-              <span className="go">Read more →</span>
+            <Link to="/apply">
+              <span>Apply as an artist</span>
+              <em>Pre-launch intake</em>
             </Link>
-            <Link className="teaser-card" to="/faq">
-              <div className="tk">Company</div>
-              <h3>FAQ</h3>
-              <p>
-                Backing, ownership, deposits, withdrawals — answered plainly.
-              </p>
-              <span className="go">Read FAQ →</span>
+            <Link to="/about">
+              <span>About</span>
+              <em>Why we built this</em>
             </Link>
-            <Link className="teaser-card" to="/press">
-              <div className="tk">Company</div>
-              <h3>Press &amp; media</h3>
-              <p>Writing about Nextup? Start here.</p>
-              <span className="go">Get in touch →</span>
+            <Link to="/faq">
+              <span>FAQ</span>
+              <em>Backing, ownership, withdrawals</em>
             </Link>
-          </div>
+          </nav>
         </div>
       </section>
 
@@ -210,7 +176,7 @@ export function Home() {
         <div className="wrap">
           <div className="section-head" data-reveal>
             <div className="eyebrow">On Nextup right now</div>
-            <h2>A few artists getting backed early.</h2>
+            <h2>Getting backed early.</h2>
             <p>
               <Link to="/discover">Browse the full roster →</Link>
             </p>

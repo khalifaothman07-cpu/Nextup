@@ -1,16 +1,159 @@
-:root {
-  --ink: #0b0b0c;
-  --ink-2: #141416;
-  --paper: #f3f1ec;
-  --paper-dim: #c9c7c0;
-  --brass: #c6a15b;
-  --muted: #8a8a8e;
-  --violet: #8b5cf6;
-  --coral: #ff6b57;
-  --good: #7ddc9a;
-  --line: rgba(243, 241, 236, 0.12);
-  --maxw: 1180px;
+/* Self-hosted, not CDN-linked. Three reasons: the render must not depend on a
+   third party being reachable; the screenshot harness renders the real faces
+   instead of silently falling back to Arial (which is exactly what it did the
+   first time, and made the redesign impossible to judge); and no font request
+   leaves the user's browser to another origin. Latin subsets, ~113 KB total. */
+@font-face {
+  font-family: "Anybody";
+  font-weight: 400 900;
+  font-stretch: 75% 150%;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/anybody-var.woff2") format("woff2-variations");
 }
+@font-face {
+  font-family: "Public Sans";
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/publicsans-var.woff2") format("woff2-variations");
+}
+@font-face {
+  font-family: "DM Mono";
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/dmmono-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "DM Mono";
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/dmmono-500.woff2") format("woff2");
+}
+
+/* =====================================================================
+   Design tokens — §5 visual identity.
+   "2000s Nintendo hardware meets a 2026 financial market interface."
+
+   Dark: near-black ground, matte charcoal surfaces, one controlled green.
+   Light: cream ground, dark text, deep red accent.
+
+   Every legacy variable (--ink, --brass, --paper...) is aliased onto the new
+   palette at the bottom of each theme block, so the ~2000 lines of component
+   CSS written against the old names re-skin without being rewritten. New code
+   should use the semantic names.
+   ===================================================================== */
+:root {
+  /* grounds and surfaces */
+  --ground: #0a0b0a;
+  --surface: #141713;
+  --surface-2: #1c201b;
+  --raise: #252a24;
+  --edge: rgba(230, 234, 227, 0.13);
+  --edge-hi: rgba(230, 234, 227, 0.26);
+
+  /* text */
+  --text: #e6eae3;
+  --dim: #a8aea3;
+  --soft: #7b8276;
+
+  /* accent — controlled green, the only saturated colour in the dark theme */
+  --accent: #4fd37a;
+  --accent-deep: #1e7a47;
+  --accent-ink: #08170e;
+
+  /* semantic state, deliberately separate from the accent hue */
+  --up: #4fd37a;
+  --down: #e8705c;
+  --warn: #d9a441;
+
+  --shadow: 0 10px 24px rgba(0, 0, 0, 0.38);
+  --maxw: 1180px;
+
+  /* type */
+  --display: "Anybody", "Arial Black", Helvetica, sans-serif;
+  --body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --data: "DM Mono", ui-monospace, "SF Mono", Consolas, monospace;
+
+  /* legacy aliases */
+  --ink: var(--ground);
+  --ink-2: var(--surface);
+  --paper: var(--text);
+  --paper-dim: var(--dim);
+  --brass: var(--accent);
+  --muted: var(--soft);
+  --violet: var(--accent-deep);
+  --coral: var(--down);
+  --good: var(--up);
+  --line: var(--edge);
+  --header-bg: rgba(10, 11, 10, 0.86);
+}
+
+/* The viewer's OS preference is the default signal... */
+@media (prefers-color-scheme: light) {
+  :root {
+    --ground: #f1ece0;
+    --surface: #fbf7ee;
+    --surface-2: #e9e2d3;
+    --raise: #fffdf7;
+    --edge: rgba(25, 26, 23, 0.14);
+    --edge-hi: rgba(25, 26, 23, 0.3);
+    --text: #191a17;
+    --dim: #4a4a43;
+    --soft: #757266;
+    --accent: #a32c24;
+    --accent-deep: #7a1e18;
+    --accent-ink: #fdf8f0;
+    --up: #1f7a4d;
+    --down: #b3462f;
+    --warn: #8a6414;
+    --shadow: 0 10px 22px rgba(60, 48, 30, 0.16);
+    --header-bg: rgba(241, 236, 224, 0.88);
+  }
+}
+
+/* ...and an explicit choice always wins over it, in both directions. */
+:root[data-theme="dark"] {
+  --ground: #0a0b0a;
+  --surface: #141713;
+  --surface-2: #1c201b;
+  --raise: #252a24;
+  --edge: rgba(230, 234, 227, 0.13);
+  --edge-hi: rgba(230, 234, 227, 0.26);
+  --text: #e6eae3;
+  --dim: #a8aea3;
+  --soft: #7b8276;
+  --accent: #4fd37a;
+  --accent-deep: #1e7a47;
+  --accent-ink: #08170e;
+  --up: #4fd37a;
+  --down: #e8705c;
+  --warn: #d9a441;
+  --shadow: 0 10px 24px rgba(0, 0, 0, 0.38);
+  --header-bg: rgba(10, 11, 10, 0.86);
+}
+:root[data-theme="light"] {
+  --ground: #f1ece0;
+  --surface: #fbf7ee;
+  --surface-2: #e9e2d3;
+  --raise: #fffdf7;
+  --edge: rgba(25, 26, 23, 0.14);
+  --edge-hi: rgba(25, 26, 23, 0.3);
+  --text: #191a17;
+  --dim: #4a4a43;
+  --soft: #757266;
+  --accent: #a32c24;
+  --accent-deep: #7a1e18;
+  --accent-ink: #fdf8f0;
+  --up: #1f7a4d;
+  --down: #b3462f;
+  --warn: #8a6414;
+  --shadow: 0 10px 22px rgba(60, 48, 30, 0.16);
+  --header-bg: rgba(241, 236, 224, 0.88);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -21,7 +164,7 @@ body {
   margin: 0;
   background: var(--ink);
   color: var(--paper);
-  font-family: "Inter", sans-serif;
+  font-family: var(--body);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
@@ -34,29 +177,25 @@ h1,
 h2,
 h3,
 .display {
-  font-family: "Archivo Black", sans-serif;
-  text-transform: uppercase;
-  letter-spacing: -0.01em;
-  line-height: 0.98;
+  font-family: var(--display);
+  font-weight: 800;
+  font-stretch: 128%;
+  letter-spacing: -0.018em;
+  line-height: 0.96;
   margin: 0;
   text-wrap: balance;
 }
-.eyebrow {
-  font-family: "JetBrains Mono", monospace;
-  font-size: 12px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--brass);
-  display: flex;
-  align-items: center;
-  gap: 10px;
+h2,
+h3 {
+  font-weight: 700;
+  font-stretch: 116%;
 }
-.eyebrow::before {
-  content: "";
-  width: 14px;
-  height: 1px;
-  background: var(--brass);
-  display: inline-block;
+.eyebrow {
+  font-family: var(--data);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
 }
 a {
   color: inherit;
@@ -83,9 +222,11 @@ a {
   display: block;
 }
 .mark span {
-  font-family: "Archivo Black", sans-serif;
-  font-size: 18px;
-  letter-spacing: 0.02em;
+  font-family: var(--display);
+  font-weight: 800;
+  font-stretch: 140%;
+  font-size: 17px;
+  letter-spacing: 0.01em;
   text-transform: uppercase;
 }
 
@@ -94,7 +235,7 @@ header {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(11, 11, 12, 0.82);
+  background: var(--header-bg);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--line);
@@ -167,7 +308,7 @@ nav.wrap {
   }
 }
 .nav-cta {
-  font-family: "Archivo", sans-serif;
+  font-family: var(--display);
   font-weight: 600;
   font-size: 13px;
   white-space: nowrap;
@@ -215,7 +356,7 @@ nav.wrap {
   border-radius: 100px;
   padding: 9px 14px;
   color: var(--paper);
-  font-family: "Inter", sans-serif;
+  font-family: var(--body);
   font-size: 13px;
   outline: none;
   width: 170px;
@@ -224,7 +365,7 @@ nav.wrap {
   border-color: var(--brass);
 }
 .auth-btn {
-  font-family: "Archivo", sans-serif;
+  font-family: var(--display);
   font-weight: 600;
   font-size: 12px;
   letter-spacing: 0.05em;
@@ -242,7 +383,7 @@ nav.wrap {
   color: var(--brass);
 }
 .auth-note {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 10.5px;
   color: var(--muted);
   position: absolute;
@@ -255,7 +396,7 @@ nav.wrap {
   min-width: 0;
 }
 .auth-email {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 12px;
   color: var(--paper-dim);
   overflow: hidden;
@@ -268,7 +409,7 @@ nav.wrap {
   border: none;
   color: var(--muted);
   text-decoration: underline;
-  font-family: "Inter", sans-serif;
+  font-family: var(--body);
   font-size: 12px;
   cursor: pointer;
   padding: 0;
@@ -287,17 +428,13 @@ nav.wrap {
 .hero-grain {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(
-      600px 400px at 82% -10%,
-      rgba(139, 92, 246, 0.16),
-      transparent 60%
-    ),
-    radial-gradient(
-      500px 380px at 100% 30%,
-      rgba(255, 107, 87, 0.1),
-      transparent 60%
-    );
+  /* One accent-tinted wash, low opacity. The old version layered violet and
+     coral gradients from a palette that no longer exists. */
+  background: radial-gradient(
+    620px 420px at 88% -8%,
+    color-mix(in srgb, var(--accent) 14%, transparent),
+    transparent 62%
+  );
   pointer-events: none;
 }
 .hero-inner {
@@ -336,7 +473,7 @@ nav.wrap {
   border-radius: 100px;
   padding: 15px 20px;
   color: var(--paper);
-  font-family: "Inter", sans-serif;
+  font-family: var(--body);
   font-size: 15px;
   outline: none;
 }
@@ -347,7 +484,7 @@ nav.wrap {
   border-color: var(--brass);
 }
 .waitlist button {
-  font-family: "Archivo", sans-serif;
+  font-family: var(--display);
   font-weight: 700;
   font-size: 14px;
   letter-spacing: 0.04em;
@@ -381,7 +518,7 @@ nav.wrap {
 }
 .fineprint {
   margin-top: 14px;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11.5px;
   color: var(--muted);
   letter-spacing: 0.02em;
@@ -476,19 +613,19 @@ section {
   align-items: flex-start;
 }
 .card .top .name {
-  font-family: "Archivo Black", sans-serif;
+  font-family: var(--display);
   font-size: 20px;
   text-transform: uppercase;
 }
 .card .top .tag {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 10.5px;
   color: rgba(255, 255, 255, 0.75);
   letter-spacing: 0.08em;
   margin-top: 4px;
 }
 .card .up {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 12px;
   background: rgba(0, 0, 0, 0.32);
   padding: 5px 9px;
@@ -546,7 +683,7 @@ section {
 }
 .disc-wrap span {
   display: block;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 9.5px;
   color: rgba(255, 255, 255, 0.72);
   margin-top: 8px;
@@ -570,7 +707,7 @@ section {
   left: 18px;
   right: 18px;
   text-align: center;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11px;
   color: rgba(255, 255, 255, 0.6);
   letter-spacing: 0.08em;
@@ -616,7 +753,7 @@ section {
   padding: 36px 30px 40px;
 }
 .flow-item .fk {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11px;
   color: var(--brass);
   letter-spacing: 0.14em;
@@ -659,7 +796,7 @@ section {
   }
 }
 .side .letter {
-  font-family: "Archivo Black", sans-serif;
+  font-family: var(--display);
   font-size: 13px;
   color: var(--muted);
   letter-spacing: 0.1em;
@@ -711,53 +848,8 @@ section {
   background: var(--line);
   border-radius: 10px;
 }
-.rcard {
-  flex: 0 0 220px;
-  scroll-snap-align: start;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 20px;
-  background: var(--ink-2);
-  text-decoration: none;
-  display: block;
-  transition:
-    border-color 0.18s ease,
-    transform 0.18s ease;
-}
-.rcard:hover {
-  border-color: var(--brass);
-  transform: translateY(-2px);
-}
-.rcard .swatch {
-  width: 100%;
-  aspect-ratio: 1/1;
-  border-radius: 10px;
-  margin-bottom: 16px;
-}
-.rcard h4 {
-  font-family: "Archivo", sans-serif;
-  font-weight: 700;
-  font-size: 16px;
-  text-transform: uppercase;
-  margin: 0 0 4px;
-}
-.rcard .genre {
-  font-family: "JetBrains Mono", monospace;
-  font-size: 11px;
-  color: var(--muted);
-}
-.rcard .stat {
-  margin-top: 14px;
-  display: flex;
-  justify-content: space-between;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 12px;
-}
-.rcard .stat .g {
-  color: var(--good);
-}
 .roster-row.loading {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 12px;
   color: var(--muted);
 }
@@ -786,19 +878,19 @@ section {
   border-color: var(--brass);
 }
 .tier .tk {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11px;
   color: var(--brass);
   letter-spacing: 0.14em;
 }
 .tier .amount {
-  font-family: "Archivo Black", sans-serif;
+  font-family: var(--display);
   font-size: 40px;
   text-transform: none;
 }
 .tier .amount span {
   font-size: 15px;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   color: var(--muted);
   text-transform: uppercase;
   margin-left: 6px;
@@ -830,7 +922,7 @@ section {
 }
 .tiers-note {
   margin-top: 24px;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 12px;
   color: var(--muted);
 }
@@ -857,7 +949,7 @@ section {
   justify-content: space-between;
   align-items: center;
   gap: 20px;
-  font-family: "Archivo", sans-serif;
+  font-family: var(--display);
   font-weight: 600;
   font-size: 15.5px;
 }
@@ -866,7 +958,7 @@ section {
 }
 .faq summary::after {
   content: "+";
-  font-family: "Archivo Black", sans-serif;
+  font-family: var(--display);
   font-size: 20px;
   color: var(--brass);
   flex-shrink: 0;
@@ -912,11 +1004,11 @@ section {
   padding-left: 18px;
 }
 .about-stat .n {
-  font-family: "Archivo Black", sans-serif;
+  font-family: var(--display);
   font-size: 32px;
 }
 .about-stat .l {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11.5px;
   color: var(--muted);
   letter-spacing: 0.08em;
@@ -981,7 +1073,7 @@ footer {
   flex-wrap: wrap;
 }
 .foot-col h5 {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11px;
   letter-spacing: 0.1em;
   color: var(--muted);
@@ -1006,14 +1098,14 @@ footer {
   gap: 12px;
 }
 .legal {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11px;
   color: var(--muted);
   max-width: 640px;
   line-height: 1.6;
 }
 .copy {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11px;
   color: var(--muted);
   white-space: nowrap;
@@ -1033,7 +1125,7 @@ footer {
 
 /* ---- artist profile page ---- */
 .breadcrumb {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 12px;
   color: var(--muted);
   text-decoration: none;
@@ -1064,7 +1156,7 @@ footer {
   border: 1px solid var(--line);
 }
 .artist-meta .genre-city {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 12.5px;
   color: var(--muted);
   letter-spacing: 0.05em;
@@ -1093,7 +1185,7 @@ footer {
   align-items: center;
   gap: 6px;
   margin-top: 20px;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 13px;
   background: rgba(125, 220, 154, 0.1);
   color: var(--good);
@@ -1120,18 +1212,18 @@ footer {
   border-bottom: none;
 }
 .track-title {
-  font-family: "Archivo", sans-serif;
+  font-family: var(--display);
   font-weight: 600;
   font-size: 15.5px;
 }
 .track-price {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 12.5px;
   color: var(--muted);
   margin-top: 4px;
 }
 .track-buy {
-  font-family: "Archivo", sans-serif;
+  font-family: var(--display);
   font-weight: 700;
   font-size: 12.5px;
   letter-spacing: 0.04em;
@@ -1152,7 +1244,7 @@ footer {
   cursor: default;
 }
 .track-owned {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11.5px;
   color: var(--good);
   flex-shrink: 0;
@@ -1183,7 +1275,7 @@ footer {
   margin-bottom: 16px;
 }
 .amount-chip {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 13.5px;
   background: var(--ink);
   border: 1px solid var(--line);
@@ -1197,7 +1289,7 @@ footer {
   color: var(--brass);
 }
 .back-btn {
-  font-family: "Archivo", sans-serif;
+  font-family: var(--display);
   font-weight: 700;
   font-size: 14px;
   letter-spacing: 0.04em;
@@ -1224,7 +1316,7 @@ footer {
 }
 
 .price-ticker {
-  font-family: "Archivo Black", sans-serif;
+  font-family: var(--display);
   font-size: 32px;
   margin: 4px 0 16px;
 }
@@ -1233,7 +1325,7 @@ footer {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 12.5px;
   color: var(--paper-dim);
   border: 1px solid var(--line);
@@ -1242,7 +1334,7 @@ footer {
   margin-bottom: 16px;
 }
 .wallet-add-btn {
-  font-family: "Archivo", sans-serif;
+  font-family: var(--display);
   font-weight: 600;
   font-size: 11.5px;
   letter-spacing: 0.04em;
@@ -1266,7 +1358,7 @@ footer {
 }
 .direction-btn {
   flex: 1;
-  font-family: "Archivo", sans-serif;
+  font-family: var(--display);
   font-weight: 700;
   font-size: 13px;
   letter-spacing: 0.03em;
@@ -1357,7 +1449,7 @@ footer {
   transform: translateY(-2px);
 }
 .teaser-card .tk {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11px;
   letter-spacing: 0.08em;
   color: var(--brass);
@@ -1375,7 +1467,7 @@ footer {
 .teaser-card .go {
   display: inline-block;
   margin-top: 14px;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 12px;
   color: var(--paper);
 }
@@ -1385,7 +1477,7 @@ footer {
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 20px;
 }
-.discover-grid .rcard {
+.discover-grid .cart {
   flex: unset;
   width: 100%;
   scroll-snap-align: unset;
@@ -1417,7 +1509,7 @@ footer {
   margin-bottom: 6px;
 }
 .content-page .updated {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 12px;
   color: var(--muted);
   margin-bottom: 32px;
@@ -1428,7 +1520,7 @@ footer {
 
 /* ---- discovery: nav link, filters, follow, momentum ---- */
 .nav-link {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1468,7 +1560,7 @@ footer {
   flex-wrap: wrap;
 }
 .filter-chip {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1485,7 +1577,7 @@ footer {
   border-color: var(--paper);
 }
 .sort-select {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1501,7 +1593,7 @@ footer {
   border-color: var(--brass);
 }
 .results-note {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 12px;
   color: var(--muted);
   margin-top: 28px;
@@ -1538,7 +1630,7 @@ footer {
   cursor: default;
 }
 .follow-note {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 12px;
   color: var(--brass);
 }
@@ -1552,7 +1644,7 @@ footer {
   max-width: 560px;
 }
 .mp-head {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11px;
   letter-spacing: 0.08em;
   color: var(--brass);
@@ -1565,7 +1657,7 @@ footer {
   color: var(--muted);
 }
 .mp-score {
-  font-family: "Archivo Black", "Archivo", sans-serif;
+  font-family: var(--display);
   font-size: 36px;
   color: var(--good);
   margin: 12px 0 4px;
@@ -1583,7 +1675,7 @@ footer {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 12.5px;
   color: var(--paper-dim);
 }
@@ -1604,7 +1696,7 @@ footer {
   flex-wrap: wrap;
 }
 .role-chip {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1632,11 +1724,11 @@ footer {
   padding: 22px 20px;
 }
 .dash-stat .n {
-  font-family: "Archivo Black", sans-serif;
+  font-family: var(--display);
   font-size: 26px;
 }
 .dash-stat .l {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11px;
   color: var(--muted);
   letter-spacing: 0.08em;
@@ -1657,7 +1749,7 @@ footer {
   gap: 16px;
   padding: 14px 20px;
   border-bottom: 1px solid var(--line);
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 12.5px;
 }
 .mh-row:last-child {
@@ -1691,7 +1783,7 @@ footer {
   gap: 8px;
 }
 .dash-field span {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1704,7 +1796,7 @@ footer {
   border-radius: 14px;
   padding: 12px 16px;
   color: var(--paper);
-  font-family: "Inter", sans-serif;
+  font-family: var(--body);
   font-size: 14.5px;
   outline: none;
   resize: vertical;
@@ -1746,7 +1838,7 @@ footer {
   margin-bottom: 18px;
 }
 .status-pill {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1795,7 +1887,7 @@ footer {
   }
 }
 .apply-summary dt {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1837,7 +1929,7 @@ footer {
   color: var(--brass);
 }
 .admin-status button {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1870,7 +1962,7 @@ footer {
   font-size: 20px;
 }
 .admin-meta {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11.5px;
   letter-spacing: 0.04em;
   color: var(--muted);
@@ -1882,7 +1974,7 @@ footer {
   margin: 0 0 20px;
 }
 .admin-dl dt {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1924,7 +2016,7 @@ footer {
 }
 .admin-done {
   margin-left: auto;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1952,7 +2044,7 @@ footer {
   background: var(--ink-2);
 }
 .admin-flag-key {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 13px;
   letter-spacing: 0.04em;
   color: var(--paper);
@@ -1988,12 +2080,12 @@ footer {
   align-items: baseline;
 }
 .audit-when {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11.5px;
   color: var(--muted);
 }
 .audit-action {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 12px;
   color: var(--brass);
 }
@@ -2004,7 +2096,7 @@ footer {
 .audit-detail {
   grid-column: 3;
   color: var(--muted);
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--data);
   font-size: 11.5px;
   overflow-wrap: anywhere;
 }
@@ -2024,4 +2116,528 @@ footer {
 .filter-chip:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+/* =====================================================================
+   Identity layer (§5). Loaded last so it wins over the component CSS
+   above without that CSS having to be rewritten rule by rule.
+   ===================================================================== */
+
+/* ---- the cartridge ----
+   Artist cards read as collectible hardware: a ridged grip at the top, a
+   silkscreened label panel, a connector edge at the bottom, and real travel
+   when you press it. Replaces .rcard, which was a rounded SaaS tile. */
+.cart {
+  flex: 0 0 232px;
+  scroll-snap-align: start;
+  display: block;
+  position: relative;
+  padding: 9px 9px 0;
+  background: var(--surface-2);
+  border: 1px solid var(--edge);
+  border-radius: 13px 13px 4px 4px;
+  text-decoration: none;
+  color: inherit;
+  box-shadow:
+    0 1px 0 var(--edge-hi) inset,
+    var(--shadow);
+  transition:
+    transform 0.13s cubic-bezier(0.2, 0.7, 0.3, 1),
+    box-shadow 0.13s ease,
+    border-color 0.16s ease;
+}
+.cart:hover {
+  border-color: var(--accent);
+}
+.cart:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.cart:active {
+  transform: translateY(3px);
+  box-shadow:
+    0 1px 0 var(--edge-hi) inset,
+    0 2px 6px rgba(0, 0, 0, 0.32);
+}
+.cart-ridge {
+  height: 13px;
+  margin: -3px -3px 9px;
+  border-radius: 7px 7px 0 0;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--raise) 0 4px,
+    transparent 4px 8px
+  );
+}
+.cart-label {
+  background: var(--raise);
+  border: 1px solid var(--edge);
+  border-radius: 5px;
+  padding: 12px 12px 13px;
+}
+.cart-art {
+  height: 74px;
+  border-radius: 3px;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.cart-art span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--display);
+  font-weight: 800;
+  font-stretch: 145%;
+  font-size: 34px;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.94);
+}
+.cart h4 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-stretch: 112%;
+  font-size: 17px;
+  line-height: 1.06;
+  margin: 0 0 4px;
+}
+.cart-meta {
+  font-family: var(--data);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--soft);
+}
+.cart-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 4px 11px;
+  font-family: var(--data);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--soft);
+}
+.cart-score.up {
+  color: var(--up);
+}
+/* The connector edge. Sits below the price row, inside the card's own
+   footprint — an earlier version was absolutely positioned over it. */
+.cart-pins {
+  height: 7px;
+  margin: 0 26px;
+  border-radius: 2px 2px 0 0;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--edge-hi) 0 3px,
+    transparent 3px 7px
+  );
+}
+@media (prefers-reduced-motion: reduce) {
+  .cart,
+  .cart:active {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* ---- pressable controls ----
+   A 100px radius on everything was half the generic look. Hardware keys
+   instead: small radius, a solid bottom edge, and travel on press. */
+.back-btn,
+.nav-cta,
+.auth-btn,
+.wallet-add-btn,
+.track-buy {
+  font-family: var(--display);
+  font-weight: 700;
+  font-stretch: 112%;
+  letter-spacing: 0.005em;
+  text-transform: none;
+  border-radius: 7px;
+  border: none;
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 0 3px 0 var(--accent-deep);
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease,
+    background 0.15s ease;
+}
+.back-btn:hover,
+.nav-cta:hover,
+.auth-btn:hover,
+.wallet-add-btn:hover,
+.track-buy:hover {
+  background: var(--accent);
+  transform: none;
+  filter: brightness(1.08);
+}
+.back-btn:active,
+.nav-cta:active,
+.auth-btn:active,
+.wallet-add-btn:active,
+.track-buy:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 var(--accent-deep);
+}
+.back-btn:disabled,
+.auth-btn:disabled {
+  opacity: 0.45;
+  box-shadow: 0 3px 0 var(--accent-deep);
+  transform: none;
+}
+.nav-cta {
+  padding: 10px 18px;
+  font-size: 13.5px;
+}
+
+/* chips and pills: squared off, mono, no 100px radius anywhere */
+.filter-chip,
+.role-chip,
+.status-pill,
+.amount-chip,
+.artist-stat-pill,
+.sort-select,
+.follow-btn,
+.auth-signout,
+.direction-btn {
+  font-family: var(--data);
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.filter-chip,
+.follow-btn,
+.direction-btn {
+  transition:
+    transform 0.1s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.filter-chip:active,
+.follow-btn:active,
+.direction-btn:active {
+  transform: translateY(2px);
+}
+.filter-chip.active,
+.direction-btn.active {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+}
+
+/* panels: matte, squared, no pill radii */
+.card,
+.teaser-card,
+.backing-panel,
+.momentum-panel,
+.admin-card,
+.admin-flag,
+.dash-stat,
+.about-stat,
+.tier,
+.position-row,
+.wallet-bar {
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+/* figures are data: line them up and give them the display face */
+.dash-stat .n,
+.price-ticker,
+.about-stat .n,
+.mp-score,
+.mh-score,
+.num {
+  font-family: var(--display);
+  font-weight: 700;
+  font-stretch: 120%;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.dash-stats,
+.momentum-history,
+.positions-list,
+.admin-audit,
+.mp-rows,
+table {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- theme toggle ---- */
+.theme-toggle {
+  font-family: var(--data);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid var(--edge);
+  color: var(--soft);
+  border-radius: 6px;
+  padding: 7px 10px;
+  cursor: pointer;
+  line-height: 1;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+.theme-toggle:hover {
+  color: var(--text);
+  border-color: var(--edge-hi);
+}
+
+/* ---- who you are ----
+   The founder's question was "how would I differentiate who the admin is".
+   Two answers: this badge, on every page, saying what this account is; and
+   the admin console's own chrome below. */
+.whoami {
+  font-family: var(--data);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 5px 9px;
+  border-radius: 5px;
+  border: 1px solid var(--edge-hi);
+  color: var(--soft);
+  white-space: nowrap;
+}
+.whoami.is-admin {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+.whoami.is-artist {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ---- admin console: a back office, not another page of the website ----
+   Lighter charcoal ground, a permanent striped warning band, a mono-forward
+   scale, and no marketing furniture — you should never be unsure whether
+   you are looking at the public site or the operator's console. */
+.admin-shell {
+  background: var(--surface);
+  min-height: 70vh;
+}
+.admin-band {
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--edge);
+  border-top: 3px solid var(--warn);
+}
+.admin-band .wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  font-family: var(--data);
+  font-size: 11.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--soft);
+}
+.admin-band strong {
+  color: var(--warn);
+  letter-spacing: 0.16em;
+  font-weight: 500;
+}
+.admin-band .spacer {
+  flex: 1;
+}
+.admin-shell .page-hero {
+  padding: 34px 0 22px;
+}
+.admin-shell .page-hero h1 {
+  font-size: clamp(26px, 3vw, 36px);
+}
+.admin-shell section {
+  padding: 30px 0;
+}
+.admin-shell .admin-card,
+.admin-shell .admin-flag {
+  background: var(--raise);
+}
+
+/* Admin gets a warning-coloured nav link, so the way into the back office is
+   visually distinct from the ordinary pages beside it. */
+.nav-link.is-admin {
+  color: var(--warn);
+}
+.admin-band .nav-link {
+  font-family: var(--data);
+  font-size: 11px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--soft);
+}
+.admin-band .nav-link:hover {
+  color: var(--text);
+}
+
+/* ---- section index ----
+   Replaces a six-card teaser grid (kicker / heading / blurb / "Read more →"
+   ×6) — the most templated block on the site and a lot of words to say
+   "here are the other pages". A ruled list says it in one line each. */
+.index-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 0 44px;
+  border-top: 1px solid var(--edge);
+}
+.index-list a {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 2px;
+  border-bottom: 1px solid var(--edge);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.index-list a:hover {
+  color: var(--accent);
+}
+.index-list span {
+  font-family: var(--display);
+  font-weight: 700;
+  font-stretch: 112%;
+  font-size: 17px;
+}
+.index-list em {
+  font-family: var(--data);
+  font-style: normal;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--soft);
+  text-align: right;
+}
+
+/* ---- one button system ----
+   Before this the page showed three: a green nav key, a white pill in the
+   hero, and a lowercase green "sign in" — same action, three shapes and two
+   casings. Everything that submits or commits now looks like the same key. */
+.waitlist button,
+.auth-btn,
+.back-btn,
+.nav-cta,
+.wallet-add-btn,
+.track-buy {
+  font-family: var(--display);
+  font-weight: 700;
+  font-stretch: 112%;
+  font-size: 14px;
+  letter-spacing: 0.005em;
+  text-transform: none;
+  border: none;
+  border-radius: 7px;
+  padding: 13px 22px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 0 3px 0 var(--accent-deep);
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease,
+    filter 0.15s ease;
+}
+.waitlist button:hover,
+.auth-btn:hover,
+.back-btn:hover,
+.nav-cta:hover,
+.wallet-add-btn:hover,
+.track-buy:hover {
+  filter: brightness(1.08);
+  background: var(--accent);
+  transform: none;
+}
+.waitlist button:active,
+.auth-btn:active,
+.back-btn:active,
+.nav-cta:active,
+.wallet-add-btn:active,
+.track-buy:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 var(--accent-deep);
+}
+.waitlist button:disabled,
+.auth-btn:disabled,
+.back-btn:disabled {
+  opacity: 0.45;
+  transform: none;
+  box-shadow: 0 3px 0 var(--accent-deep);
+}
+.nav-cta,
+.auth-btn {
+  padding: 10px 16px;
+  font-size: 13px;
+}
+
+/* text inputs match the keys: squared, not 100px pills */
+.waitlist input,
+.auth-input,
+.filter-search,
+.dash-field input,
+.dash-field textarea,
+.amount-row input {
+  border-radius: 7px;
+  font-family: var(--body);
+}
+
+/* ---- hero ----
+   Was clamping to 92px, which put the headline on five lines and pushed
+   everything below the fold. Anybody is a wide face; it needs less size to
+   carry the same weight. */
+.hero {
+  padding: 72px 0 52px;
+}
+.hero h1 {
+  font-size: clamp(38px, 5.2vw, 66px);
+  margin: 16px 0 22px;
+  max-width: 15ch;
+}
+/* A two-colour gradient clipped to one word was the loudest AI tell on the
+   page. The accent alone does the same job. */
+.hero h1 em {
+  font-style: normal;
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  color: var(--accent);
+}
+.hero p.lede {
+  font-size: 17.5px;
+  max-width: 46ch;
+  margin: 0 0 30px;
+}
+.fineprint {
+  font-family: var(--data);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  color: var(--soft);
+}
+
+/* ---- the signature device card ----
+   Deliberately stays dark in both themes: it is a picture of a phone showing
+   an artist profile, not a surface of the page. But it inherits page text
+   colour, which made its label vanish against the dark screen in light mode. */
+.card,
+.card .top .name,
+.card .up,
+.card .hint,
+.card .disc-wrap span {
+  color: #f2f0ea;
+}
+.card .up {
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.42);
+  color: var(--up);
+}
+.card .top .name {
+  text-transform: none;
+  font-weight: 700;
+  font-stretch: 112%;
 }

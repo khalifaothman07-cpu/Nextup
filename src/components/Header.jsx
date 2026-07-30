@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { Logo } from "./Logo.jsx";
 import { AuthWidget } from "./AuthWidget.jsx";
+import { ThemeToggle } from "./ThemeToggle.jsx";
+import { WhoAmI } from "./WhoAmI.jsx";
 import { useSession } from "../context/SessionContext.jsx";
 import { useMemberships } from "../hooks/useMemberships.js";
 import { useRoles } from "../hooks/useRoles.js";
@@ -33,20 +35,22 @@ export function Header() {
             </Link>
           )}
           {session && roles?.includes("admin") && (
-            <Link to="/admin" className="nav-link">
+            <Link to="/admin" className="nav-link is-admin">
               Admin
             </Link>
           )}
         </div>
 
         <div className="nav-right">
+          {session && <WhoAmI roles={roles} memberships={memberships} />}
           <div className="auth-widget">
             <AuthWidget />
           </div>
+          <ThemeToggle />
           {/* Nothing to offer someone who already has an account. */}
           {!session && (
             <Link to="/#waitlist" className="nav-cta">
-              Get Early Access
+              Get early access
             </Link>
           )}
         </div>

@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient.js";
 import { useSession } from "../context/SessionContext.jsx";
 import { useRoles } from "../hooks/useRoles.js";
-import { Breadcrumb } from "../components/Breadcrumb.jsx";
 import { PageHero } from "../components/PageHero.jsx";
 import { useReveal } from "../hooks/useReveal.js";
 import { usePageTitle } from "../hooks/usePageTitle.js";
@@ -118,16 +117,12 @@ export function Admin() {
   if (!session) {
     return (
       <main>
-        <Breadcrumb />
         <PageHero
           eyebrow="Admin"
           title="Sign in to open the console."
           style={{ borderBottom: "none" }}
         >
-          <p>
-            Use the sign-in form at the top of the page. The console is limited
-            to accounts holding the admin role.
-          </p>
+          <p>Sign in above. The console is limited to admin accounts.</p>
         </PageHero>
       </main>
     );
@@ -136,17 +131,15 @@ export function Admin() {
   if (!isAdmin) {
     return (
       <main>
-        <Breadcrumb />
         <PageHero
           eyebrow="Admin"
           title="This account isn't an admin."
           style={{ borderBottom: "none" }}
         >
           <p>
-            Nothing here is available to you, and there's no request flow to
-            offer — admin is granted directly in the database, not applied for.
-            If you're an artist looking for your own page, that's{" "}
-            <Link to="/dashboard">the artist dashboard</Link>.
+            Admin is granted directly in the database, not applied for. If
+            you're an artist looking for your own page, that's{" "}
+            <Link to="/dashboard">the dashboard</Link>.
           </p>
         </PageHero>
       </main>
@@ -161,17 +154,28 @@ export function Admin() {
   ).length;
 
   return (
-    <main className="app-shell">
-      <Breadcrumb />
+    <main className="app-shell admin-shell">
+      {/* The console gets its own chrome. You should never have to work out
+          whether you are on the public site or in the back office. */}
+      <div className="admin-band">
+        <div className="wrap">
+          <strong>Admin</strong>
+          <span>{session.user.email}</span>
+          <span className="spacer"></span>
+          <span>Every action is audited</span>
+          <Link to="/" className="nav-link">
+            Leave console
+          </Link>
+        </div>
+      </div>
 
-      <PageHero eyebrow="Admin console" title="Run the place.">
+      <PageHero eyebrow="Console" title="Run the place.">
         <p>
           {applications === null
             ? "Loading…"
             : openCount === 0
-              ? "No applications waiting on a decision."
-              : `${openCount} application${openCount === 1 ? "" : "s"} waiting on a decision.`}{" "}
-          Every action here writes an audit row — see the log at the bottom.
+              ? "Nothing waiting on a decision."
+              : `${openCount} application${openCount === 1 ? "" : "s"} waiting on a decision.`}
         </p>
       </PageHero>
 
@@ -314,11 +318,9 @@ export function Admin() {
           ))}
 
           <p className="results-note" data-reveal>
-            "Create artist page" is the real onboarding step: it makes the
-            artist record and its price curve, hands the applicant the owner
-            role on the team, and marks the application accepted — in one
-            transaction, once per application. Until you press it, an accepted
-            applicant has no page and no dashboard.
+            "Create artist page" builds the artist, its price curve, and the
+            applicant's owner role in one transaction. Until you press it, an
+            accepted applicant has no page and no dashboard.
           </p>
         </div>
       </section>
@@ -350,10 +352,9 @@ export function Admin() {
             {!flags.length && <p className="muted">No flags defined.</p>}
           </div>
           <p className="results-note" data-reveal>
-            Flags take effect for everyone on their next page load. Turning{" "}
+            Takes effect for everyone on their next page load. Turning{" "}
             <code>regulated_offerings</code> off hides the Buy/Sell panel
-            site-wide; it does not close anyone's open positions or touch their
-            wallet.
+            site-wide; open positions and wallets are untouched.
           </p>
         </div>
       </section>
@@ -386,9 +387,8 @@ export function Admin() {
             )}
           </div>
           <p className="results-note" data-reveal>
-            Newest 50. Rows are written by the admin functions themselves and
-            nobody — admins included — has insert, update, or delete rights on
-            this table from the client.
+            Newest 50. Append-only — nobody, admins included, can edit or delete
+            these rows.
           </p>
         </div>
       </section>
