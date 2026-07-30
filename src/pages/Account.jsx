@@ -19,6 +19,7 @@ export function Account() {
   const [nameStatus, setNameStatus] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [cancelBusyId, setCancelBusyId] = useState(null);
+  const [actionStatus, setActionStatus] = useState("");
 
   const load = useCallback(async () => {
     if (!session) {
@@ -146,9 +147,10 @@ export function Account() {
     );
     setCancelBusyId(null);
     if (error || !res?.request) {
-      alert(res?.error ?? "Could not cancel — try again.");
+      setActionStatus(res?.error ?? "Couldn't cancel — try again.");
       return;
     }
+    setActionStatus("Withdrawal cancelled — balance returned.");
     await load();
   }
 
@@ -304,6 +306,9 @@ export function Account() {
                       </p>
                     )}
                   </div>
+                  {actionStatus && (
+                    <div className="action-status">{actionStatus}</div>
+                  )}
 
                   <div
                     className="section-head"
@@ -380,24 +385,21 @@ export function Account() {
                 <h2>Songs you own</h2>
               </div>
               {data.owned.length ? (
-                <div
-                  className="track-list"
-                  data-reveal
-                  style={{ maxWidth: 640 }}
-                >
-                  {data.owned.map((t) => (
-                    <div className="track-row" key={t.id}>
-                      <div>
-                        <div className="track-title">{t.title}</div>
-                        <div className="track-price">
-                          {t.artist?.name ?? "Artist"} · owned for{" "}
-                          {formatUSD(t.purchase?.price_cents ?? 0)}
-                        </div>
-                      </div>
+                <ol className="tracks" data-reveal style={{ maxWidth: 640 }}>
+                  {data.owned.map((t, i) => (
+                    <li className="track" key={t.id}>
+                      <span className="track-n">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <span className="track-title">{t.title}</span>
+                      <span className="track-price">
+                        {t.artist?.name ?? "Artist"} ·{" "}
+                        {formatUSD(t.purchase?.price_cents ?? 0)}
+                      </span>
                       <span className="track-owned">Owned</span>
-                    </div>
+                    </li>
                   ))}
-                </div>
+                </ol>
               ) : (
                 <p className="muted" data-reveal>
                   No songs owned yet — every artist page lists theirs with a

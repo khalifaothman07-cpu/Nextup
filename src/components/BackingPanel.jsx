@@ -29,9 +29,8 @@ export function BackingPanel({ artist, slug }) {
     return (
       <div className="backing-panel">
         <h3>Backing isn't open yet</h3>
-        <p className="lede">
-          Support for {artist.name} is still being built. Join the waitlist on
-          the homepage and we'll let you know when it's ready.
+        <p className="bp-note">
+          Not live for {artist.name} yet. Join the waitlist and we'll say when.
         </p>
       </div>
     );

@@ -3,61 +3,65 @@ import { supabase } from "../lib/supabaseClient.js";
 import { formatUSD } from "../lib/format.js";
 import { useSession } from "../context/SessionContext.jsx";
 
-export function TrackList({ artist, slug, tracks, ownedSet }) {
+/**
+ * Numbered track rows, following the reference's popular-tracks column:
+ * ordinal, title, then the commercial state right-aligned. Compact enough
+ * that a full catalogue reads as a list rather than a stack of cards.
+ */
+export function TrackList({ slug, tracks, ownedSet }) {
   const { session } = useSession();
   const [buying, setBuying] = useState(null);
+  const [error, setError] = useState("");
 
   async function handleBuy(trackId) {
     if (!session) {
-      alert(
-        "Sign in at the top of the page first, then come back and try again.",
-      );
+      setError("Sign in at the top of the page, then try again.");
       return;
     }
     setBuying(trackId);
-    const { data, error } = await supabase.functions.invoke("create-charge", {
-      body: { kind: "song", track_id: trackId, slug },
-    });
-    if (error || !data?.hosted_url) {
+    setError("");
+    const { data, error: err } = await supabase.functions.invoke(
+      "create-charge",
+      { body: { kind: "song", track_id: trackId, slug } },
+    );
+    if (err || !data?.hosted_url) {
       setBuying(null);
-      alert(data?.error ?? "Could not start checkout — try again.");
+      setError(data?.error ?? "Couldn't start checkout — try again.");
       return;
     }
     window.location.href = data.hosted_url;
   }
 
   if (!tracks?.length) {
-    return (
-      <p className="muted" style={{ padding: "20px 0" }}>
-        No tracks listed yet.
-      </p>
-    );
+    return <p className="muted">No tracks listed yet.</p>;
   }
 
   return (
-    <div className="track-list">
-      {tracks.map((t) => (
-        <div className="track-row" key={t.id}>
-          <div>
-            <div className="track-title">{t.title}</div>
-            <div className="track-price">
-              {formatUSD(t.price_cents)} in crypto
-            </div>
-          </div>
-          {ownedSet.has(t.id) ? (
-            <span className="track-owned">Owned</span>
-          ) : (
-            <button
-              type="button"
-              className="track-buy"
-              disabled={buying === t.id}
-              onClick={() => handleBuy(t.id)}
-            >
-              {buying === t.id ? "Redirecting to checkout…" : "Own this song"}
-            </button>
-          )}
-        </div>
-      ))}
-    </div>
+    <>
+      <ol className="tracks">
+        {tracks.map((t, i) => (
+          <li className="track" key={t.id}>
+            <span className="track-n">{String(i + 1).padStart(2, "0")}</span>
+            <span className="track-title">{t.title}</span>
+            <span className="track-price">{formatUSD(t.price_cents)}</span>
+            {ownedSet.has(t.id) ? (
+              <span className="track-owned">Owned</span>
+            ) : (
+              <button
+                type="button"
+                className="track-buy"
+                disabled={buying === t.id}
+                onClick={() => handleBuy(t.id)}
+              >
+                {buying === t.id ? "Redirecting…" : "Own it"}
+              </button>
+            )}
+          </li>
+        ))}
+      </ol>
+      {/* Replaces an alert(). A modal dialog for "you need to sign in" was
+          both jarring and invisible to the screenshot harness. */}
+      {error && <div className="action-status">{error}</div>}
+    </>
   );
 }

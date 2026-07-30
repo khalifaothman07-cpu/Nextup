@@ -1,49 +1,36 @@
 import { Link } from "react-router-dom";
 
-/** Initials for the cartridge label — licensed artwork drops into the same slot. */
-function initials(name) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase();
-}
-
 /**
- * Roster cartridge (Home teaser row + Discover grid). Shows only real,
- * computed numbers: the trigger-maintained follower count and the daily
- * momentum score — never the seeded stat_30d_pct placeholder.
+ * Roster tile.
+ *
+ * Same rule as the artist page: the artist's hue owns the surface, the name
+ * is set large in white on top of it, and the ghosted wordmark stands in for
+ * the photograph until there is a licensed one to drop into the slot. A tile
+ * is a small version of the page it opens, so hovering the roster reads as a
+ * wall of artists rather than a grid of identical grey cards.
  */
 export function ArtistCard({ artist, momentum }) {
   const score = momentum?.score ?? 0;
   return (
-    <Link className="cart" to={`/artist/${encodeURIComponent(artist.slug)}`}>
-      <div className="cart-ridge" aria-hidden="true"></div>
-      <div className="cart-label">
-        <div
-          className="cart-art"
-          style={{
-            background: `linear-gradient(150deg,${artist.accent_from},${artist.accent_to})`,
-          }}
-        >
-          <span aria-hidden="true">{initials(artist.name)}</span>
-        </div>
-        <h4>{artist.name}</h4>
-        <div className="cart-meta">
-          {artist.genre} · {artist.city}
-        </div>
-      </div>
-      <div className="cart-foot">
-        <span className="cart-followers">
-          {(artist.follower_count ?? 0).toLocaleString("en-US")}
-        </span>
-        <span className={score > 0 ? "cart-score up" : "cart-score"}>
-          ▲ {score}
-        </span>
-      </div>
-      <div className="cart-pins" aria-hidden="true"></div>
+    <Link
+      className="tile"
+      to={`/artist/${encodeURIComponent(artist.slug)}`}
+      style={{
+        "--f-from": artist.accent_from,
+        "--f-to": artist.accent_to,
+      }}
+    >
+      <span className="tile-ghost" aria-hidden="true">
+        {artist.name}
+      </span>
+      <span className="tile-meta">
+        {artist.genre} · {artist.city}
+      </span>
+      <span className="tile-name">{artist.name}</span>
+      <span className="tile-foot">
+        <span>{(artist.follower_count ?? 0).toLocaleString("en-US")}</span>
+        <span className="tile-score">▲ {score}</span>
+      </span>
     </Link>
   );
 }

@@ -5,6 +5,7 @@ import { fetchArtistMomentum } from "../lib/momentum.js";
 import { useReveal } from "../hooks/useReveal.js";
 import { usePageTitle } from "../hooks/usePageTitle.js";
 import { TrackList } from "../components/TrackList.jsx";
+import { ArtistField } from "../components/ArtistField.jsx";
 import { BackingPanel } from "../components/BackingPanel.jsx";
 import { FollowButton } from "../components/FollowButton.jsx";
 import { MomentumPanel } from "../components/MomentumPanel.jsx";
@@ -90,112 +91,109 @@ export function Artist() {
 
   const chargeState = searchParams.get("charge") ?? searchParams.get("deposit");
 
+  const hue =
+    state.status === "loaded"
+      ? {
+          "--f-from": state.artist.accent_from,
+          "--f-to": state.artist.accent_to,
+          // Any seeded artist colour has to stay legible on the dark ground and
+          // on cream, so it is pulled toward the page's own text colour rather
+          // than used raw. Buttons keep white text against it.
+          "--accent": `color-mix(in srgb, ${state.artist.accent_from} 76%, var(--text) 24%)`,
+          "--accent-deep": `color-mix(in srgb, ${state.artist.accent_to} 78%, #000 22%)`,
+          "--accent-ink": "#fff",
+        }
+      : undefined;
+
   return (
-    <main className="wrap" style={{ paddingTop: 56 }}>
-      <Link to="/" className="breadcrumb">
-        ← Back to Nextup
-      </Link>
-
-      {chargeState === "success" && (
-        <p
-          style={{
-            color: "var(--good)",
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 13,
-            marginBottom: 24,
-          }}
-        >
-          Payment received — confirming on-chain. This can take a few minutes;
-          refresh this page once it confirms.
-        </p>
-      )}
-      {chargeState === "cancelled" && (
-        <p
-          className="muted"
-          style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 13,
-            marginBottom: 24,
-          }}
-        >
-          Checkout cancelled — nothing was charged.
+    <main className="artist-page" style={hue}>
+      {state.status === "loading" && (
+        <p className="muted wrap" style={{ padding: "72px 0" }}>
+          Loading artist…
         </p>
       )}
 
-      {state.status === "loading" && <p className="muted">Loading artist…</p>}
-
-      {state.status === "no-slug" && (
-        <p className="muted">
-          No artist specified. <Link to="/">Back to Nextup →</Link>
-        </p>
-      )}
-
-      {state.status === "not-found" && (
-        <p className="muted">
+      {(state.status === "no-slug" || state.status === "not-found") && (
+        <p className="muted wrap" style={{ padding: "72px 0" }}>
           Couldn't find that artist. <Link to="/">Back to Nextup →</Link>
         </p>
       )}
 
       {state.status === "loaded" && (
         <>
-          <div className="artist-hero" data-reveal>
-            <div
-              className="artist-swatch"
-              style={{
-                background: `linear-gradient(155deg,${state.artist.accent_from},${state.artist.accent_to})`,
-              }}
-            ></div>
-            <div className="artist-meta">
-              <div className="genre-city">
-                {state.artist.genre.toUpperCase()} ·{" "}
-                {state.artist.city.toUpperCase()}
+          <ArtistField artist={state.artist}>
+            <Link to="/discover" className="field-back">
+              ← Roster
+            </Link>
+
+            <div className="field-meta">
+              <div>
+                <span>Genre</span>
+                {state.artist.genre}
               </div>
-              <h1>{state.artist.name}</h1>
-              <p className="tagline">{state.artist.tagline}</p>
-              <p className="bio">{state.artist.bio}</p>
-              <div className="artist-actions">
-                <div className="artist-stat-pill">
-                  {followerCount} follower{followerCount === 1 ? "" : "s"}
-                </div>
-                <FollowButton
-                  artistId={state.artist.id}
-                  onToggled={refreshFollowerCount}
-                />
+              <div>
+                <span>Based</span>
+                {state.artist.city}
+              </div>
+              <div>
+                <span>Followers</span>
+                {followerCount.toLocaleString("en-US")}
+              </div>
+              <div>
+                <span>Momentum 7d</span>▲ {momentum?.score ?? 0}
               </div>
             </div>
+
+            <h1 className="field-name">{state.artist.name}</h1>
+            <p className="field-tagline">{state.artist.tagline}</p>
+
+            <div className="field-actions">
+              <FollowButton
+                artistId={state.artist.id}
+                onToggled={refreshFollowerCount}
+              />
+            </div>
+          </ArtistField>
+
+          {chargeState === "success" && (
+            <div className="wrap notice good">
+              Payment received — confirming on-chain. That can take a few
+              minutes; refresh once it does.
+            </div>
+          )}
+          {chargeState === "cancelled" && (
+            <div className="wrap notice">
+              Checkout cancelled — nothing was charged.
+            </div>
+          )}
+
+          <div className="wrap artist-body">
+            <div className="artist-main">
+              <div className="col-head">
+                <h2>Songs</h2>
+                <span>One owner each · priced in USD, paid in crypto</span>
+              </div>
+              <TrackList
+                slug={slug}
+                tracks={state.tracks}
+                ownedSet={state.ownedSet}
+              />
+
+              <div className="col-head" style={{ marginTop: 56 }}>
+                <h2>About</h2>
+              </div>
+              <p className="artist-bio">{state.artist.bio}</p>
+
+              <MomentumPanel momentum={momentum} />
+            </div>
+
+            <aside className="artist-side">
+              <div className="col-head">
+                <h2>Back {state.artist.name}</h2>
+              </div>
+              <BackingPanel artist={state.artist} slug={slug} />
+            </aside>
           </div>
-
-          <MomentumPanel momentum={momentum} />
-
-          <section style={{ borderBottom: "none", paddingBottom: 0 }}>
-            <div className="two-col" style={{ marginTop: 64 }}>
-              <div>
-                <div className="section-head" style={{ marginBottom: 24 }}>
-                  <div className="eyebrow">Side B</div>
-                  <h2 style={{ fontSize: 28, marginTop: 12 }}>Own a song</h2>
-                  <p style={{ marginTop: 10 }}>
-                    Priced in USD, paid in crypto — BTC, ETH, USDC, and more.
-                  </p>
-                </div>
-                <TrackList
-                  artist={state.artist}
-                  slug={slug}
-                  tracks={state.tracks}
-                  ownedSet={state.ownedSet}
-                />
-              </div>
-
-              <div>
-                <div className="section-head" style={{ marginBottom: 24 }}>
-                  <div className="eyebrow">Side A</div>
-                  <h2 style={{ fontSize: 28, marginTop: 12 }}>
-                    Back {state.artist.name}
-                  </h2>
-                </div>
-                <BackingPanel artist={state.artist} slug={slug} />
-              </div>
-            </div>
-          </section>
         </>
       )}
     </main>

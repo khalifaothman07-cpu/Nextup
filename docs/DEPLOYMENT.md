@@ -6,7 +6,7 @@ Per explicit instruction earlier in this project, nothing goes live without the 
 
 ## Site
 
-`npm run build` produces a static `dist/` bundle (React + Vite, see `docs/ASSUMPTIONS.md` #2) that can be hosted anywhere that serves static assets — no server-side rendering, but there **is** now a build step, unlike the original hand-written HTML. Because routing is client-side (`react-router-dom`), the host must rewrite unknown paths to `/index.html` (a history-API fallback) or deep links like `/artist/marra-vale` will 404 on direct load/refresh. `public/_redirects` (Netlify's convention: `/*  /index.html  200`) is committed for that; other hosts (Vercel, S3+CloudFront, etc.) need their own equivalent rewrite rule. Domain `nextup.exchange` is acquired but not pointed at anything.
+`npm run build` produces a static `dist/` bundle (React + Vite, see `docs/ASSUMPTIONS.md` #2) that can be hosted anywhere that serves static assets — no server-side rendering, but there **is** now a build step, unlike the original hand-written HTML. Because routing is client-side (`react-router-dom`), the host must rewrite unknown paths to `/index.html` (a history-API fallback) or deep links like `/artist/bruno-mars` will 404 on direct load/refresh. `public/_redirects` (Netlify's convention: `/*  /index.html  200`) is committed for that; other hosts (Vercel, S3+CloudFront, etc.) need their own equivalent rewrite rule. Domain `nextup.exchange` is acquired but not pointed at anything.
 
 ## Supabase
 

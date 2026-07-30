@@ -767,7 +767,115 @@ async function navStrip(pg, path, file, widths, label) {
   console.log(`${file} written`);
 }
 
+/**
+ * Structural style guard.
+ *
+ * Deleting CSS by source range is how a redesign pass silently removed
+ * .page-hero, .content-page, .two-col, .teaser-row and .discover-grid's
+ * `display: grid` while nine pages went on rendering that markup. The
+ * screenshots showed it; nothing failed. These assertions fail.
+ *
+ * Each entry is a class the app actually renders, plus one computed property
+ * that is meaningless unless a rule matched. `display: block` on a div, or a
+ * zero padding, means the rule is gone.
+ */
+const STYLE_GUARD = [
+  ["/discover", ".page-hero", "paddingTop", (v) => parseFloat(v) > 20],
+  ["/discover", ".discover-grid", "display", (v) => v === "grid"],
+  ["/discover", ".filter-chip", "borderRadius", (v) => parseFloat(v) > 0],
+  ["/discover", ".filter-search", "borderRadius", (v) => parseFloat(v) > 0],
+  ["/discover", ".tile", "backgroundImage", (v) => v.includes("gradient")],
+  ["/discover", ".tile-name", "fontSize", (v) => parseFloat(v) > 18],
+  [
+    "/artist/bruno-mars",
+    ".field",
+    "backgroundImage",
+    (v) => v.includes("gradient"),
+  ],
+  ["/artist/bruno-mars", ".field-name", "fontSize", (v) => parseFloat(v) > 40],
+  ["/artist/bruno-mars", ".field-ghost", "position", (v) => v === "absolute"],
+  ["/artist/bruno-mars", ".track", "display", (v) => v === "grid"],
+  [
+    "/artist/bruno-mars",
+    ".backing-panel",
+    "borderTopWidth",
+    (v) => parseFloat(v) > 0,
+  ],
+  ["/", ".index-list", "display", (v) => v === "grid"],
+  ["/", ".hero h1", "fontFamily", (v) => v.includes("Anybody")],
+  ["/account", ".app-shell", "display", () => true],
+  ["/admin", ".admin-band", "borderTopWidth", (v) => parseFloat(v) >= 3],
+];
+
+async function styleGuard(pg) {
+  console.log("\nstructural style guard:");
+  for (const [path, sel, prop, ok] of STYLE_GUARD) {
+    adminMode = path === "/admin";
+    await pg.goto(`http://localhost:8200${path}`, {
+      waitUntil: "domcontentloaded",
+      timeout: 20000,
+    });
+    await pg.waitForTimeout(900);
+    const value = await pg.evaluate(
+      ([s2, p2]) => {
+        const el = document.querySelector(s2);
+        if (!el) return null;
+        return getComputedStyle(el)[p2];
+      },
+      [sel, prop],
+    );
+    if (value === null) {
+      errors.push(`style guard: ${sel} not rendered on ${path}`);
+      console.log(`  MISSING  ${path} ${sel}`);
+      continue;
+    }
+    const pass = ok(value);
+    if (!pass) errors.push(`style guard: ${sel} ${prop}="${value}" on ${path}`);
+    console.log(
+      `  ${pass ? "ok  " : "FAIL"}     ${path} ${sel} ${prop}=${value}`,
+    );
+  }
+  adminMode = false;
+}
+
+/** Every class the app renders should match at least one rule in the sheet. */
+async function unstyledClassSweep(pg) {
+  const orphans = await pg.evaluate(() => {
+    const used = new Set();
+    document
+      .querySelectorAll("[class]")
+      .forEach((el) => el.classList.forEach((c) => used.add(c)));
+    const styled = new Set();
+    for (const sheet of document.styleSheets) {
+      let rules;
+      try {
+        rules = sheet.cssRules;
+      } catch {
+        continue;
+      }
+      const walk = (list) => {
+        for (const r of list) {
+          if (r.cssRules) walk(r.cssRules);
+          if (!r.selectorText) continue;
+          for (const m of r.selectorText.matchAll(/\.([a-zA-Z0-9_-]+)/g))
+            styled.add(m[1]);
+        }
+      };
+      walk(rules);
+    }
+    return [...used].filter((c) => !styled.has(c));
+  });
+  if (orphans.length) {
+    errors.push(`classes rendered with no CSS rule: ${orphans.join(", ")}`);
+    console.log("  unstyled classes:", orphans.join(", "));
+  } else {
+    console.log("  unstyled classes: none");
+  }
+}
+
 const WIDTHS = [1280, 900, 700, 560, 430, 390, 360];
+
+await styleGuard(page);
 
 console.log("\nheader across breakpoints (signed in):");
 await navStrip(page, "/account", "shot-nav-widths.png", WIDTHS, "signed-in");
@@ -830,6 +938,13 @@ await tryShot("/admin", "shot-admin-mobile.png", { width: 390 });
 console.log("\nheader across breakpoints (admin — extra nav link):");
 await navStrip(page, "/admin", "shot-nav-widths-admin.png", WIDTHS, "admin");
 adminMode = false;
+
+await page.goto("http://localhost:8200/artist/bruno-mars", {
+  waitUntil: "domcontentloaded",
+});
+await page.waitForTimeout(900);
+console.log("\nunstyled-class sweep (artist page):");
+await unstyledClassSweep(page);
 
 console.log("\nunmatched REST:", JSON.stringify([...new Set(unmatched)]));
 console.log("pageerrors:", JSON.stringify(errors));

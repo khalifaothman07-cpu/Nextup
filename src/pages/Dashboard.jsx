@@ -170,8 +170,18 @@ export function Dashboard() {
     );
   }
 
+  // Same rule as the public artist page: an artist's own surface carries their
+  // hue, so a team member's dashboard looks like the page it manages.
+  const hue = data
+    ? {
+        "--accent": `color-mix(in srgb, ${data.artist.accent_from} 76%, var(--text) 24%)`,
+        "--accent-deep": `color-mix(in srgb, ${data.artist.accent_to} 78%, #000 22%)`,
+        "--accent-ink": "#fff",
+      }
+    : undefined;
+
   return (
-    <main className="app-shell">
+    <main className="app-shell" style={hue}>
       <Breadcrumb />
 
       <PageHero eyebrow="Artist dashboard" title={data?.artist.name ?? "…"}>

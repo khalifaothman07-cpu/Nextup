@@ -147,24 +147,24 @@ export function HowItWorks() {
               <div className="grad"></div>
               <div className="top">
                 <div>
-                  <div className="name">Marra Vale</div>
-                  <div className="tag">R&amp;B / ALT · SÃO PAULO</div>
+                  <div className="name">Bruno Mars</div>
+                  <div className="tag">Pop / Funk · Honolulu</div>
                 </div>
-                <div className="up">▲ 212%</div>
+                <div className="up">▲ 43</div>
               </div>
               <div className="hint">Tap to preview profile</div>
               <div className="discs">
                 <div className="disc-wrap">
                   <div className="disc"></div>
-                  <span>Salt Water</span>
+                  <span>Die With A Smile</span>
                 </div>
                 <div className="disc-wrap">
                   <div className="disc"></div>
-                  <span>Low Tide</span>
+                  <span>Leave The Door Open</span>
                 </div>
                 <div className="disc-wrap">
                   <div className="disc"></div>
-                  <span>25th &amp; Gray</span>
+                  <span>Locked Out Of Heaven</span>
                 </div>
               </div>
             </div>
@@ -176,9 +176,7 @@ export function HowItWorks() {
                 to back it.
               </p>
               <p className="muted">
-                <Link to="/artist/marra-vale">
-                  Open Marra Vale's real profile →
-                </Link>
+                <Link to="/artist/bruno-mars">Open a real profile →</Link>
               </p>
             </div>
           </div>
