@@ -1,0 +1,821 @@
+<title>NextUp — Technical and Product Appendix</title>
+<style>
+  {{FONTS}}
+
+  :root {
+    --ground: #0a0b0a; --surface: #141713; --edge: rgba(230,234,227,.13);
+    --edge-hi: rgba(230,234,227,.26); --text: #e6eae3; --dim: #a8aea3;
+    --soft: #7b8276; --accent: #4fd37a; --on-accent: #08170e;
+    --done: #4fd37a; --partial: #d9a441; --open: #7b8276; --gap: #e8705c;
+    --display: "Anybody", "Arial Black", Helvetica, sans-serif;
+    --body: "Public Sans", system-ui, -apple-system, sans-serif;
+    --data: "DM Mono", ui-monospace, "SF Mono", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --ground: #f1ece0; --surface: #fbf7ee; --edge: rgba(25,26,23,.14);
+      --edge-hi: rgba(25,26,23,.3); --text: #191a17; --dim: #4a4a43;
+      --soft: #757266; --accent: #a32c24; --on-accent: #fdf8f0;
+      --done: #1f7a4d; --partial: #8a6414; --open: #757266; --gap: #b3462f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0a0b0a; --surface: #141713; --edge: rgba(230,234,227,.13);
+    --edge-hi: rgba(230,234,227,.26); --text: #e6eae3; --dim: #a8aea3;
+    --soft: #7b8276; --accent: #4fd37a; --on-accent: #08170e;
+    --done: #4fd37a; --partial: #d9a441; --open: #7b8276; --gap: #e8705c;
+  }
+  :root[data-theme="light"] {
+    --ground: #f1ece0; --surface: #fbf7ee; --edge: rgba(25,26,23,.14);
+    --edge-hi: rgba(25,26,23,.3); --text: #191a17; --dim: #4a4a43;
+    --soft: #757266; --accent: #a32c24; --on-accent: #fdf8f0;
+    --done: #1f7a4d; --partial: #8a6414; --open: #757266; --gap: #b3462f;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--text);
+    font-family: var(--body); line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 30px; }
+  .col { max-width: 70ch; }
+
+  h1, h2, h3 {
+    font-family: var(--display); font-weight: 800; margin: 0;
+    letter-spacing: -.02em; line-height: .99; text-wrap: balance;
+  }
+  h1 { font-stretch: 128%; font-size: clamp(34px, 5vw, 58px); }
+  h2 { font-stretch: 116%; font-weight: 700; font-size: clamp(21px, 2.6vw, 27px); }
+  h3 { font-stretch: 108%; font-weight: 700; font-size: 16px; }
+  p { margin: 0 0 13px; color: var(--dim); font-size: 15.5px; }
+  strong { color: var(--text); font-weight: 600; }
+  em { font-style: italic; }
+
+  .eyebrow {
+    font-family: var(--data); font-size: 10.5px; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--accent);
+  }
+
+  header { border-bottom: 1px solid var(--edge); padding: 56px 0 40px; }
+  .meta {
+    display: flex; flex-wrap: wrap; gap: 6px 44px; margin-top: 28px;
+    font-family: var(--data); font-size: 12.5px;
+    font-variant-numeric: tabular-nums; color: var(--text);
+  }
+  .meta span {
+    display: block; font-size: 9.5px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--soft); margin-bottom: 3px;
+  }
+  .confidential {
+    margin-top: 26px; border-left: 3px solid var(--partial);
+    padding: 11px 0 11px 15px; font-family: var(--data);
+    font-size: 11.5px; line-height: 1.65; color: var(--soft); max-width: 66ch;
+  }
+
+  section { padding: 42px 0; border-bottom: 1px solid var(--edge); }
+  section:last-of-type { border-bottom: none; }
+  .section-head { margin-bottom: 22px; }
+  .section-head h2 { margin-top: 7px; }
+  .n {
+    font-family: var(--data); font-size: 10.5px; letter-spacing: .14em;
+    color: var(--soft);
+  }
+
+  /* status rows: stripe + word, never colour alone */
+  .rows {
+    display: flex; flex-direction: column; gap: 1px; background: var(--edge);
+    border: 1px solid var(--edge); border-radius: 10px; overflow: hidden;
+  }
+  .row {
+    display: grid; grid-template-columns: 4px 1fr 132px; gap: 0 18px;
+    align-items: start; background: var(--ground);
+  }
+  .row .stripe { align-self: stretch; background: var(--open); }
+  .row.done .stripe { background: var(--done); }
+  .row.partial .stripe { background: var(--partial); }
+  .row.gap .stripe { background: var(--gap); }
+  .row .body { padding: 15px 0 15px 4px; }
+  .row .body h3 { margin-bottom: 4px; }
+  .row .body p { margin: 0; font-size: 14px; }
+  .row .state {
+    padding: 17px 17px 17px 0; text-align: right; font-family: var(--data);
+    font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--open);
+  }
+  .row.done .state { color: var(--done); }
+  .row.partial .state { color: var(--partial); }
+  .row.gap .state { color: var(--gap); }
+  @media (max-width: 640px) {
+    .row { grid-template-columns: 4px 1fr; }
+    .row .state { grid-column: 2; text-align: left; padding: 0 0 15px 4px; }
+  }
+  .key {
+    display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 16px;
+    font-family: var(--data); font-size: 10.5px; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--soft);
+  }
+  .key i {
+    display: inline-block; width: 20px; height: 3px; margin-right: 7px;
+    vertical-align: middle;
+  }
+
+  .ruled { border-top: 1px solid var(--edge); margin: 0; padding: 0; list-style: none; }
+  .ruled li {
+    border-bottom: 1px solid var(--edge); padding: 14px 0;
+    display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 5px 24px;
+  }
+  .ruled b {
+    font-family: var(--data); font-weight: 400; font-size: 10.5px;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--soft);
+    padding-top: 3px;
+  }
+  .ruled span { color: var(--dim); font-size: 14.5px; }
+  @media (max-width: 640px) { .ruled li { grid-template-columns: 1fr; } }
+
+  /* phased roadmap — numbered because it IS a sequence with dependencies */
+  .phase {
+    border-left: 2px solid var(--edge-hi); padding: 0 0 24px 22px;
+    position: relative; margin-left: 6px;
+  }
+  .phase:last-child { padding-bottom: 0; }
+  .phase::before {
+    content: ""; position: absolute; left: -6px; top: 5px; width: 10px;
+    height: 10px; border-radius: 50%; background: var(--ground);
+    border: 2px solid var(--accent);
+  }
+  .phase .when {
+    font-family: var(--data); font-size: 10.5px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 5px;
+  }
+  .phase ol { margin: 8px 0 0; padding-left: 18px; color: var(--dim); font-size: 14.5px; }
+  .phase ol li { margin-bottom: 5px; }
+
+  .needs {
+    border: 1px dashed var(--edge-hi); border-radius: 10px;
+    padding: 18px 20px; background: var(--surface); margin-top: 6px;
+  }
+  .needs h3 { margin-bottom: 8px; color: var(--partial); }
+  .needs ul { margin: 0; padding-left: 18px; color: var(--dim); font-size: 14.5px; }
+  .needs ul li { margin-bottom: 5px; }
+
+  .decide {
+    border: 1px solid var(--edge); border-radius: 10px; padding: 20px 22px;
+    background: var(--surface); margin-bottom: 12px;
+  }
+  .decide h3 { margin-bottom: 7px; }
+  .decide .q {
+    font-family: var(--data); font-size: 10.5px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 9px;
+  }
+  .decide p:last-child { margin-bottom: 0; }
+
+  footer {
+    padding: 36px 0 60px; color: var(--soft); font-family: var(--data);
+    font-size: 11.5px; line-height: 1.7;
+  }
+</style>
+
+<header>
+  <div class="wrap col">
+    <div class="eyebrow">Technical and Product Appendix</div>
+    <h1>NextUp</h1>
+    <div class="meta">
+      <div><span>Prepared for</span>Board review</div>
+      <div><span>Stage</span>Pre-launch</div>
+      <div><span>Public launch</span>Not yet</div>
+      <div><span>Date</span>31 July 2026</div>
+    </div>
+    <div class="confidential">
+      Confidential. Prepared as a supporting appendix to the NextUp board
+      proposal. Operational infrastructure identifiers, environment references
+      and implementation specifics are deliberately excluded and are available
+      to the board on request under appropriate controls.
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap col">
+    <div class="section-head">
+      <div class="n">01</div>
+      <h2>Summary.</h2>
+    </div>
+    <p>
+      NextUp has completed a substantial pre-launch technical foundation
+      covering artist discovery, track commerce, wallet accounting,
+      bonding-curve transactions, access-control architecture and activity-based
+      artist momentum rankings.
+      <strong>The platform has not yet launched publicly.</strong> The remaining
+      work is concentrated around deployment, regulated-market review,
+      payment-provider activation, operational administration, artist
+      infrastructure and independent security testing.
+    </p>
+    <p>
+      This appendix describes what exists, what does not, and what the board is
+      being asked to decide. It is written to be read alongside the commercial
+      proposal rather than in place of it: the technical position is materially
+      further advanced than the commercial one, and Section 09 sets out the
+      areas where the company still needs to define its model rather than its
+      architecture.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap col">
+    <div class="section-head">
+      <div class="n">02</div>
+      <h2>The product.</h2>
+    </div>
+    <p>
+      NextUp is a two-sided platform. Listeners discover unsigned and rising
+      artists early and take a position in their progress; artists gain a direct
+      revenue relationship with the people who found them first, without a label
+      intermediating it.
+    </p>
+    <p><strong>Listeners have two ways to participate:</strong></p>
+    <ul class="ruled" style="margin-bottom: 16px">
+      <li>
+        <b>Own the Song</b>
+        <span
+          >A one-time purchase of a specific track at a flat, artist-set price.
+          One holder per track.
+          <em
+            >The precise nature of what this conveys is an open legal question —
+            see Section 09.</em
+          ></span
+        >
+      </li>
+      <li>
+        <b>Back the Artist</b>
+        <span
+          >A continuously priced position in an artist, funded from a platform
+          wallet, where price responds to real demand. This is the higher-value
+          and higher-risk half of the product and is treated throughout as a
+          regulated-market question rather than a purely technical one.</span
+        >
+      </li>
+    </ul>
+    <p>
+      Artists receive a profile, a catalogue, a revenue relationship, and an
+      analytics dashboard reporting genuine platform activity. Ranking is driven
+      by an activity-based momentum score computed from real platform behaviour
+      only — follows, transactions and purchases. It contains no editorial
+      weighting and no imported or estimated figures, and the calculation is
+      shown to users in full.
+    </p>
+    <p>
+      All settlement is in cryptocurrency. There are no subscriptions and no
+      tiers.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head col">
+      <div class="n">03</div>
+      <h2>What is built.</h2>
+      <p>
+        Status is stated conservatively: "complete" means built, verified and
+        exercised against realistic data, not merely written.
+      </p>
+    </div>
+    <div class="key">
+      <span><i style="background: var(--done)"></i>Complete</span>
+      <span
+        ><i style="background: var(--partial)"></i>Built, awaiting
+        activation</span
+      >
+      <span><i style="background: var(--open)"></i>Not started</span>
+      <span><i style="background: var(--gap)"></i>Identified gap</span>
+    </div>
+    <div class="rows">
+      <div class="row done">
+        <div class="stripe"></div>
+        <div class="body">
+          <h3>Discovery and artist profiles</h3>
+          <p>
+            Full roster with search, filtering and ranking; individual artist
+            pages with catalogue, live pricing and an explainable momentum
+            breakdown.
+          </p>
+        </div>
+        <div class="state">Complete</div>
+      </div>
+      <div class="row done">
+        <div class="stripe"></div>
+        <div class="body">
+          <h3>Accounts and access control</h3>
+          <p>
+            Passwordless sign-in. Distinct listener, supporter, artist-team and
+            administrative roles, enforced at the database layer rather than in
+            the interface alone.
+          </p>
+        </div>
+        <div class="state">Complete</div>
+      </div>
+      <div class="row done">
+        <div class="stripe"></div>
+        <div class="body">
+          <h3>Track commerce and wallet accounting</h3>
+          <p>
+            Purchase, deposit, position-opening and position-closing logic, with
+            balance changes handled atomically so concurrent activity cannot
+            produce an inconsistent balance.
+          </p>
+        </div>
+        <div class="state">Complete</div>
+      </div>
+      <div class="row done">
+        <div class="stripe"></div>
+        <div class="body">
+          <h3>Artist intake and onboarding</h3>
+          <p>
+            Application capture with a reviewed status lifecycle, and
+            single-action onboarding that creates the artist, their pricing and
+            their team permissions together.
+          </p>
+        </div>
+        <div class="state">Complete</div>
+      </div>
+      <div class="row done">
+        <div class="stripe"></div>
+        <div class="body">
+          <h3>Administrative console</h3>
+          <p>
+            Application review, artist onboarding, payout processing and
+            platform configuration, with a tamper-resistant activity record of
+            every administrative action.
+          </p>
+        </div>
+        <div class="state">Complete</div>
+      </div>
+      <div class="row done">
+        <div class="stripe"></div>
+        <div class="body">
+          <h3>Abuse controls and activity logging</h3>
+          <p>
+            Per-account limits on transactional endpoints and an append-only
+            administrative audit record, both enforced at the data layer.
+            Completed 31 July 2026.
+          </p>
+        </div>
+        <div class="state">Complete</div>
+      </div>
+      <div class="row partial">
+        <div class="stripe"></div>
+        <div class="body">
+          <h3>Payment processing</h3>
+          <p>
+            Payment logic is written and verified. It cannot process value until
+            a commercial payment-provider account is established and connected.
+            Until then payment endpoints decline cleanly rather than partially
+            succeeding.
+          </p>
+        </div>
+        <div class="state">Awaiting provider</div>
+      </div>
+      <div class="row partial">
+        <div class="stripe"></div>
+        <div class="body">
+          <h3>Policy documentation</h3>
+          <p>
+            Terms, risk disclosure and privacy documentation are drafted and
+            specific to the product's actual behaviour. They have not been
+            reviewed by external counsel.
+          </p>
+        </div>
+        <div class="state">Awaiting counsel</div>
+      </div>
+      <div class="row gap">
+        <div class="stripe"></div>
+        <div class="body">
+          <h3>Treasury and customer-funds segregation</h3>
+          <p>
+            The system currently models customer balances only. It has no
+            representation of company-held liquidity, no separation between
+            company and customer funds, and no double-entry reconciliation. This
+            is the most significant architectural gap and is addressed in
+            Section 06.
+          </p>
+        </div>
+        <div class="state">Gap</div>
+      </div>
+      <div class="row gap">
+        <div class="stripe"></div>
+        <div class="body">
+          <h3>Withdrawal automation</h3>
+          <p>
+            Withdrawals are processed by an operator through a controlled,
+            audited interface rather than automatically. This is workable for a
+            restricted beta and is not a credible operating model at scale.
+          </p>
+        </div>
+        <div class="state">Gap</div>
+      </div>
+      <div class="row gap">
+        <div class="stripe"></div>
+        <div class="body">
+          <h3>Jurisdictional enforcement</h3>
+          <p>
+            The capacity to restrict features by territory exists structurally
+            but is not yet enforced, pending the regulatory determination in
+            Section 09.
+          </p>
+        </div>
+        <div class="state">Gap</div>
+      </div>
+      <div class="row gap">
+        <div class="stripe"></div>
+        <div class="body">
+          <h3>Automated financial and access-control testing</h3>
+          <p>
+            Verification is currently performed through targeted manual testing
+            and automated visual inspection. There is no continuous automated
+            regression suite covering financial logic and access boundaries.
+            Required before public launch.
+          </p>
+        </div>
+        <div class="state">Gap</div>
+      </div>
+      <div class="row">
+        <div class="stripe"></div>
+        <div class="body">
+          <h3>Community, marketplace and A&amp;R tooling</h3>
+          <p>
+            Scoped and deliberately not started. Building audience features
+            before an audience exists would mean designing them without
+            evidence.
+          </p>
+        </div>
+        <div class="state">Not started</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap col">
+    <div class="section-head">
+      <div class="n">04</div>
+      <h2>Technology.</h2>
+    </div>
+    <ul class="ruled">
+      <li>
+        <b>Application</b>
+        <span
+          >A modern JavaScript single-page application, statically built and
+          deployable to any standard hosting provider. No proprietary or
+          vendor-locked runtime.</span
+        >
+      </li>
+      <li>
+        <b>Platform</b>
+        <span
+          >A secured Supabase production environment providing the database,
+          authentication and server-side functions. A managed, industry-standard
+          platform with an established security posture.</span
+        >
+      </li>
+      <li>
+        <b>Payments</b>
+        <span
+          >Cryptocurrency settlement through a commercial payment processor. The
+          company does not custody payment credentials and never handles card or
+          bank details.</span
+        >
+      </li>
+      <li>
+        <b>Source control</b>
+        <span
+          >A private company GitHub repository. Full change history, with the
+          reasoning for each significant decision recorded alongside the
+          change.</span
+        >
+      </li>
+      <li>
+        <b>Documentation</b>
+        <span
+          >Architecture, data model, security posture, deployment procedure and
+          a complete decision log are maintained in-repository and
+          current.</span
+        >
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="wrap col">
+    <div class="section-head">
+      <div class="n">05</div>
+      <h2>Security architecture.</h2>
+    </div>
+    <p>
+      <strong
+        >The governing principle: the user's browser is never trusted with
+        identity, balance or price.</strong
+      >
+    </p>
+    <p>
+      Every action that moves value is executed server-side. The user's device
+      states an intention; it never states who it is, what it holds, or what
+      something costs. Identity is derived from a verified session on the
+      server, and all monetary arithmetic is performed there.
+    </p>
+    <p>
+      Data access is enforced at the database layer rather than in the
+      application, so a user can only ever retrieve their own financial records
+      regardless of how the request is made. Administrative capability is
+      separately gated and every administrative action is written to an
+      append-only record that administrators themselves cannot alter or remove.
+    </p>
+    <p>
+      <strong>Assurance to date, stated plainly.</strong> Security has been
+      verified through automated platform advisory tooling run after every
+      structural change, targeted testing of access boundaries, and a documented
+      review of every permission in the system. Issues identified during
+      development were remediated and recorded.
+      <strong
+        >The platform has not undergone independent third-party security
+        testing.</strong
+      >
+      Commissioning that review is a prerequisite to public launch and is
+      included in the funding requirement.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap col">
+    <div class="section-head">
+      <div class="n">06</div>
+      <h2>Treasury and customer funds.</h2>
+    </div>
+    <p>
+      This is called out separately because it is the most consequential
+      outstanding item and it is architectural, not cosmetic.
+    </p>
+    <p>
+      The platform currently models <strong>customer balances only</strong>.
+      There is no representation of company-held liquidity, no formal separation
+      between company funds and customer funds, and no double-entry ledger
+      reconciling what the company holds against what it owes.
+    </p>
+    <p>
+      Any company capital committed as operating liquidity must be modelled as a
+      distinct, company-owned account that is structurally incapable of being
+      commingled with customer balances, with continuous reconciliation between
+      obligations and holdings. This affects solvency reporting, audit,
+      regulatory classification and the ability to demonstrate that customer
+      funds are intact at any moment.
+    </p>
+    <p>
+      <strong>Recommendation:</strong> this work should precede any real
+      customer money entering the system, and should be specified with input
+      from counsel and an accountant rather than designed engineering-first. It
+      is placed accordingly in the roadmap.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head col">
+      <div class="n">07</div>
+      <h2>Roadmap.</h2>
+      <p>
+        Sequenced by dependency rather than ambition. Legal definition precedes
+        financial architecture, which precedes controls, which precede exposure
+        to real customers. Durations assume a funded team and are indicative.
+      </p>
+    </div>
+    <div class="col">
+      <div class="phase">
+        <div class="when">Phase 1 · Months 0–3 · Containment</div>
+        <h3>Establish what the product legally is.</h3>
+        <ol>
+          <li>Legal product-definition review across target jurisdictions</li>
+          <li>
+            Define precisely what "Own the Song" transfers — copyright, master
+            rights, licence, collectable status, resale rights or royalty
+            participation
+          </li>
+          <li>Treasury, custody and customer-funds architecture</li>
+          <li>
+            Automated financial and access-control regression testing, and
+            completion of remaining launch controls
+          </li>
+        </ol>
+      </div>
+      <div class="phase">
+        <div class="when">Phase 2 · Months 3–6 · Controlled exposure</div>
+        <h3>Operate the system with real people, at small scale.</h3>
+        <ol start="5">
+          <li>Administrative and jurisdiction-control interface</li>
+          <li>Independent third-party security assessment</li>
+          <li>Private sandbox deployment</li>
+          <li>Secure the first ten artists under contract</li>
+          <li>
+            Closed beta with a capped participant group and capped exposure
+          </li>
+        </ol>
+      </div>
+      <div class="phase">
+        <div class="when">Phase 3 · Months 6–12 · Operating capability</div>
+        <h3>Make it viable to run, not just to use.</h3>
+        <ol start="10">
+          <li>
+            Automated treasury and withdrawal processing, replacing operator
+            handling
+          </li>
+          <li>Complete artist-operations and permissions interfaces</li>
+          <li>
+            Artist acquisition pipeline — contracting, onboarding and support
+          </li>
+          <li>Financial reporting, reconciliation and audit readiness</li>
+        </ol>
+      </div>
+      <div class="phase">
+        <div class="when">Phase 4 · Months 12–18 · Scale</div>
+        <h3>Grow only once the transaction model is proven.</h3>
+        <ol start="14">
+          <li>Public launch in cleared jurisdictions</li>
+          <li>Community and marketplace functionality</li>
+          <li>Visual and brand development</li>
+          <li>Institutional and label partnership channels</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap col">
+    <div class="section-head">
+      <div class="n">08</div>
+      <h2>Capital requirement.</h2>
+    </div>
+    <p>
+      The technical position can be stated with confidence. The financial
+      position cannot yet, and this appendix does not assert figures it cannot
+      support. The categories below are the ones the funding case must cover;
+      the amounts require the company's own commercial modelling and are not
+      estimated here.
+    </p>
+    <div class="needs">
+      <h3>To be completed before the board proposal is final</h3>
+      <ul>
+        <li>
+          <strong>Legal and regulatory</strong> — product-definition review,
+          jurisdictional opinions, entity and licensing structure, ongoing
+          counsel
+        </li>
+        <li>
+          <strong>Independent security assessment</strong> — third-party testing
+          and remediation
+        </li>
+        <li>
+          <strong>Operating liquidity</strong> — company capital committed as
+          working float, held separately from customer funds per Section 06
+        </li>
+        <li>
+          <strong>Engineering</strong> — team cost across the four roadmap
+          phases
+        </li>
+        <li>
+          <strong>Artist acquisition</strong> — advances, guarantees or
+          incentives required to secure the first cohort under contract
+        </li>
+        <li>
+          <strong>Unit economics</strong> — customer acquisition cost, platform
+          take rate, artist revenue share, expected transaction volume,
+          retention, reserve requirements and resulting runway
+        </li>
+        <li>
+          <strong>Operations</strong> — infrastructure, payment processing
+          costs, compliance and support headcount
+        </li>
+      </ul>
+    </div>
+    <p style="margin-top: 16px">
+      Of these,
+      <strong>unit economics is the single largest gap in the proposal</strong>.
+      The platform's technical behaviour is well understood; its commercial
+      behaviour is not yet modelled, and no figure in this appendix should be
+      read as implying otherwise.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head col">
+      <div class="n">09</div>
+      <h2>Decisions requested.</h2>
+      <p>
+        Each of these is outside an engineering mandate and is put to the board
+        directly.
+      </p>
+    </div>
+    <div class="col">
+      <div class="decide">
+        <div class="q">Decision 1</div>
+        <h3>Regulatory classification of the Backing product</h3>
+        <p>
+          The continuously priced Backing mechanic is the platform's most
+          valuable feature and its largest single risk. Depending on
+          jurisdiction and final structure it may attract securities,
+          derivatives, custody, gaming or virtual-asset regulation. The board is
+          asked to authorise a formal legal determination, and to decide whether
+          the platform launches with Backing enabled, restricted to cleared
+          territories, or withheld pending licensing.
+        </p>
+      </div>
+      <div class="decide">
+        <div class="q">Decision 2</div>
+        <h3>What "Own the Song" actually conveys</h3>
+        <p>
+          The purchase is currently described as permanent ownership of a track.
+          What that transfers is not yet legally defined — whether copyright,
+          master rights, a licence, collectable status, resale rights or royalty
+          participation. This determines the product's consumer proposition, its
+          tax treatment, its accounting treatment and its regulatory exposure.
+          It requires resolution before any real purchase is accepted.
+        </p>
+      </div>
+      <div class="decide">
+        <div class="q">Decision 3</div>
+        <h3>Treasury structure and custody model</h3>
+        <p>
+          Whether the company holds customer funds directly, engages a regulated
+          custodian, or restructures so that it never takes custody at all. This
+          decision drives Section 06's architecture, the licensing position, and
+          the credibility of the operating-liquidity commitment.
+        </p>
+      </div>
+      <div class="decide">
+        <div class="q">Decision 4</div>
+        <h3>Payment and payout infrastructure</h3>
+        <p>
+          The current processor accepts inbound payment but cannot send funds
+          out, which is why withdrawals are operator-processed. A full payout
+          provider is required before scale. The board is asked to approve
+          selection and the associated compliance onboarding.
+        </p>
+      </div>
+      <div class="decide">
+        <div class="q">Decision 5</div>
+        <h3>Artist acquisition strategy and commitment</h3>
+        <p>
+          Artists are the product, and there is not yet a contractual,
+          operational or financial pipeline for securing and supporting them.
+          The board is asked to approve the commercial terms offered to the
+          first cohort and the budget behind them.
+        </p>
+      </div>
+      <div class="decide">
+        <div class="q">Decision 6</div>
+        <h3>Launch jurisdiction and sequencing</h3>
+        <p>
+          Which territories the platform opens in, in what order, and on what
+          regulatory basis. This determines what jurisdictional enforcement must
+          do before it can be built.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap col">
+    <div class="section-head">
+      <div class="n">10</div>
+      <h2>Position.</h2>
+    </div>
+    <p>
+      The engineering work demonstrates that NextUp is real and technically
+      substantial. It does not, on its own, demonstrate that the business is
+      legally containable, commercially executable or financially controlled —
+      and this appendix is deliberate in not implying otherwise.
+    </p>
+    <p>
+      The three items that most need resolution are not engineering problems.
+      They are the regulatory classification of the Backing product, the legal
+      definition of what a song purchase conveys, and a treasury structure that
+      separates company liquidity from customer funds. Each is put to the board
+      in Section 09.
+    </p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    NextUp · Confidential · Prepared for board review, 31 July 2026<br />
+    Nothing in this document constitutes an offer, a solicitation, or legal or
+    financial advice. Statements regarding future development are indicative and
+    subject to the decisions requested in Section 09.
+  </div>
+</footer>
