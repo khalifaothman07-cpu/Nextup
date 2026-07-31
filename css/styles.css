@@ -3091,3 +3091,18 @@ header .nav-link.is-admin {
   font-size: clamp(30px, 4.4vw, 44px);
   margin: 16px 0 8px;
 }
+
+/* ---- preview directory ----
+   Preview-only grouping around .index-list, so someone opening the artifact
+   cold can reach all sixteen routes including the role-gated ones. */
+.pv-dir-group + .pv-dir-group {
+  margin-top: 30px;
+}
+.pv-dir-label {
+  font-family: var(--data);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--soft);
+  margin-bottom: 8px;
+}

@@ -1,0 +1,676 @@
+<title>Nextup — where we've reached</title>
+<style>
+  {{FONTS}}
+
+  :root {
+    --ground: #0a0b0a;
+    --surface: #141713;
+    --surface-2: #1c201b;
+    --edge: rgba(230, 234, 227, 0.13);
+    --edge-hi: rgba(230, 234, 227, 0.26);
+    --text: #e6eae3;
+    --dim: #a8aea3;
+    --soft: #7b8276;
+    --accent: #4fd37a;
+    --on-accent: #08170e;
+    --shipped: #4fd37a;
+    --blocked: #d9a441;
+    --unbuilt: #7b8276;
+    --alert: #e8705c;
+    --display: "Anybody", "Arial Black", Helvetica, sans-serif;
+    --body: "Public Sans", system-ui, -apple-system, sans-serif;
+    --data: "DM Mono", ui-monospace, "SF Mono", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --ground: #f1ece0;
+      --surface: #fbf7ee;
+      --surface-2: #e9e2d3;
+      --edge: rgba(25, 26, 23, 0.14);
+      --edge-hi: rgba(25, 26, 23, 0.3);
+      --text: #191a17;
+      --dim: #4a4a43;
+      --soft: #757266;
+      --accent: #a32c24;
+      --on-accent: #fdf8f0;
+      --shipped: #1f7a4d;
+      --blocked: #8a6414;
+      --unbuilt: #757266;
+      --alert: #b3462f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0a0b0a;
+    --surface: #141713;
+    --surface-2: #1c201b;
+    --edge: rgba(230, 234, 227, 0.13);
+    --edge-hi: rgba(230, 234, 227, 0.26);
+    --text: #e6eae3;
+    --dim: #a8aea3;
+    --soft: #7b8276;
+    --accent: #4fd37a;
+    --on-accent: #08170e;
+    --shipped: #4fd37a;
+    --blocked: #d9a441;
+    --unbuilt: #7b8276;
+    --alert: #e8705c;
+  }
+  :root[data-theme="light"] {
+    --ground: #f1ece0;
+    --surface: #fbf7ee;
+    --surface-2: #e9e2d3;
+    --edge: rgba(25, 26, 23, 0.14);
+    --edge-hi: rgba(25, 26, 23, 0.3);
+    --text: #191a17;
+    --dim: #4a4a43;
+    --soft: #757266;
+    --accent: #a32c24;
+    --on-accent: #fdf8f0;
+    --shipped: #1f7a4d;
+    --blocked: #8a6414;
+    --unbuilt: #757266;
+    --alert: #b3462f;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--text);
+    font-family: var(--body);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 0 28px; }
+  .col { max-width: 68ch; }
+
+  h1, h2, h3 {
+    font-family: var(--display);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 0.98;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h1 { font-stretch: 130%; font-size: clamp(38px, 6vw, 70px); }
+  h2 { font-stretch: 118%; font-weight: 700; font-size: clamp(22px, 3vw, 30px); }
+  h3 { font-stretch: 110%; font-weight: 700; font-size: 17px; }
+  p { margin: 0 0 14px; color: var(--dim); font-size: 16px; }
+  strong { color: var(--text); font-weight: 600; }
+  a { color: var(--accent); }
+  code {
+    font-family: var(--data);
+    font-size: 0.88em;
+    background: var(--surface);
+    border: 1px solid var(--edge);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+
+  .eyebrow {
+    font-family: var(--data);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  /* ---- masthead ---- */
+  header {
+    border-bottom: 1px solid var(--edge);
+    padding: 60px 0 44px;
+  }
+  .masthead-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 40px;
+    margin-top: 32px;
+    font-family: var(--data);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+  .masthead-meta span {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--soft);
+    margin-bottom: 3px;
+  }
+
+  section { padding: 46px 0; border-bottom: 1px solid var(--edge); }
+  section:last-of-type { border-bottom: none; }
+  .section-head { margin-bottom: 24px; }
+  .section-head h2 { margin-top: 8px; }
+
+  /* ---- the headline status ---- */
+  .standing {
+    border-left: 3px solid var(--alert);
+    background: var(--surface);
+    padding: 20px 24px;
+    border-radius: 0 10px 10px 0;
+    margin-top: 8px;
+  }
+  .standing p:last-child { margin-bottom: 0; }
+
+  /* ---- status rows ----
+     Status is carried by a stripe and a word, not colour alone. */
+  .rows { display: flex; flex-direction: column; gap: 1px; background: var(--edge); border: 1px solid var(--edge); border-radius: 10px; overflow: hidden; }
+  .row {
+    display: grid;
+    grid-template-columns: 4px 1fr 128px;
+    gap: 0 18px;
+    align-items: start;
+    background: var(--ground);
+    padding: 0;
+  }
+  .row .stripe { background: var(--unbuilt); align-self: stretch; }
+  .row.is-shipped .stripe { background: var(--shipped); }
+  .row.is-blocked .stripe { background: var(--blocked); }
+  .row .body { padding: 16px 0 16px 4px; }
+  .row .body h3 { margin-bottom: 5px; }
+  .row .body p { margin: 0; font-size: 14.5px; color: var(--dim); }
+  .row .state {
+    padding: 18px 18px 18px 0;
+    font-family: var(--data);
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--unbuilt);
+    text-align: right;
+  }
+  .row.is-shipped .state { color: var(--shipped); }
+  .row.is-blocked .state { color: var(--blocked); }
+  @media (max-width: 620px) {
+    .row { grid-template-columns: 4px 1fr; }
+    .row .state { grid-column: 2; text-align: left; padding: 0 0 16px 4px; }
+  }
+
+  .key {
+    display: flex;
+    gap: 22px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+    font-family: var(--data);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--soft);
+  }
+  .key i { display: inline-block; width: 22px; height: 3px; margin-right: 8px; vertical-align: middle; }
+
+  /* ---- numbers ---- */
+  .figures {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--edge);
+    border: 1px solid var(--edge);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .fig { background: var(--ground); padding: 20px; }
+  .fig .n {
+    font-family: var(--display);
+    font-weight: 700;
+    font-stretch: 120%;
+    font-size: 32px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+  .fig .l {
+    font-family: var(--data);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--soft);
+    margin-top: 8px;
+  }
+  .fig.zero .n { color: var(--alert); }
+  @media (max-width: 700px) { .figures { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 420px) { .figures { grid-template-columns: 1fr; } }
+
+  /* ---- ruled list ---- */
+  .ruled { border-top: 1px solid var(--edge); margin: 0; padding: 0; list-style: none; }
+  .ruled li {
+    border-bottom: 1px solid var(--edge);
+    padding: 15px 0;
+    display: grid;
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 6px 24px;
+  }
+  .ruled b {
+    font-family: var(--data);
+    font-weight: 400;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--soft);
+    padding-top: 3px;
+  }
+  .ruled span { color: var(--dim); font-size: 15px; }
+  @media (max-width: 620px) {
+    .ruled li { grid-template-columns: 1fr; }
+  }
+
+  .cta {
+    display: inline-block;
+    font-family: var(--display);
+    font-weight: 700;
+    font-stretch: 112%;
+    font-size: 15px;
+    text-decoration: none;
+    background: var(--accent);
+    color: var(--on-accent);
+    border-radius: 7px;
+    padding: 13px 22px;
+    margin: 4px 10px 4px 0;
+  }
+  .cta.ghost {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--edge-hi);
+  }
+  .cta:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  footer { padding: 40px 0 64px; color: var(--soft); font-family: var(--data); font-size: 12px; line-height: 1.7; }
+</style>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">Founder pack · 31 July 2026</div>
+    <h1>Where Nextup has reached.</h1>
+    <div class="masthead-meta">
+      <div><span>Product</span>Nextup</div>
+      <div><span>Stage</span>Pre-launch</div>
+      <div><span>Deployed</span>Nowhere yet</div>
+      <div><span>Real users</span>0</div>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap col">
+    <p>
+      <strong
+        >Nextup lets people find unsigned and rising artists early and take a
+        real stake in them</strong
+      >
+      — either by owning a specific song outright at a flat price, or by taking
+      a position on an artist's live, demand-driven price. Everything settles in
+      cryptocurrency. There are no subscriptions and no tiers.
+    </p>
+
+    <div class="standing">
+      <p>
+        <strong
+          >The honest headline: the product is substantially built and nothing
+          is live.</strong
+        >
+      </p>
+      <p>
+        Sixteen pages, nineteen database tables, and the full money path all
+        exist and work. But the site is not hosted anywhere, no payment
+        credentials are configured, and not one person has ever signed in. Four
+        things stand between here and a real launch, and three of them need a
+        human, not more code.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head col">
+      <div class="eyebrow">By the numbers</div>
+      <h2>What exists.</h2>
+    </div>
+    <div class="figures">
+      <div class="fig">
+        <div class="n">16</div>
+        <div class="l">Pages, all reachable</div>
+      </div>
+      <div class="fig">
+        <div class="n">19</div>
+        <div class="l">Tables, all RLS-enabled</div>
+      </div>
+      <div class="fig">
+        <div class="n">26</div>
+        <div class="l">Row-level policies</div>
+      </div>
+      <div class="fig">
+        <div class="n">7</div>
+        <div class="l">Edge functions written</div>
+      </div>
+      <div class="fig">
+        <div class="n">7,200</div>
+        <div class="l">Lines of app + CSS</div>
+      </div>
+      <div class="fig zero">
+        <div class="n">0</div>
+        <div class="l">Accounts ever created</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head col">
+      <div class="eyebrow">Surfaces</div>
+      <h2>What's built, and what isn't.</h2>
+    </div>
+    <div class="key">
+      <span
+        ><i style="background: var(--shipped)"></i>Built &amp; verified</span
+      >
+      <span
+        ><i style="background: var(--blocked)"></i>Built, blocked on setup</span
+      >
+      <span><i style="background: var(--unbuilt)"></i>Not built</span>
+    </div>
+    <div class="rows">
+      <div class="row is-shipped">
+        <div class="stripe"></div>
+        <div class="body">
+          <h3>Discovery</h3>
+          <p>
+            Roster, search, genre filter, sort, follows, and a momentum score
+            recomputed daily from real platform activity only — no seeded or
+            invented numbers anywhere.
+          </p>
+        </div>
+        <div class="state">Built</div>
+      </div>
+
+      <div class="row is-shipped">
+        <div class="stripe"></div>
+        <div class="body">
+          <h3>Artist pages</h3>
+          <p>
+            One saturated colour surface per artist, their songs, their live
+            price, and the momentum breakdown shown as an explainable sum rather
+            than a black box.
+          </p>
+        </div>
+        <div class="state">Built</div>
+      </div>
+
+      <div class="row is-shipped">
+        <div class="stripe"></div>
+        <div class="body">
+          <h3>Accounts &amp; roles</h3>
+          <p>
+            Magic-link sign-in, no passwords. Listener, Supporter, artist-team
+            and admin roles, with Supporter derived from real holdings rather
+            than stored.
+          </p>
+        </div>
+        <div class="state">Built</div>
+      </div>
+
+      <div class="row is-shipped">
+        <div class="stripe"></div>
+        <div class="body">
+          <h3>Artist intake</h3>
+          <p>
+            A real application form writing a real row, with a real status a
+            person moves. No autoresponder pretending to be a review.
+          </p>
+        </div>
+        <div class="state">Built</div>
+      </div>
+
+      <div class="row is-shipped">
+        <div class="stripe"></div>
+        <div class="body">
+          <h3>Artist dashboard</h3>
+          <p>
+            Followers, momentum history day by day, live curve price, songs
+            sold, and profile editing — restricted to owner, manager and
+            content-editor roles in the database, not just the UI.
+          </p>
+        </div>
+        <div class="state">Built</div>
+      </div>
+
+      <div class="row is-shipped">
+        <div class="stripe"></div>
+        <div class="body">
+          <h3>Admin console</h3>
+          <p>
+            Application review queue, one-press artist onboarding that creates
+            the artist, their price curve and their team role in a single
+            transaction, feature-flag switches, and an append-only audit log no
+            admin can edit.
+          </p>
+        </div>
+        <div class="state">Built</div>
+      </div>
+
+      <div class="row is-blocked">
+        <div class="stripe"></div>
+        <div class="body">
+          <h3>Payments</h3>
+          <p>
+            Song purchases, wallet deposits, trading and withdrawals are written
+            and the database side is verified. Nothing can actually take money
+            until a Coinbase Commerce account exists and the seven edge
+            functions are deployed.
+          </p>
+        </div>
+        <div class="state">Blocked</div>
+      </div>
+
+      <div class="row is-blocked">
+        <div class="stripe"></div>
+        <div class="body">
+          <h3>Legal pages</h3>
+          <p>
+            Terms, risk disclosure and privacy policy are written, specific to
+            what the product actually does, and clearly marked as drafts. No
+            lawyer has read them.
+          </p>
+        </div>
+        <div class="state">Blocked</div>
+      </div>
+
+      <div class="row">
+        <div class="stripe"></div>
+        <div class="body">
+          <h3>Community &amp; commerce</h3>
+          <p>
+            Posts, comments, merch and drops. Scoped, sequenced, deliberately
+            not started.
+          </p>
+        </div>
+        <div class="state">Not built</div>
+      </div>
+
+      <div class="row">
+        <div class="stripe"></div>
+        <div class="body">
+          <h3>A&amp;R pipeline, notifications, tests</h3>
+          <p>
+            Also scoped and not started. There is no automated test suite yet —
+            verification today is a screenshot harness plus database probes,
+            both real but both narrower than a test suite.
+          </p>
+        </div>
+        <div class="state">Not built</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head col">
+      <div class="eyebrow">Between here and launch</div>
+      <h2>Four blockers.</h2>
+      <p>Only one of these is a coding problem.</p>
+    </div>
+    <ul class="ruled">
+      <li>
+        <b>Coinbase account</b
+        ><span
+          >A real Coinbase Commerce business account has to be created and its
+          two secrets configured. Until then the payment functions deliberately
+          return "crypto payments aren't configured yet" rather than pretending
+          to work. <strong>Needs the founder.</strong></span
+        >
+      </li>
+      <li>
+        <b>Function deployment</b
+        ><span
+          >Seven edge functions are written and committed but never deployed —
+          the deploy step has needed a manual approval that hasn't been granted
+          in any working session. <strong>Needs one approval.</strong></span
+        >
+      </li>
+      <li>
+        <b>Legal review</b
+        ><span
+          >The three policy pages are agent-written drafts. They should not be
+          relied on by a real user in their current state.
+          <strong>Needs a lawyer.</strong></span
+        >
+      </li>
+      <li>
+        <b>Hosting</b
+        ><span
+          >The domain <code>nextup.exchange</code> is owned but points nowhere.
+          The build is a static bundle and can go up quickly once someone says
+          go. <strong>Needs a decision.</strong></span
+        >
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head col">
+      <div class="eyebrow">Worth knowing</div>
+      <h2>Decisions already taken.</h2>
+      <p>These shaped the product and are not obvious from looking at it.</p>
+    </div>
+    <ul class="ruled">
+      <li>
+        <b>No subscriptions</b
+        ><span
+          >A tiered monthly-support model was built, then removed on the
+          founder's call. Backing is a live price plus wallet deposits and
+          withdrawals — that is the only mechanism, by design.</span
+        >
+      </li>
+      <li>
+        <b>Trading is switched on</b
+        ><span
+          >The bonding-curve product sits behind a feature flag that ships off.
+          It is currently on, at the founder's explicit instruction, with the
+          founder owning the licensing and jurisdiction question.</span
+        >
+      </li>
+      <li>
+        <b>Crypto only</b
+        ><span>No cards, no bank transfers, anywhere in the system.</span>
+      </li>
+      <li>
+        <b>Withdrawals are manual</b
+        ><span
+          >Coinbase Commerce can accept crypto but cannot send it. A withdrawal
+          debits the wallet immediately and a person sends the funds. This is
+          documented rather than hidden, and it stays true until a payout
+          provider is integrated.</span
+        >
+      </li>
+      <li>
+        <b>Admins are made in SQL</b
+        ><span
+          >There is deliberately no UI for granting the admin role. A console
+          that can mint admins is an escalation surface, and with one operator
+          it would be all risk.</span
+        >
+      </li>
+      <li>
+        <b>Famous names are placeholders</b
+        ><span
+          >The preview shows Bruno Mars, Justin Bieber, The Weeknd, Rihanna and
+          Shakira with their real public listener figures, so the design can be
+          judged populated instead of empty. None of them has agreed to
+          anything. The live database still holds five fictional seed
+          artists.</span
+        >
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head col">
+      <div class="eyebrow">How money is protected</div>
+      <h2>The one rule.</h2>
+    </div>
+    <div class="col">
+      <p>
+        <strong
+          >The browser is never trusted with who you are, what you hold, or what
+          anything costs.</strong
+        >
+        Every action that moves money runs through a server-side function that
+        derives your identity from a verified token and does the arithmetic
+        itself. Every table has row-level security on from the moment it is
+        created; a signed-in user can read their own rows and nobody else's.
+      </p>
+      <p>
+        Two real holes were found and closed this way. A leftover policy would
+        have let any signed-in user grant themselves any unowned song for free.
+        And two separate mistakes in locking down privileged database functions
+        — opposite errors with the same root cause — would each have exposed
+        them publicly. Both were caught by running the security advisor after
+        every change, which is now routine.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head col">
+      <div class="eyebrow">See it</div>
+      <h2>The preview.</h2>
+      <p>
+        Fixed in a demo account holding the artist and admin roles, so the gated
+        screens are visible. Payments and trading only run on the real build.
+        There is a light/dark switch in the header.
+      </p>
+    </div>
+    <div class="col">
+      <a
+        class="cta"
+        href="https://claude.ai/code/artifact/05016e13-6777-4899-9941-b3372ab66599"
+        >Open the preview</a
+      >
+      <a
+        class="cta ghost"
+        href="https://claude.ai/code/artifact/d217cc17-fe22-4341-9bbe-c26328c1612e"
+        >Straight to an artist page</a
+      >
+      <p style="margin-top: 18px">
+        The home page carries a full directory — every one of the sixteen
+        routes, grouped, including the three that are role-gated.
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Nextup · pre-launch · nothing on this page is an offer or a solicitation.<br />
+    Figures are from the live database and the repository as of 31 July 2026.
+  </div>
+</footer>
