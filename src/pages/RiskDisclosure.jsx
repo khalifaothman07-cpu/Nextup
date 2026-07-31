@@ -27,73 +27,70 @@ export function RiskDisclosure() {
 
           <h2>Not investment advice</h2>
           <p>
-            Nothing on Nextup is investment advice, a recommendation, or a
-            solicitation to buy or sell anything. Backing an artist and owning a
-            song are both discretionary purchases you make with your own
-            judgment. Nextup does not guarantee any outcome, return, or level of
-            artist success.
+            Nothing here is investment advice, a recommendation, or a
+            solicitation. Backing an artist and owning a song are discretionary
+            purchases you make on your own judgment. We guarantee no outcome, no
+            return, and no level of artist success.
           </p>
 
           <h2>You can lose your full contribution</h2>
           <p>
-            An artist's momentum can decline. A bonding-curve position can be
-            closed for less than you paid to open it, including a total loss of
-            the stake behind it. A track you own has no guaranteed resale value.
-            There is no insurance, guarantee fund, or protection scheme behind
-            any balance, position, or purchase on Nextup.
+            An artist's momentum can decline. A position can close for less than
+            you paid to open it, up to losing the whole stake. A track you own
+            has no guaranteed resale value. There is no insurance, no guarantee
+            fund, and no protection scheme behind any balance, position or
+            purchase here.
           </p>
 
           <h2>Cryptocurrency volatility</h2>
           <p>
-            All payments, wallet balances, and prices on Nextup are denominated
-            in USD but settled in cryptocurrency. Crypto asset prices are
-            volatile; the value of what you send or receive can change
-            significantly between the moment you initiate a payment and the
-            moment it confirms on-chain.
+            Everything is priced in USD but settled in crypto, and crypto is
+            volatile. What you send or receive can change in value between
+            starting a payment and it confirming on-chain.
           </p>
 
-          <h2>How the bonding curve works — and what that means for you</h2>
+          <h2>How the price moves</h2>
           <p>
-            An artist's price moves continuously with trading activity:{" "}
-            <code>price(supply) = base_price × e^(k × supply)</code>. Opening a
-            position changes the price for the next person. A Sell ("negative")
-            position is backed by escrow of up to twice your stake rather than
-            open-ended margin, but the position can still be closed for a loss
-            up to that escrowed amount. Curve depth can limit how large a Sell
-            position can be at any given time — this is a deliberate safeguard,
-            not a bug, but it means you may not always be able to open the exact
-            position size you want.
+            The price rises as people buy and falls as they sell — your own
+            position moves it for whoever comes next. A Sell position is backed
+            by escrow of up to twice your stake instead of open-ended margin,
+            and can still close at a loss up to that escrowed amount. How much
+            the curve can absorb limits how large a Sell can be at any moment;
+            that is a deliberate safeguard, but it means the size you want may
+            not always be available.
+          </p>
+          <p className="legal-formula">
+            <code>price(supply) = base_price × e^(k × supply)</code>
           </p>
 
           <h2>Payments are final</h2>
           <p>
-            Cryptocurrency payments cannot be reversed once confirmed on-chain.
-            There are no refunds for Song Ownership purchases, wallet deposits,
-            or closed positions except where required by law.
+            Crypto payments cannot be reversed once confirmed on-chain. No
+            refunds on purchases, deposits or closed positions, except where the
+            law requires it.
           </p>
 
           <h2>Withdrawals are manual, not instant</h2>
           <p>
-            A withdrawal request debits your wallet immediately but is fulfilled
-            by Nextup as a manual step shortly after, not an automated on-demand
-            payout. If you provide an incorrect destination address, the funds
-            cannot be recovered.
+            A withdrawal debits your wallet immediately but is paid out by hand
+            shortly after, not automatically on demand.{" "}
+            <strong>
+              Send it to the wrong address and the funds cannot be recovered.
+            </strong>
           </p>
 
           <h2>Regulatory and jurisdictional risk</h2>
           <p>
-            Rules around cryptocurrency payments and artist-backing products
-            vary by jurisdiction and can change. You are responsible for
-            confirming that using Nextup, and specifically the Backing feature,
-            is lawful where you live before you use it.
+            Rules on crypto payments and artist-backing products vary by country
+            and change. Confirming that Nextup — Backing especially — is lawful
+            where you live is your responsibility, before you use it.
           </p>
 
           <h2>No professional advice</h2>
           <p>
-            Nextup doesn't provide legal, tax, or financial advice. Consider
-            speaking with a qualified professional about the tax and legal
-            implications of backing an artist or owning a song before you do
-            either.
+            We don't give legal, tax or financial advice. Talk to someone
+            qualified about the tax and legal side before you back an artist or
+            buy a song.
           </p>
         </div>
       </section>

@@ -25,68 +25,56 @@ export function Privacy() {
           </div>
 
           <h2>What we collect</h2>
+          <dl className="legal-dl">
+            <dt>Email</dt>
+            <dd>For magic-link sign-in. There is no password to store.</dd>
+            <dt>Waitlist email</dt>
+            <dd>If you join the waitlist.</dd>
+            <dt>Platform activity</dt>
+            <dd>
+              Songs you own, wallet balance, deposits, withdrawals, positions.
+              Account data, not tracking.
+            </dd>
+            <dt>Withdrawal address</dt>
+            <dd>The crypto address you give us, so we can pay you.</dd>
+          </dl>
           <p>
-            <strong>Account &amp; auth:</strong> your email address, used solely
-            for magic-link sign-in — Nextup never stores a password.
-          </p>
-          <p>
-            <strong>Waitlist:</strong> if you join the waitlist, we store the
-            email address you submit.
-          </p>
-          <p>
-            <strong>Activity on the platform:</strong> song ownership purchases,
-            wallet balance and deposit/withdrawal history, and backing positions
-            you open or close — this is core account data, not optional
-            tracking.
-          </p>
-          <p>
-            <strong>Withdrawal destination addresses:</strong> the
-            cryptocurrency address you provide when requesting a withdrawal,
-            stored so the request can be fulfilled.
-          </p>
-          <p>
-            <strong>What we don't collect:</strong> Nextup does not use
-            analytics or advertising trackers, and does not set tracking
-            cookies. We don't collect payment card or bank details — all
-            payments go through Coinbase Commerce directly.
+            <strong>Not collected:</strong> no analytics, no ad trackers, no
+            tracking cookies, no card or bank details — payments go through
+            Coinbase Commerce.
           </p>
 
           <h2>Who processes it</h2>
           <p>
-            Account data, wallet balances, and platform activity are stored in
-            Supabase (Postgres), access-controlled with row-level security so
-            you can only read your own records. Payments are processed by
-            Coinbase Commerce, which handles the cryptocurrency charge itself —
-            Nextup receives confirmation of a charge, not any wallet
-            credentials.
+            Your data lives in Supabase (Postgres) under row-level security, so
+            you can only read your own records. Payments run through Coinbase
+            Commerce — we get confirmation that a charge cleared, never your
+            wallet credentials.
           </p>
 
           <h2>How we use it</h2>
           <p>
-            To operate your account, process the payments and withdrawals you
-            initiate, run the bonding-curve trading system correctly, and
-            contact you about your account, the waitlist, or the platform. We
-            don't sell your data or share it with advertisers.
+            To run your account, settle the payments and withdrawals you start,
+            price the curve correctly, and email you about any of it. We don't
+            sell it or share it with advertisers.
           </p>
 
           <h2>Retention</h2>
           <p>
-            We keep account and transaction records for as long as your account
-            is active and as needed to resolve disputes, comply with legal
-            obligations, or maintain accurate financial records.
+            As long as your account is active, plus whatever we need to settle
+            disputes, meet legal obligations, and keep accurate financial
+            records.
           </p>
 
           <h2>Your choices</h2>
           <p>
-            You can request a copy of your data or ask us to delete your account
-            by emailing us below. Deletion may be limited where we need to
-            retain transaction records for legal or accounting reasons.
+            Email us for a copy of your data or to delete your account. Deletion
+            can be limited where we're required to keep transaction records.
           </p>
 
           <h2>Contact</h2>
           <p>
-            Questions about this policy or your data:{" "}
-            <a href="mailto:admin@nextup.exchange">admin@nextup.exchange</a>.
+            <a href="mailto:admin@nextup.exchange">admin@nextup.exchange</a>
           </p>
         </div>
       </section>

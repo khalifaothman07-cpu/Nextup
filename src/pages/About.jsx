@@ -24,33 +24,27 @@ export function About() {
                 Built for the artists streaming still isn't paying.
               </h1>
               <p>
-                Most platforms let you stream an artist for free and give them
-                fractions of a cent. Nextup asks a different question: what if
-                the people who found an artist first could actually have a stake
-                in what happens next?
+                Streaming pays artists fractions of a cent and pays the people
+                who found them first nothing at all. Nextup asks the other
+                question: what if getting there early counted for something?
               </p>
               <p>
-                Nextup is global from day one and digital-native throughout —
-                every backing and every song purchase settles in crypto, with no
-                borders, no banks, and no waiting on a market to "roll out" to
-                you. Discovery first, ownership second, streaming numbers a
-                distant third.
+                Global from day one. Everything settles in crypto — no borders,
+                no banks, no waiting for a market to roll out to you.
               </p>
             </div>
             <div className="about-stats" data-reveal>
               <div className="about-stat">
-                <div className="n">5</div>
-                <div className="l">Artists on the platform at launch</div>
+                <div className="n">0%</div>
+                <div className="l">Platform fee on anything you buy</div>
               </div>
               <div className="about-stat">
                 <div className="n">$1</div>
-                <div className="l">
-                  Minimum to open a position backing an artist
-                </div>
+                <div className="l">Minimum to back an artist</div>
               </div>
               <div className="about-stat">
                 <div className="n">Worldwide</div>
-                <div className="l">Where Nextup is available</div>
+                <div className="l">Crypto only, no borders</div>
               </div>
             </div>
           </div>

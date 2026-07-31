@@ -27,62 +27,54 @@ export function Terms() {
 
           <h2>1. What Nextup is</h2>
           <p>
-            Nextup is a platform for discovering unsigned and rising artists. It
-            offers two ways to participate: buying permanent ownership of a
-            specific track at a flat price ("Song Ownership"), and opening
-            Buy/Sell positions against an artist's live, continuously-priced
-            bonding curve using funds held in a Nextup wallet ("Backing"). All
-            payments are in cryptocurrency via Coinbase Commerce — Nextup does
-            not accept cards or bank transfers.
+            A platform for discovering unsigned and rising artists, with two
+            ways to take part: buying permanent ownership of a track at a flat
+            price ("Song Ownership"), and opening Buy/Sell positions against an
+            artist's live bonding-curve price from a Nextup wallet ("Backing").
+            Payment is cryptocurrency via Coinbase Commerce only — no cards, no
+            bank transfers.
           </p>
 
           <h2>2. Eligibility</h2>
           <p>
-            You must be able to form a binding contract in your jurisdiction and
-            be legally permitted to hold and transact in cryptocurrency where
-            you live. Nextup does not verify identity or residency beyond a
-            valid email address at this time; you're responsible for confirming
-            your own local regulations allow you to use the platform, including
-            the Backing feature described below.
+            You must be able to form a binding contract where you live, and be
+            legally permitted to hold and transact in cryptocurrency there. We
+            verify nothing beyond a working email address, so confirming your
+            local rules allow this — Backing included — is on you.
           </p>
 
           <h2>3. Accounts</h2>
           <p>
-            Accounts are created via email magic-link — there are no passwords.
-            You're responsible for keeping access to your email account secure,
-            since it is the sole means of authenticating to Nextup.
+            Sign-in is an emailed magic link; there are no passwords. Your email
+            account is therefore the only thing standing between someone else
+            and your account. Keep it secure.
           </p>
 
           <h2>4. Song Ownership</h2>
           <p>
-            Each track has a single, flat, one-time price set by the artist.
-            Payment is a Coinbase Commerce crypto charge. Once confirmed
-            on-chain, ownership of that track is recorded to your account
-            permanently. Each track can only be owned by one account at a time.
-            Song Ownership purchases are final once the charge confirms — see
-            Section 7 on refunds.
+            One flat price per track, set by the artist, paid as a Coinbase
+            Commerce crypto charge. Once it confirms on-chain the track is
+            recorded to your account permanently, and only one account can own a
+            given track at a time. Purchases are final once the charge confirms
+            — see Section 7.
           </p>
 
           <h2>5. Backing, wallets, and trading</h2>
           <p>
-            Backing is funded through a Nextup wallet balance, added via
-            Coinbase Commerce (minimum $10 per deposit). From that balance you
-            may open a Buy ("positive") or Sell ("negative") position against an
-            artist's bonding-curve price (minimum $1 stake). Sell positions are
-            backed by escrow held from your wallet at up to twice your stake;
-            Nextup does not extend margin or credit, and there are no margin
-            calls beyond the escrow already held. Closing a position settles at
-            the then-current curve price and credits or debits your wallet
-            accordingly.
+            Fund a Nextup wallet via Coinbase Commerce ($10 minimum deposit),
+            then open Buy or Sell positions against an artist's curve price ($1
+            minimum stake). Sell positions are backed by escrow of up to twice
+            your stake — we extend no margin or credit, and there are no margin
+            calls beyond that escrow. Closing settles at the current curve price
+            and credits or debits your wallet.
           </p>
 
           <h2>6. Withdrawals</h2>
           <p>
-            You may request a withdrawal of your wallet balance (minimum $10) to
-            a cryptocurrency address you provide. A withdrawal request debits
-            your wallet immediately and is fulfilled by Nextup shortly after —
-            it is a request, not an instant automated payout. You may cancel a
-            request while it remains pending for an immediate refund to your
+            You may request a withdrawal ($10 minimum) to a crypto address you
+            provide. The request debits your wallet immediately and is fulfilled
+            by us shortly after — a request, not an instant automated payout.
+            Cancel while it is still pending for an immediate refund to your
             wallet balance. You are solely responsible for providing a correct
             destination address; Nextup cannot reverse a payment sent to an
             address you supplied.
@@ -90,40 +82,38 @@ export function Terms() {
 
           <h2>7. Payments are final</h2>
           <p>
-            Cryptocurrency payments cannot be reversed once confirmed on-chain.
-            Nextup does not offer refunds for Song Ownership purchases, wallet
-            deposits, or closed positions, except where required by law. If a
-            payment fails to confirm, no charge is recorded and no funds move.
+            Crypto payments cannot be reversed once confirmed on-chain. No
+            refunds on Song Ownership purchases, wallet deposits, or closed
+            positions, except where the law requires it. If a payment never
+            confirms, nothing is recorded and no funds move.
           </p>
 
           <h2>8. Risk</h2>
           <p>
             Backing an artist and owning a song both carry financial risk,
-            including possible loss of your full contribution and exposure to
-            cryptocurrency price volatility. Read the full{" "}
+            including losing everything you put in and exposure to crypto price
+            swings. Read the full{" "}
             <Link to="/risk-disclosure">risk disclosure</Link> before using
             either feature — it is part of these Terms by reference.
           </p>
 
           <h2>9. Artist content and conduct</h2>
           <p>
-            Artists are responsible for the accuracy of their profile, track
-            metadata, and pricing, and for having the rights to any content they
-            upload. Nextup may remove content or suspend an account that
-            infringes rights, is fraudulent, or otherwise violates these Terms.
+            Artists are responsible for their profile, track metadata and
+            pricing being accurate, and for holding the rights to anything they
+            upload. We may remove content or suspend an account that infringes
+            rights, is fraudulent, or breaks these Terms.
           </p>
 
           <h2>10. Changes</h2>
           <p>
-            Nextup is pre-launch and these Terms will change as the product
-            does. Material changes will be reflected on this page with an
-            updated date above.
+            Nextup is pre-launch and these Terms will change as it does.
+            Material changes appear here with a new date above.
           </p>
 
           <h2>11. Contact</h2>
           <p>
-            Questions about these Terms:{" "}
-            <a href="mailto:admin@nextup.exchange">admin@nextup.exchange</a>.
+            <a href="mailto:admin@nextup.exchange">admin@nextup.exchange</a>
           </p>
         </div>
       </section>

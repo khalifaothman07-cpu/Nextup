@@ -3007,3 +3007,87 @@ header .nav-link.is-admin {
     position: static;
   }
 }
+
+/* ---- legal pages ----
+   These are short for their genre (Terms 439 words, Risk 350, Privacy 200).
+   They read long because they were undifferentiated stacks of heading +
+   paragraph. Structure does the work that deleting clauses would otherwise
+   have done — and deleting clauses from a risk disclosure is a bad trade. */
+.content-page h2 {
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  margin: 40px 0 10px;
+  padding-top: 18px;
+  border-top: 1px solid var(--edge);
+}
+.content-page h2:first-of-type {
+  margin-top: 30px;
+}
+.content-page p {
+  font-size: 15.5px;
+  line-height: 1.68;
+  color: var(--dim);
+  max-width: 68ch;
+  margin: 0 0 12px;
+}
+.content-page .updated {
+  font-family: var(--data);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--soft);
+  border-left: 3px solid var(--warn);
+  padding: 10px 0 10px 14px;
+  margin-bottom: 8px;
+  max-width: 60ch;
+}
+.content-page strong {
+  color: var(--text);
+}
+.legal-dl {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 12px 24px;
+  margin: 4px 0 16px;
+  max-width: 68ch;
+}
+.legal-dl dt {
+  font-family: var(--data);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--soft);
+  padding-top: 3px;
+}
+.legal-dl dd {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--dim);
+}
+@media (max-width: 620px) {
+  .legal-dl {
+    grid-template-columns: 1fr;
+    gap: 2px 0;
+  }
+  .legal-dl dd {
+    margin-bottom: 12px;
+  }
+}
+.legal-formula {
+  font-family: var(--data);
+  font-size: 13px;
+  background: var(--surface);
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  padding: 12px 16px;
+  overflow-x: auto;
+  max-width: 68ch;
+}
+
+/* The legal pages' h1 carried an inline clamp; it lives here now so the
+   preview build can strip inline styles when it generates those pages from
+   the React source. */
+.content-page h1 {
+  font-size: clamp(30px, 4.4vw, 44px);
+  margin: 16px 0 8px;
+}
