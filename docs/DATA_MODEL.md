@@ -62,6 +62,14 @@ This is the only backing mechanism — there is no separate tiered/subscription 
 - **The asymmetry between those two is the whole point of the slice.** Because the debit happens at request time, paying moves nothing and rejecting must refund. Getting it backwards in either direction silently takes money from a user — pay-that-refunds double-spends, reject-that-doesn't leaves them short with nothing sent. Both directions are probed.
 - **All eight are `SECURITY DEFINER`, take no `user_id` argument, read `auth.uid()` themselves, and refuse any caller without the `admin` role** — the deliberate opposite of the `service_role`-only pattern used by `open_position`/`request_withdrawal`. `docs/SECURITY.md` explains why the two shapes need different grants.
 
+## Rate limiting (Cycle 15)
+
+- **`private.rate_counters`** — `bucket, window_start (composite PK), hits`. Fixed-window counters, one row per bucket per window. In the `private` schema so PostgREST never exposes it. GC'd nightly at 03:30 UTC by pg_cron job `gc-rate-counters` calling `private.gc_rate_counters()`.
+- **`private.check_rate_limit(bucket, max, window)`** — upserts the counter and raises `P0001 rate limit exceeded for <bucket>` once the bucket is over. Not reachable from PostgREST.
+- **`private.request_ip()`** — prefers `cf-connecting-ip` (Cloudflare overwrites it, so it cannot be forged); falls back to the _last_ hop of `x-forwarded-for` only.
+- **Enforced by `BEFORE INSERT` triggers, not by callers** — on `positions` (20/min + 200/hr per user), `withdrawal_requests` (5/hr), `crypto_charges` and `wallet_deposits` (10/hr), `waitlist_signups` (5/hr per IP). On the table so it cannot be skipped by calling PostgREST directly.
+- **The waitlist trigger does not fall back to a global bucket** when the IP is unknown. A shared counter would let one flooder lock every real signup out, which is worse than the spam. See `docs/SECURITY.md` for what per-IP limiting genuinely buys and what it does not.
+
 ## Growth
 
 - **`waitlist_signups`** — `id, email (unique), source, created_at`. Public insert-only (intentionally permissive — a lead-capture form), no read.

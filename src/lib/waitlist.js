@@ -1,4 +1,5 @@
 import { supabase } from "./supabaseClient.js";
+import { friendlyError } from "./errors.js";
 
 export async function joinWaitlist(email, source) {
   const { error } = await supabase
@@ -8,7 +9,10 @@ export async function joinWaitlist(email, source) {
     if (error.code === "23505") return { ok: true, already: true };
     return {
       ok: false,
-      message: "Something went wrong — try again in a moment.",
+      message: friendlyError(
+        error,
+        "Something went wrong — try again in a moment.",
+      ),
     };
   }
   return { ok: true, already: false };

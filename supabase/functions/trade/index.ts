@@ -7,6 +7,11 @@ interface TradeRequest {
   stake_cents?: number;
 }
 
+/** The DB rate limiter raises this; surface it as 429, not a generic failure. */
+function rateLimited(message: string | undefined): boolean {
+  return (message ?? "").includes("rate limit exceeded");
+}
+
 function jsonResponse(body: unknown, status: number) {
   return new Response(JSON.stringify(body), {
     status,
@@ -79,6 +84,12 @@ Deno.serve(async (req) => {
   });
 
   if (error) {
+    if (rateLimited(error.message)) {
+      return jsonResponse(
+        { error: "That's a lot of trades in a short time. Give it a minute." },
+        429,
+      );
+    }
     const message = error.message.includes("insufficient wallet balance")
       ? "Not enough funds in your wallet — add funds first."
       : error.message.includes("not enough curve depth")

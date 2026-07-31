@@ -2,6 +2,7 @@ import { useState } from "react";
 import { supabase } from "../lib/supabaseClient.js";
 import { formatUSD } from "../lib/format.js";
 import { useSession } from "../context/SessionContext.jsx";
+import { friendlyError } from "../lib/errors.js";
 
 /**
  * Numbered track rows, following the reference's popular-tracks column:
@@ -26,7 +27,12 @@ export function TrackList({ slug, tracks, ownedSet }) {
     );
     if (err || !data?.hosted_url) {
       setBuying(null);
-      setError(data?.error ?? "Couldn't start checkout — try again.");
+      setError(
+        friendlyError(
+          err,
+          data?.error ?? "Couldn't start checkout — try again.",
+        ),
+      );
       return;
     }
     window.location.href = data.hosted_url;

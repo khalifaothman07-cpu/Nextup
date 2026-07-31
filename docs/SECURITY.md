@@ -47,9 +47,29 @@ Both show up in `get_advisors` and are left as-is deliberately — flagged here 
 
 `coinbase-webhook` verifies `X-CC-Webhook-Signature` via HMAC-SHA256 against `COMMERCE_WEBHOOK_SECRET` using a constant-time comparison before parsing or trusting anything in the request body. It's idempotent (a charge already `confirmed` is a no-op; the update that flips `pending -> confirmed` is conditioned on `.eq("status","pending")` so only one concurrent delivery can win and proceed to the entitlement/credit step).
 
+## Rate limiting: what it does and does not do (Cycle 15)
+
+Three properties worth being precise about, because each one is a real limit on the protection:
+
+**A rejected request does not burn quota.** Postgres rolls back the counter increment along with the failed insert, so the guarantee is "at most N _successes_ per window", not "at most N _attempts_". That is the right behaviour — a user who trips a limit is not punished further for retrying — but it means the limiter caps successful abuse without reducing the load of a flood. Volume floods are Cloudflare's job, and Supabase already sits behind it.
+
+**Fixed windows allow a 2× burst at the boundary.** Ten charges at 10:59 and ten more at 11:01 both pass. Accepted: the alternative is storing and counting every event, and the numbers here are chosen so that twice the limit is still harmless.
+
+**Per-IP limiting is weak against anyone with an IP pool, and we proved it by accident.** The end-to-end test fired seven waitlist signups from one machine and every one succeeded — because this sandbox's egress IP rotates across a pool, so the seven landed in three different buckets and none reached five. That is exactly the bypass a datacenter, VPN or botnet has for free. The limit still stops casual and naive spam, and `waitlist_signups` has a unique constraint on email underneath it, but nobody should read "per-IP rate limited" as "protected". If waitlist spam ever becomes real, the answer is a CAPTCHA (Turnstile/hCaptcha), not a smaller number here.
+
+**The IP itself is read from `cf-connecting-ip`**, which Cloudflare overwrites on every request and a client therefore cannot forge. `x-forwarded-for` is only a fallback, and only its _last_ hop is trusted — anything earlier in that header may have been supplied by the caller.
+
+## Magic-link sign-in is Supabase's endpoint, not ours
+
+The one surface a database trigger cannot reach. `signInWithOtp` posts to Supabase Auth directly, so there is no table to hang a trigger on and no function of ours in the path. Three things apply instead:
+
+1. **Supabase's own auth rate limits** are the real control, and they are dashboard settings rather than code. Before launch, confirm the per-hour email limit and the per-IP sign-in limit under Auth → Rate Limits. The built-in SMTP has a low project-wide hourly ceiling, which is a shared fuse — one abuser exhausts it for every real user, so a custom SMTP provider should be configured at the same time.
+2. **Enable CAPTCHA on auth** (Turnstile or hCaptcha, Auth → Settings). This is the actual defence against automated sign-in abuse and the only one that survives an attacker with an IP pool.
+3. **The 30-second resend cooldown in `AuthWidget`** is politeness, not security — it lives in the page and anyone can bypass it. It is there because without it an ordinary person who doesn't see the email clicks "Sign in" four times in ten seconds and burns the shared quota on their own confusion.
+
 ## Known gaps (not yet addressed)
 
-- No rate limiting anywhere (auth, trade, checkout). The master prompt requires it (§20); not built this pass.
+- **Closed, with one honest exception (Cycle 15).** Rate limits are enforced in Postgres by `BEFORE INSERT` triggers on `positions` (20/min and 200/hr per user), `withdrawal_requests` (5/hr), `crypto_charges` and `wallet_deposits` (10/hr), and `waitlist_signups` (5/hr per IP). They live on the tables rather than in the Edge Functions deliberately: a limit inside a function is skipped the moment somebody calls PostgREST directly, and all of these tables are reachable that way. Counters are fixed-window rows in `private.rate_counters`, GC'd nightly by pg_cron.
 - **Partly closed (Cycle 13).** `artist_members` owner grants now happen through `/admin`'s "Create artist page", which is audited. `user_roles` grants (`admin`, `curator`) are still SQL-only and deliberately so: an admin console that can mint admins is a privilege-escalation surface, and there is no second-person approval or self-demotion guard to make that safe yet. Granting the first admin is documented in `docs/DEPLOYMENT.md`.
 - **Closed (Cycle 13).** `audit_log` exists and every `admin_*` function writes to it. It covers admin actions only — moderation and role grants aren't recorded because neither has a code path yet. The table is append-only from the client's perspective: `INSERT`/`UPDATE`/`DELETE` are revoked from `anon` and `authenticated` with no policy granting them back, so an admin cannot edit or erase their own trail through the API.
 - `jurisdiction_rules` exists as a schema stub only; nothing actually checks it before allowing a trade or backing action.

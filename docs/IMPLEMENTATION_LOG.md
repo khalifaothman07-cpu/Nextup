@@ -43,6 +43,32 @@ Advisor: the two long-accepted lints, plus five `authenticated_security_definer_
 
 ---
 
+## Cycle 15 — Rate limiting, and being precise about what it buys
+
+**Slice**: there was none, anywhere — auth, trade, checkout, waitlist. The master prompt asks for it (§20). It wanted doing _before_ the domain resolves rather than after.
+
+**Where it lives, and why there**: `BEFORE INSERT` triggers on the tables, not checks inside the Edge Functions. A limit in a function is skipped the moment someone calls PostgREST directly, and every one of these tables is reachable that way. Edge Functions are also ephemeral and horizontally scaled, so an in-memory counter there counts almost nothing — the only shared state already available is the database, and using it costs no new infrastructure.
+
+**Limits**: `positions` 20/min and 200/hr per user (a per-minute cap alone still permits a sustained grind; a per-hour cap alone still permits a burst), `withdrawal_requests` 5/hr, `crypto_charges` and `wallet_deposits` 10/hr, `waitlist_signups` 5/hr per IP.
+
+**Verified against the real HTTP path, not just SQL.** The 6th withdrawal and 11th charge were refused at exactly the right counts, a second user was untouched (per-actor, not global), and an end-to-end curl run returned `HTTP 400 / P0001` with the hint intact.
+
+**Three things worth being precise about, all now in `docs/SECURITY.md`:**
+
+1. **A rejected request does not burn quota.** The counter increment rolls back with the failed insert, so the guarantee is "at most N _successes_ per window", not attempts. Correct behaviour — retrying is not punished — but it means the limiter caps successful abuse without reducing flood load.
+2. **Fixed windows allow a 2× boundary burst.** Accepted; the alternative is storing every event, and twice these numbers is still harmless.
+3. **Per-IP limiting is weak against an IP pool, and the test proved it by accident.** Seven waitlist signups from one machine all succeeded — this sandbox's egress IP rotates, so they landed in three buckets and none reached five. That is precisely the free bypass a datacenter or VPN has. Forcing one bucket over the line confirmed enforcement works; the limitation is real and is now written down rather than papered over. If waitlist spam becomes real the answer is a CAPTCHA, not a smaller number.
+
+**The one surface a trigger cannot reach**: magic-link sign-in posts to Supabase Auth directly — no table, no function of ours in the path. Documented as what it is: Supabase's dashboard rate limits are the actual control, CAPTCHA on auth is the real defence, and the new 30-second resend cooldown in `AuthWidget` is politeness rather than security. It earns its place because without it a person who doesn't see the email clicks four times in ten seconds and burns a shared hourly quota on their own confusion — but it is client-side and says so in the code.
+
+**User-facing copy**: `src/lib/errors.js` maps limits to sentences a person can act on; a raw `rate limit exceeded for wd:<uuid>` both reads as a crash and leaks an internal bucket key. The four Edge Functions that front money paths now return **429** with the same copy — needed because an Edge Function error arrives as an HTTP body, not a Postgres error code, so the client-side mapper cannot see it.
+
+**Redeploy needed**: `trade`, `withdraw`, `create-charge` and `deposit` changed. `bash scripts/deploy-functions.sh`. The DB limits are already live and enforce regardless.
+
+**Recommended next**: RLS regression tests — the structural gap the screenshot harness cannot cover, and the thing that would have caught the free-song-ownership policy in Cycle 8 automatically.
+
+---
+
 ## Cycle 14 — Withdrawal fulfillment: taking the money path out of the SQL editor
 
 **Slice**: chosen over the master prompt's next phase (community/commerce) and the founder agreed. Reasoning: every other step in the money path is now automated — purchase → webhook → ownership, deposit → webhook → credit, trade → locked function. Withdrawals were the exception. Marking one paid meant finding the row by hand and running an `UPDATE` in the Supabase SQL editor, with **no audit row, no check that it was still pending, and a `WHERE` clause one typo away from hitting the whole table**. Harmless while there is no money; the single riskiest thing in the system the day the Commerce account lands. Community, by contrast, would be designed blind for zero users.

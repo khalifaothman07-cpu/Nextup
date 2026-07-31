@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient.js";
 import { formatUSD } from "../lib/format.js";
+import { friendlyError } from "../lib/errors.js";
 import { useSession } from "../context/SessionContext.jsx";
 
 const AMOUNT_CHIPS = [
@@ -115,7 +116,12 @@ export function TradingPanel({ artist, slug }) {
     });
     setFormBusy(false);
     if (error || !data?.hosted_url) {
-      setFormError(data?.error ?? "Couldn't start the deposit — try again.");
+      setFormError(
+        friendlyError(
+          error,
+          data?.error ?? "Couldn't start the deposit — try again.",
+        ),
+      );
       return;
     }
     window.location.href = data.hosted_url;
@@ -139,7 +145,12 @@ export function TradingPanel({ artist, slug }) {
     });
     setFormBusy(false);
     if (error || !data?.request) {
-      setFormError(data?.error ?? "Couldn't submit that — try again.");
+      setFormError(
+        friendlyError(
+          error,
+          data?.error ?? "Couldn't submit that — try again.",
+        ),
+      );
       return;
     }
     setMode(null);
@@ -201,7 +212,10 @@ export function TradingPanel({ artist, slug }) {
     setTradeBusy(false);
     setTradeStatus(
       error
-        ? (data?.error ?? "Could not place trade — try again.")
+        ? friendlyError(
+            error,
+            data?.error ?? "Couldn't place that trade — try again.",
+          )
         : `${direction === "positive" ? "Bought" : "Sold"} ${formatUSD(selectedAmount)} of ${artist.name}.`,
     );
     if (!error) await refreshWallet();

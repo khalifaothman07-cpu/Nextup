@@ -6,6 +6,11 @@ interface WithdrawRequest {
   destination_address?: string;
 }
 
+/** The DB rate limiter raises this; surface it as 429, not a generic failure. */
+function rateLimited(message: string | undefined): boolean {
+  return (message ?? "").includes("rate limit exceeded");
+}
+
 function jsonResponse(body: unknown, status: number) {
   return new Response(JSON.stringify(body), {
     status,
@@ -67,6 +72,15 @@ Deno.serve(async (req) => {
   });
 
   if (error) {
+    if (rateLimited(error.message)) {
+      return jsonResponse(
+        {
+          error:
+            "You've made several withdrawal requests already. Try again in an hour — the ones you've made are still queued.",
+        },
+        429,
+      );
+    }
     const message = error.message.includes("insufficient wallet balance")
       ? "Not enough funds in your wallet."
       : "Could not submit withdrawal request.";

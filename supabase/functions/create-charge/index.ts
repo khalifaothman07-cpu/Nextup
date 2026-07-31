@@ -9,6 +9,11 @@ interface ChargeRequest {
   slug?: string;
 }
 
+/** The DB rate limiter raises this; surface it as 429, not a generic failure. */
+function rateLimited(message: string | undefined): boolean {
+  return (message ?? "").includes("rate limit exceeded");
+}
+
 function jsonResponse(body: unknown, status: number) {
   return new Response(JSON.stringify(body), {
     status,
@@ -117,6 +122,15 @@ Deno.serve(async (req) => {
   });
 
   if (insertError) {
+    if (rateLimited(insertError.message)) {
+      return jsonResponse(
+        {
+          error:
+            "You've started several checkouts recently. Try again in an hour.",
+        },
+        429,
+      );
+    }
     console.error("Failed to record charge:", insertError);
     return jsonResponse({ error: "Could not record charge" }, 500);
   }
