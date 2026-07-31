@@ -60,7 +60,9 @@ Original reasoning, kept for context on why the tier model looked like a good id
 
 Coinbase Commerce only accepts payments — it has no API for sending crypto out. `request_withdrawal` debits the wallet immediately (so a balance can't be withdrawn twice) and records a `pending` row in `withdrawal_requests`; actually sending the funds and marking the request `paid` is a manual step outside the app, until a real payout provider is integrated.
 
-**Assumption**: this is honest and complete as far as the app's own state goes (the request is real, the debit is real, canceling correctly refunds) — the gap is entirely on the "someone/something needs to actually send the crypto" side, which is operational, not a missing feature to fake. Flagged in `docs/DEPLOYMENT.md` alongside the other manual steps (Coinbase Commerce account setup, Edge Function deployment).
+**Assumption**: this is honest and complete as far as the app's own state goes (the request is real, the debit is real, canceling correctly refunds) — the gap is entirely on the "someone/something needs to actually send the crypto" side, which is operational, not a missing feature to fake.
+
+**Update (Cycle 14)**: the sending is still a person's job and always will be until a payout provider exists, but the _recording_ of it is no longer a hand-written UPDATE. `/admin` has a payout queue, and the two outcomes are functions that lock the row, refuse to run twice, and write an audit entry. The thing that made the old approach dangerous was not the manual send — it was that marking a payout complete was an unaudited raw UPDATE on a money table, one typo'd `WHERE` clause away from hitting every row.
 
 ## 9. Split into dedicated pages, and the stale pricing section
 

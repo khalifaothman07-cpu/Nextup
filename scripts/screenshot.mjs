@@ -376,6 +376,57 @@ const ADMIN_APPS = [
   },
 ];
 
+/**
+ * Withdrawal queue. Deliberately includes one pending, one already paid and
+ * one rejected, so the screenshots exercise the send form, the settled log and
+ * the "nothing to do" path in one run.
+ */
+const ADMIN_WITHDRAWALS = [
+  {
+    id: "wd-1",
+    user_id: UID,
+    payee_email: "rui@example.com",
+    payee_display_name: "Rui M.",
+    amount_cents: 4750,
+    destination_address: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
+    status: "pending",
+    requested_at: "2026-07-30T18:12:00Z",
+    processed_at: null,
+    tx_reference: "",
+    notes: "",
+    wallet_balance_cents: 1250,
+  },
+  {
+    id: "wd-2",
+    user_id: "22222222-2222-4222-8222-222222222222",
+    payee_email: "hello@thelonghall.co",
+    payee_display_name: null,
+    amount_cents: 12000,
+    destination_address: "0x9aE1f4B2c3D5e6F708192a3B4c5D6e7F8091A2b3",
+    status: "paid",
+    requested_at: "2026-07-27T09:40:00Z",
+    processed_at: "2026-07-27T15:02:00Z",
+    tx_reference:
+      "0x4c1f9e2a7b8d3f5061c2e4a6b8d0f2143a5c7e9b0d2f4618a3c5e7092b4d6f81",
+    notes: "",
+    wallet_balance_cents: 0,
+  },
+  {
+    id: "wd-3",
+    user_id: "33333333-3333-4333-8333-333333333333",
+    payee_email: "dm@example.net",
+    payee_display_name: null,
+    amount_cents: 2500,
+    destination_address: "not-an-address",
+    status: "rejected",
+    requested_at: "2026-07-24T11:05:00Z",
+    processed_at: "2026-07-24T12:31:00Z",
+    tx_reference: "",
+    notes: "Address failed validation — refunded to wallet.",
+    wallet_balance_cents: 2500,
+  },
+];
+
 const ADMIN_AUDIT = [
   {
     id: 4,
@@ -498,6 +549,7 @@ await ctx.route("**/rest/v1/**", (route) => {
       });
     if (fn === "admin_list_applications") return send(ADMIN_APPS);
     if (fn === "admin_list_audit") return send(ADMIN_AUDIT);
+    if (fn === "admin_list_withdrawals") return send(ADMIN_WITHDRAWALS);
     unmatched.push(t);
     return send([]);
   }
@@ -805,6 +857,8 @@ const STYLE_GUARD = [
   ["/", ".hero h1", "fontFamily", (v) => v.includes("Anybody")],
   ["/account", ".app-shell", "display", () => true],
   ["/admin", ".admin-band", "borderTopWidth", (v) => parseFloat(v) >= 3],
+  ["/admin", ".wd-address code", "userSelect", (v) => v === "all"],
+  ["/admin", ".wd-amount", "fontSize", (v) => parseFloat(v) > 24],
 ];
 
 async function styleGuard(pg) {

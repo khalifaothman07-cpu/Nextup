@@ -3106,3 +3106,83 @@ header .nav-link.is-admin {
   color: var(--soft);
   margin-bottom: 8px;
 }
+
+/* ---- withdrawal fulfillment ----
+   The only screen on the site where an operator sends real money by hand, so
+   it is built around not making a mistake: the amount is the largest thing,
+   the destination address is never truncated, and the two outcomes look
+   different from each other rather than sitting side by side as twin buttons. */
+.wd-card {
+  border: 1px solid var(--edge);
+  border-left: 3px solid var(--warn);
+  border-radius: 10px;
+  padding: 20px 22px;
+  margin-bottom: 14px;
+  background: var(--raise);
+}
+.wd-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.wd-amount {
+  font-family: var(--display);
+  font-weight: 700;
+  font-stretch: 120%;
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.wd-address {
+  margin-bottom: 14px;
+}
+.wd-address code {
+  display: block;
+  font-family: var(--data);
+  font-size: 13px;
+  background: var(--ground);
+  border: 1px solid var(--edge-hi);
+  border-radius: 7px;
+  padding: 11px 13px;
+  /* Wrap, never ellipsis. A truncated address is how funds get lost. */
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.wd-pay,
+.wd-reject {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 560px;
+}
+.wd-reject {
+  border-top: 1px solid var(--edge);
+  padding-top: 16px;
+}
+/* The confirm-reject button must never be mistaken for the pay button. In the
+   light theme the accent is a deep red and --down is an orange-red, so hue
+   alone does not separate them — the distinction is carried by treatment
+   instead: filled means "send the money", outlined means "give it back". That
+   holds in both themes and for anyone who cannot tell the two reds apart. */
+.wd-reject .back-btn {
+  background: transparent;
+  color: var(--down);
+  border: 1px solid var(--down);
+  box-shadow: none;
+}
+.wd-reject .back-btn:hover {
+  background: color-mix(in srgb, var(--down) 12%, transparent);
+  filter: none;
+}
+.wd-reject .back-btn:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+.wd-card .dash-field input {
+  background: var(--ground);
+}

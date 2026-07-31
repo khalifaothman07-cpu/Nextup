@@ -43,6 +43,38 @@ Advisor: the two long-accepted lints, plus five `authenticated_security_definer_
 
 ---
 
+## Cycle 14 — Withdrawal fulfillment: taking the money path out of the SQL editor
+
+**Slice**: chosen over the master prompt's next phase (community/commerce) and the founder agreed. Reasoning: every other step in the money path is now automated — purchase → webhook → ownership, deposit → webhook → credit, trade → locked function. Withdrawals were the exception. Marking one paid meant finding the row by hand and running an `UPDATE` in the Supabase SQL editor, with **no audit row, no check that it was still pending, and a `WHERE` clause one typo away from hitting the whole table**. Harmless while there is no money; the single riskiest thing in the system the day the Commerce account lands. Community, by contrast, would be designed blind for zero users.
+
+**The correctness point the whole slice turns on**: `request_withdrawal` debits the wallet the moment the user asks, so by the time an operator sees the row the money is already gone from the balance. That makes the two outcomes asymmetric — **paid moves nothing, rejected must refund** — and getting it backwards in either direction silently takes money from a user. Pay-that-also-refunds double-spends; reject-that-doesn't-refund leaves them short with nothing sent.
+
+**Database** (migration `admin_withdrawal_fulfillment`): `withdrawal_requests.tx_reference`; `admin_list_withdrawals` (pending first, joined to the payee's email in `auth.users` and their live wallet balance); `admin_mark_withdrawal_paid` (row lock, requires still-pending, **requires a non-empty tx reference**, no wallet movement, audit row); `admin_reject_withdrawal` (row lock, requires still-pending, credits the balance back, audit row). Same definer shape as the other admin functions — no `user_id` argument, identity from `auth.uid()`, `not authorised` otherwise.
+
+**Verified with probes in rolled-back transactions** — the balance is the assertion that matters, and it is checked on both sides:
+
+- balance after two requests → **2000** ✓
+- mark paid → `paid`, balance **still 2000** ✓ (no double-spend)
+- mark paid twice → `this withdrawal is already paid` ✓
+- blank tx reference → `a transaction reference is required` ✓
+- reject → `rejected`, balance **3000** ✓ (refund landed)
+- reject twice → `this withdrawal is already rejected` ✓
+- non-admin calling any of the three, including on their own row → `not authorised` ✓; `audit_log` still reads 0 rows for them ✓
+
+**A probe that lied, and how**: the first run read the balance with a plain `select` from `wallets`. RLS correctly refuses an admin reading another user's wallet, so it returned `null` — and `null` compared against nothing, so every balance assertion silently passed without testing anything. Re-run through `admin_list_withdrawals` (definer, so it can see the row) and the real numbers appeared. A probe that cannot fail is worse than no probe.
+
+**Frontend**: a Withdrawals section in `/admin`, built around not making a mistake. Amount is the largest thing on the card. The destination address is shown **whole, wrapped rather than ellipsised, and `user-select: all`** — a half-read address is how funds get lost, so the one string that must be copied exactly is the one thing always fully visible. Marking paid requires the transaction reference in the form, not just in the function. Settled requests stay below as a log with their tx hash or rejection reason.
+
+**A defect caught by looking**: in the light theme the accent is a deep red (`#a32c24`) and `--down` is an orange-red (`#b3462f`). "Mark paid" and "Reject and refund" were two nearly identical red buttons on the one screen where confusing them costs money. Fixed by carrying the distinction in **treatment rather than hue** — filled means send the money, outlined means give it back — which also survives anyone who cannot separate the two reds.
+
+**Verified**: 17/17 structural style-guard assertions (two new ones pin the address's `user-select` and the amount's size), unstyled-class sweep clean, zero page errors, advisor showing only the accepted lints plus the three intended `authenticated_security_definer_function_executable` warnings, `npm run build` and Prettier clean.
+
+**Still true and still manual**: someone has to actually send the crypto. That does not change until a payout provider is integrated. What changed is that recording it is now an audited, idempotent, role-checked action instead of a hand-written UPDATE.
+
+**Recommended next**: rate limiting. There is none anywhere — auth, trade, checkout — and the magic-link endpoint is an open email-sending faucet the moment the domain resolves. That wants doing before hosting, not after. Then RLS regression tests, which are the gap the screenshot harness structurally cannot cover.
+
+---
+
 ## Cycle 12 — `/apply`: artist applications, and a dead end I had created
 
 **Slice**: Founder: "Where's the apply as an artist page". It didn't exist — I deferred artist onboarding in Cycle 9 (`docs/ASSUMPTIONS.md` #10). But the deferral had a consequence I hadn't checked: **the FAQ answer and the dashboard's empty state both told artists to "join the waitlist and note that you're an artist", and the waitlist form is a single email field with nowhere to note anything.** Two instructions on the live site that could not be followed. That is the "every visible action must work" rule broken by my own copy, not by a missing feature.

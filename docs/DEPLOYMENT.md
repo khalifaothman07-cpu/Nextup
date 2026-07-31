@@ -38,7 +38,7 @@ rather than half-working.
 
 ### Withdrawals require a manual step — always
 
-Unlike the Edge Function deployment above (a one-time setup blocker), processing withdrawals is an **ongoing manual step**, not something that becomes automatic once configured: Coinbase Commerce has no API for sending crypto out, only for accepting it. When a `withdrawal_requests` row is `pending`, someone has to actually send the crypto to `destination_address` and then mark it `paid` (currently no admin UI for this — direct DB access, e.g. `update withdrawal_requests set status='paid', processed_at=now() where id=...`, until one exists). See `docs/ASSUMPTIONS.md` #8.
+Unlike the Edge Function deployment above (a one-time setup blocker), processing withdrawals is an **ongoing manual step**, not something that becomes automatic once configured: Coinbase Commerce has no API for sending crypto out, only for accepting it. When a `withdrawal_requests` row is `pending`, someone has to actually send the crypto to `destination_address`. **As of Cycle 14 that is done from `/admin`, not from the SQL editor** — the queue shows the amount, the full untruncated address, and the payee's email, and marking one paid requires pasting the transaction reference. Rejecting instead refunds the wallet. Both are audited and neither can run twice. See `docs/ASSUMPTIONS.md` #8.
 
 ### Granting the first admin — required before `/admin` is usable by anyone
 
