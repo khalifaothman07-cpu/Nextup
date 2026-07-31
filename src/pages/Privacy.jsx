@@ -20,8 +20,8 @@ export function Privacy() {
             Privacy Policy
           </h1>
           <div className="updated">
-            Draft — last updated 2026. Pre-launch document; not yet reviewed by
-            counsel.
+            Approved by Nextup for pre-launch, 31 July 2026. Not reviewed by
+            outside counsel.
           </div>
 
           <h2>What we collect</h2>

@@ -20,9 +20,9 @@ export function RiskDisclosure() {
             Risk Disclosure
           </h1>
           <div className="updated">
-            Draft — last updated 2026. Pre-launch document; not yet reviewed by
-            counsel. Read this in full before backing an artist or owning a
-            song.
+            Approved by Nextup for pre-launch, 31 July 2026. Not reviewed by
+            outside counsel. Read this in full before backing an artist or
+            owning a song.
           </div>
 
           <h2>Not investment advice</h2>

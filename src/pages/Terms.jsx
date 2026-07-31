@@ -21,8 +21,8 @@ export function Terms() {
             Terms of Service
           </h1>
           <div className="updated">
-            Draft — last updated 2026. Pre-launch document; not yet reviewed by
-            counsel. Nextup is not open to the public yet.
+            Approved by Nextup for pre-launch, 31 July 2026. Not reviewed by
+            outside counsel. Nextup is not open to the public yet.
           </div>
 
           <h2>1. What Nextup is</h2>
