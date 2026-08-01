@@ -184,7 +184,7 @@
       <div><span>Prepared for</span>Board review</div>
       <div><span>Stage</span>Pre-launch</div>
       <div><span>Public launch</span>Not yet</div>
-      <div><span>Date</span>31 July 2026</div>
+      <div><span>Date</span>1 August 2026</div>
     </div>
     <div class="confidential">
       Confidential. Prepared as a supporting appendix to the NextUp board
@@ -334,7 +334,9 @@
           <p>
             Purchase, deposit, position-opening and position-closing logic, with
             balance changes handled atomically so concurrent activity cannot
-            produce an inconsistent balance.
+            produce an inconsistent balance. This covers the mechanics of
+            recording value, not the question of what funds the Backing product
+            — see Section 06.
           </p>
         </div>
         <div class="state">Complete</div>
@@ -864,16 +866,24 @@
     <p>
       The three items that most need resolution are not engineering problems.
       They are the regulatory classification of the Backing product, the legal
-      definition of what a song purchase conveys, and a treasury structure that
-      separates company liquidity from customer funds. Each is put to the board
-      in Section 09.
+      definition of what a song purchase conveys, and the funding model that
+      stands behind a customer's position. Each is put to the board in Section
+      09.
+    </p>
+    <p>
+      The third of those was not visible when this appendix was first drafted.
+      It became visible because the accounting the board asked for was built,
+      and the first thing that accounting did was disagree with an assumption
+      nobody had written down. That is the case for the remaining work in
+      miniature: what is built is sound and can be shown; what has not been
+      examined cannot be assumed sound because nothing has broken yet.
     </p>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
-    NextUp · Confidential · Prepared for board review, 31 July 2026<br />
+    NextUp · Confidential · Prepared for board review, 1 August 2026<br />
     Nothing in this document constitutes an offer, a solicitation, or legal or
     financial advice. Statements regarding future development are indicative and
     subject to the decisions requested in Section 09.
