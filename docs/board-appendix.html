@@ -219,6 +219,18 @@
       areas where the company still needs to define its model rather than its
       architecture.
     </p>
+    <p>
+      <strong
+        >One finding should be read before anything else in this
+        document.</strong
+      >
+      Building the customer-funds accounting requested in board review
+      established that the Backing product has no funding reserve behind it: a
+      customer's winning position is currently paid from an account that was
+      never funded. This is not a defect to be patched — it is a commercial
+      question the company has not yet answered, and it is set out in Section
+      06. Track purchases, deposits and withdrawals are unaffected.
+    </p>
   </div>
 </section>
 
@@ -285,8 +297,7 @@
     <div class="key">
       <span><i style="background: var(--done)"></i>Complete</span>
       <span
-        ><i style="background: var(--partial)"></i>Built, awaiting
-        activation</span
+        ><i style="background: var(--partial)"></i>Built, not yet complete</span
       >
       <span><i style="background: var(--open)"></i>Not started</span>
       <span><i style="background: var(--gap)"></i>Identified gap</span>
@@ -389,19 +400,19 @@
         </div>
         <div class="state">Awaiting counsel</div>
       </div>
-      <div class="row gap">
+      <div class="row partial">
         <div class="stripe"></div>
         <div class="body">
           <h3>Treasury and customer-funds segregation</h3>
           <p>
-            The system currently models customer balances only. It has no
-            representation of company-held liquidity, no separation between
-            company and customer funds, and no double-entry reconciliation. This
-            is the most significant architectural gap and is addressed in
-            Section 06.
+            A double-entry accounting layer now runs underneath the platform,
+            separating company-held liquidity from customer balances and
+            reconciling what the company holds against what it owes on a
+            continuous basis. The accounting is in place; the funding position
+            it reports is not yet sound. Section 06.
           </p>
         </div>
-        <div class="state">Gap</div>
+        <div class="state">Partial</div>
       </div>
       <div class="row gap">
         <div class="stripe"></div>
@@ -559,24 +570,57 @@
       outstanding item and it is architectural, not cosmetic.
     </p>
     <p>
-      The platform currently models <strong>customer balances only</strong>.
-      There is no representation of company-held liquidity, no formal separation
-      between company funds and customer funds, and no double-entry ledger
-      reconciling what the company holds against what it owes.
+      A double-entry accounting layer has now been built underneath the
+      platform. Company-held liquidity and customer balances are separate
+      account types that cannot be commingled; every movement of value writes
+      matched entries that must sum to zero, and the system refuses to record
+      one that does not. An operator view reports, continuously, the total the
+      company owes customers, the total it holds against those obligations, and
+      the difference between them. Reconciliation against the underlying balance
+      records has been tested against a deliberately introduced discrepancy and
+      reported it correctly.
+    </p>
+    <p>
+      <strong
+        >Installing that accounting immediately surfaced a material finding, and
+        it is more serious than the gap it was built to close.</strong
+      >
+      The Backing product has no funding reserve behind it. When a customer
+      opens a position, the amount staked leaves their balance and is not held
+      anywhere. When a position is closed at a profit, the proceeds are credited
+      to the customer from an account that was never funded. Under test, a
+      single profitable trade on a one-hundred-dollar deposit produced an
+      obligation to customers roughly ten dollars larger than the total value
+      the company held — an unbacked liability created by ordinary, intended use
+      of the product, not by any defect or abuse.
+    </p>
+    <p>
+      This reframes the item. The original concern was that the system had no
+      treasury structure. The accurate statement is that
+      <strong>the Backing product has no funding model</strong>: nothing
+      currently defines where the money to pay a winning position comes from,
+      what the company's maximum exposure is, or what happens if obligations
+      exceed holdings. That is a commercial and regulatory question before it is
+      an engineering one, and it is the same question Decision 1 asks about
+      classification, arriving from the other direction.
     </p>
     <p>
       Any company capital committed as operating liquidity must be modelled as a
       distinct, company-owned account that is structurally incapable of being
       commingled with customer balances, with continuous reconciliation between
-      obligations and holdings. This affects solvency reporting, audit,
-      regulatory classification and the ability to demonstrate that customer
-      funds are intact at any moment.
+      obligations and holdings. The accounting layer above now provides that
+      separation and that reporting. What it cannot supply is the policy: how
+      much capital stands behind the product, and on what terms.
     </p>
     <p>
-      <strong>Recommendation:</strong> this work should precede any real
-      customer money entering the system, and should be specified with input
-      from counsel and an accountant rather than designed engineering-first. It
-      is placed accordingly in the roadmap.
+      <strong>Recommendation:</strong> no real customer money should enter the
+      Backing product until the funding model is decided and the reserve is
+      funded and enforced. Wallet deposits, withdrawals and track purchases are
+      not affected by this finding — they are ordinary balance movements and are
+      fully reconciled. The Backing product specifically should remain disabled
+      until the question is answered, and it should be answered with counsel and
+      an accountant rather than designed engineering-first. It is placed
+      accordingly in the roadmap.
     </p>
   </div>
 </section>
@@ -603,7 +647,13 @@
             rights, licence, collectable status, resale rights or royalty
             participation
           </li>
-          <li>Treasury, custody and customer-funds architecture</li>
+          <li>
+            Decide the funding model for the Backing product — reserve size,
+            maximum company exposure, and what happens when obligations approach
+            holdings — then fund and enforce it. The accounting that measures
+            this exists; the policy it enforces does not (Section 06)
+          </li>
+          <li>Custody model and banking/settlement structure</li>
           <li>
             Automated financial and access-control regression testing, and
             completion of remaining launch controls
@@ -613,7 +663,7 @@
       <div class="phase">
         <div class="when">Phase 2 · Months 3–6 · Controlled exposure</div>
         <h3>Operate the system with real people, at small scale.</h3>
-        <ol start="5">
+        <ol start="6">
           <li>Administrative and jurisdiction-control interface</li>
           <li>Independent third-party security assessment</li>
           <li>Private sandbox deployment</li>
@@ -626,7 +676,7 @@
       <div class="phase">
         <div class="when">Phase 3 · Months 6–12 · Operating capability</div>
         <h3>Make it viable to run, not just to use.</h3>
-        <ol start="10">
+        <ol start="11">
           <li>
             Automated treasury and withdrawal processing, replacing operator
             handling
@@ -641,7 +691,7 @@
       <div class="phase">
         <div class="when">Phase 4 · Months 12–18 · Scale</div>
         <h3>Grow only once the transaction model is proven.</h3>
-        <ol start="14">
+        <ol start="15">
           <li>Public launch in cleared jurisdictions</li>
           <li>Community and marketplace functionality</li>
           <li>Visual and brand development</li>
@@ -754,6 +804,16 @@
           custodian, or restructures so that it never takes custody at all. This
           decision drives Section 06's architecture, the licensing position, and
           the credibility of the operating-liquidity commitment.
+        </p>
+        <p>
+          Section 06 adds a second half to this question that was not visible
+          before the accounting layer was built:
+          <strong
+            >how much capital stands behind the Backing product, and what the
+            company's maximum exposure to it is</strong
+          >. Custody answers where customer money sits. This answers where the
+          money to pay a winning position comes from. The product cannot take
+          real money until both are answered.
         </p>
       </div>
       <div class="decide">

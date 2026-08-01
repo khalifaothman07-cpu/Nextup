@@ -4,42 +4,64 @@ Newest entry first. Each entry follows the master prompt's §31 working-cycle fo
 
 ---
 
-## Cycle 13 — Phase 6: the admin console
+## Cycle 16 — The ledger, and what it found in the first hour
 
-**Slice**: Founder: "Start the next slice and keep doing it until there's a big enough change for a new preview." The next slice in `docs/ARCHITECTURE.md`'s sequence is Phase 6, the internal platform — and it was also the thing standing between Cycle 12's applications and anyone being able to act on them. `/apply` was collecting real rows into a queue nobody could open without a SQL client.
+**Slice**: Board feedback, point 7: the operating-liquidity commitment "is not reflected in the architecture" and needs to be company-owned liquidity kept completely separate from customer balances. Founder: "Yes." Built deliberately as a shape that is **correct under every custody model**, because Decision 3 (does the company hold customer funds, use a custodian, or never take custody) is unanswered and the accounting underneath is the same either way.
 
-**What it does**: `/admin` is the second role-gated surface, and the first gated on a granted platform role rather than team membership. Three sections:
+**What it does**: `ledger_accounts` / `ledger_transactions` / `ledger_entries` sit underneath the money tables as an independent second record. Company account kinds (`company_operating`, `company_revenue`, `settlement`) and customer kinds (`customer_wallet`, `customer_escrow`) are distinct, with partial unique indexes so commingling is a schema error rather than a rule someone has to remember. Every movement writes matched entries; a `DEFERRABLE INITIALLY DEFERRED` constraint trigger refuses at commit any transaction whose entries don't sum to zero or that has fewer than two legs. Entries are posted by triggers on `wallet_deposits`, `positions` (insert and update), `withdrawal_requests` and `song_ownership` — on the tables, not in the callers, for the same reason the rate limiters live there. `/admin` opens with a treasury panel: obligations, holdings, coverage, per-kind totals, and a reconciliation row count, with a visible alert when coverage is negative or the books disagree with `wallets`.
 
-- **Application queue** — filtered by what needs a decision (open / accepted / declined, with counts). Each card shows the whole application plus the applicant's email, because the review workflow ends in "we email you" and a queue that can't tell you who to write to can't finish its job. Set a status, leave a note the applicant sees on `/apply`, or press **Create artist page**.
-- **Feature flags** — real toggles on the real `feature_flags` rows, including `regulated_offerings`, the switch that hides or shows the entire Buy/Sell surface site-wide.
-- **Audit log** — newest 50, with actor emails resolved.
+**Nothing reads the ledger to make a decision.** `wallets.balance_cents` is still the operational balance and still the thing `open_position` checks. That is on purpose: the ledger's job is to be a second opinion, and a second opinion that the first one depends on is not one. Reconciliation between the two is the entire product of this slice — two records that agree prove something, one record proves nothing.
 
-**"Create artist page" is the interesting one.** It is the whole onboarding step in one transaction: slugify the artist name (with a uniqueness loop for collisions), insert the `artists` row and its bonding curve, insert the applicant's `artist_members` `owner` row, set `claimed_by_user_id`, mark the application accepted, link it back via the new `onboarded_artist_id`, and write an audit row. Before this, `docs/ASSUMPTIONS.md` #10 said memberships were "granted manually by the founder/operator via SQL" — five statements that had to be right and in the right order, by hand, per artist. It's a button now, and it either does all of it or none of it.
+**And then it immediately found something worse than the gap it was built to close.**
 
-**Database** (migrations `admin_console_foundation`, `admin_functions_revoke_public`, `admin_console_reads`): `audit_log` (admin-read; `INSERT`/`UPDATE`/`DELETE` revoked from `anon`/`authenticated` with no policy granting them back — an admin cannot edit or erase their own trail through the API); `artist_applications.onboarded_artist_id`; and five `SECURITY DEFINER` functions — `admin_review_application`, `admin_onboard_application`, `admin_set_feature_flag`, `admin_list_applications`, `admin_list_audit`.
+`open_position` does `balance_cents - p_stake_cents`. The stake leaves the wallet and is written nowhere. `close_position` does `balance_cents + v_proceeds`. The proceeds are credited from nothing. **The bonding curve has no reserve behind it — money is destroyed on open and conjured on close.** No row is wrong, no constraint is violated, nothing throws, and the arithmetic is internally consistent, which is exactly why fifteen cycles of reading that code never surfaced it. What surfaces it is asking an independent record whether obligations are covered.
 
-**A grant pattern that had to go the opposite direction.** Every prior definer function in this project is `service_role`-only, because they take `user_id` as an argument and would otherwise let a caller act as anyone. These five take no user id at all: they read `auth.uid()` themselves and raise `not authorised` unless that user holds `admin`. That inverts the correct grant — `authenticated` needs `EXECUTE` or a real admin's browser can't call them, and the in-function check is the actual gate. The rule was never "always `service_role`"; it is **never let the caller assert who they are**. Written up properly in `docs/SECURITY.md`, because "always `service_role`" was the wrong summary sitting in that doc and following it literally would have produced either an unusable console or an unsafe one.
+The probe, in a rolled-back transaction:
 
-**And the exact mirror of the Cycle 1 near-miss, made fresh.** I locked the three write functions down with `revoke execute ... from anon, authenticated` — the Cycle 1 fix minus one word — and the advisor immediately flagged all three as anon-callable, because `anon` inherits `EXECUTE` through the `PUBLIC` grant that revoke never touched. Cycle 1 was `REVOKE FROM PUBLIC` leaving the direct grants behind; this was `REVOKE FROM anon` leaving `PUBLIC` behind. Same root cause from the other side. Fixed in `admin_functions_revoke_public`, and the doc now says to name all three roles every time rather than trusting whichever one bit last.
+```
+after $100 deposit — obligations       10000
+after $100 deposit — holdings          10000
+after $100 deposit — coverage              0
+after $20 stake   — obligations         8000
+after $20 stake   — coverage            2000
+proceeds paid out                       2984
+after profitable close — obligations   10984
+after profitable close — holdings      10000
+COVERAGE (negative = unbacked)          -984
+ledger sums to zero                        0
+```
 
-**The read functions exist for one column, not for row visibility.** RLS already lets an admin select every application and every audit row. The email isn't in either table — it's in `auth.users`, which no client-facing policy can expose — so `admin_list_applications`/`admin_list_audit` do that join inside a definer function. Worth stating because "add an RPC" is usually the lazy answer to an RLS problem, and here RLS was already right.
+One ordinary $20 trade on a $100 deposit produced a $9.84 liability with nothing behind it. Not a defect, not abuse — the product working as designed.
 
-**Verified — six probes, all in rolled-back transactions with synthetic `auth.users` rows and forged JWT claims:**
+**This changes what board point 7 actually says.** The concern raised was "there is no treasury table." The accurate statement is that **the Backing product has no funding model**: nothing defines where a winning payout is funded from, what the maximum company exposure is, or what happens when obligations exceed holdings. Engineering can enforce a reserve; it cannot decide how large it should be. Written up as risk 0 in `docs/ARCHITECTURE.md` and as the rewritten Section 06 of the board appendix, where it is now the headline rather than a footnote. Deposits, withdrawals and track purchases are unaffected and reconcile cleanly — this is specific to `regulated_offerings`.
 
-- Non-admin calls `admin_review_application` → `ERROR: P0001: not authorised`. ✓
-- Non-admin calls `admin_list_applications` / `admin_list_audit` → same. ✓
-- Non-admin selects from `audit_log` → **0 rows**. ✓
-- Admin onboards end to end → `{"slug":"kite-season","curve_rows":1,"member_role":"owner","app_status":"accepted","linked":true,"audit_rows":1}` — slug correctly derived from "Kite Season!". ✓
-- Onboarding the same application twice → `ERROR: P0001: this application already has an artist page`. ✓
-- Grant table swept directly (`has_function_privilege`): all five functions `anon=false`, `authenticated=true`. ✓
+**Database** (migrations `ledger_foundation`, `ledger_posting_and_reconciliation`, `ledger_sign_convention_and_wiring`, `fix_treasury_position_types_v2`, `pin_ledger_balance_trigger_search_path`). Two functions, both the `auth.uid()`-deriving self-checking shape from Cycle 13: `admin_treasury_position()` and `admin_reconcile_wallets()`. Three tables with `SELECT`-only policies scoped to the caller's own accounts and **no write policy at all**, so `private.post_ledger` running as table owner is the only writer.
 
-Advisor: the two long-accepted lints, plus five `authenticated_security_definer_function_executable` warnings that are the intended design — documented rather than silently ignored.
+**Sign convention, stated because getting it backwards would be invisible**: assets positive, liabilities negative. A customer wallet is money owed, so its entries are negative. `coverage = holdings - obligations`. Reversed, every figure on the treasury panel stays plausible and is wrong — including, specifically, the one that says whether customer funds are intact. It is asserted by probe, not assumed.
 
-**Frontend**: a `useRoles` hook (a display signal only — it decides whether the nav link is worth rendering; every action is re-checked server-side, so faking it in devtools yields a page of buttons that all answer "not authorised"). `/admin` route, admin-only nav link, and a sticky result bar, because an admin acting on the fifth card in a queue will not scroll to the footer to find out whether it worked. Non-admins who type the URL get an honest refusal that points artists at the dashboard — no request flow is offered, because none exists.
+**Verified:**
 
-**Screenshots**: the harness now covers `/admin` at desktop and 390px, the non-admin refusal, and a third `navStrip` run with the admin link present — the nav gained a fourth link this cycle, which is exactly the change that produced the blob in Cycle 11. Mocking RPC meant teaching the harness that `/rest/v1/rpc/*` is a POST, and returning a real `P0001` for non-admins so the denied screenshot proves the denied path rather than an empty admin page.
+- Unbalanced transaction (100 / −99) → rejected at commit with `out of balance by 1 cents`. ✓
+- Balanced transaction (100 / −100) → commits; deleting both legs also commits (a fully-deleted transaction is legal, a partial one is not). ✓
+- Deposit of $100 → reconciliation reports 0 wallets out of sync, coverage 0. ✓
+- A deliberate silent 777-cent edit straight to `wallets.balance_cents` → detected, with the exact drift. **This is the probe that matters**: it is the only one that could have failed quietly, and it is the reason to have a second record. ✓
+- Trade lifecycle → the coverage table above. ✓
+- Advisor after every migration; the one new lint (`private.assert_ledger_balanced` with a role-mutable `search_path`) fixed by pinning `search_path = ''` and fully qualifying, then re-probed to confirm the trigger still rejects and still permits the right things. Pinning a `search_path` on a working function and not re-testing it is how you turn a lint fix into an outage. ✓
 
-**Deliberately not built**: a UI to grant `admin`/`curator`. A console that mints admins is a privilege-escalation surface, and there's no second-person approval, self-demotion guard, or admin-count floor to make it safe with one operator — `docs/ASSUMPTIONS.md` #11 states that, and `docs/DEPLOYMENT.md` gives the SQL for the first admin, which has to be SQL regardless since `auth.users` is empty until someone signs in. Also absent: moderation (nothing user-generated exists to moderate), a withdrawal-fulfillment queue (still the `update ... set status='paid'` documented in `docs/DEPLOYMENT.md`), and jurisdiction enforcement (`jurisdiction_rules` remains a stub nothing reads).
+**Two traps worth recording.** `sum()` over `bigint` returns `numeric`, so `admin_treasury_position()`'s first signature didn't match its own body — and `CREATE OR REPLACE VIEW` cannot change a column's type, so `ledger_position` had to be dropped and recreated rather than replaced. And the balance trigger has to be deferred: a balanced transaction is only balanced once all its legs are inserted, so a per-statement check would reject the first leg of every correct transaction.
+
+**UI**: treasury panel first in `/admin` (`.treasury`, `.tre-fig`, `.tre-alert`), harness mocks added with `ADMIN_TREASURY` deliberately showing an uncovered position so the alert state is what gets reviewed rather than the happy path. Harness: 19 assertions pass, unstyled-class sweep clean, no page errors.
+
+**Docs**: `docs/board-appendix.html` Section 06 rewritten around the finding, its status row moved from Gap to Partial, Decision 3 extended to ask for the reserve size alongside the custody model, and the roadmap's Phase 1 treasury line split into "decide and fund the reserve" plus "custody and settlement structure". `scripts/check-board-appendix.mjs` gained eight new banned terms covering the ledger internals.
+
+**Remaining limitations**:
+
+- **The reserve is measured, not enforced.** Nothing stops a position from opening when coverage is already negative, because the limit that would stop it hasn't been decided. Enforcement is a one-line check once there is a number to check against.
+- The ledger is written by triggers on today's four money tables. Any future table that moves value needs its own posting trigger, and nothing yet fails loudly if one is forgotten — a reconciliation drift is the only signal.
+- `customer_escrow` exists as an account kind and is unused. It is where staked funds belong under a reserve model; leaving it defined and empty is deliberate, so the shape doesn't have to change when the funding decision lands.
+- Edge Functions remain undeployed (six of seven, four changed in Cycle 15 for 429 handling) — `bash scripts/deploy-functions.sh`, founder-run.
+
+**Recommended next slice**: nothing that adds surface. The two items ahead of new features are the funding decision (founder + counsel, not engineering) and automated RLS/financial regression tests, which the last two cycles have made overdue — three of this project's four real security findings were caught by advisors or hand-probes that only ran because someone remembered to run them.
 
 ---
 
@@ -98,6 +120,45 @@ Advisor: the two long-accepted lints, plus five `authenticated_security_definer_
 **Still true and still manual**: someone has to actually send the crypto. That does not change until a payout provider is integrated. What changed is that recording it is now an audited, idempotent, role-checked action instead of a hand-written UPDATE.
 
 **Recommended next**: rate limiting. There is none anywhere — auth, trade, checkout — and the magic-link endpoint is an open email-sending faucet the moment the domain resolves. That wants doing before hosting, not after. Then RLS regression tests, which are the gap the screenshot harness structurally cannot cover.
+
+---
+
+## Cycle 13 — Phase 6: the admin console
+
+**Slice**: Founder: "Start the next slice and keep doing it until there's a big enough change for a new preview." The next slice in `docs/ARCHITECTURE.md`'s sequence is Phase 6, the internal platform — and it was also the thing standing between Cycle 12's applications and anyone being able to act on them. `/apply` was collecting real rows into a queue nobody could open without a SQL client.
+
+**What it does**: `/admin` is the second role-gated surface, and the first gated on a granted platform role rather than team membership. Three sections:
+
+- **Application queue** — filtered by what needs a decision (open / accepted / declined, with counts). Each card shows the whole application plus the applicant's email, because the review workflow ends in "we email you" and a queue that can't tell you who to write to can't finish its job. Set a status, leave a note the applicant sees on `/apply`, or press **Create artist page**.
+- **Feature flags** — real toggles on the real `feature_flags` rows, including `regulated_offerings`, the switch that hides or shows the entire Buy/Sell surface site-wide.
+- **Audit log** — newest 50, with actor emails resolved.
+
+**"Create artist page" is the interesting one.** It is the whole onboarding step in one transaction: slugify the artist name (with a uniqueness loop for collisions), insert the `artists` row and its bonding curve, insert the applicant's `artist_members` `owner` row, set `claimed_by_user_id`, mark the application accepted, link it back via the new `onboarded_artist_id`, and write an audit row. Before this, `docs/ASSUMPTIONS.md` #10 said memberships were "granted manually by the founder/operator via SQL" — five statements that had to be right and in the right order, by hand, per artist. It's a button now, and it either does all of it or none of it.
+
+**Database** (migrations `admin_console_foundation`, `admin_functions_revoke_public`, `admin_console_reads`): `audit_log` (admin-read; `INSERT`/`UPDATE`/`DELETE` revoked from `anon`/`authenticated` with no policy granting them back — an admin cannot edit or erase their own trail through the API); `artist_applications.onboarded_artist_id`; and five `SECURITY DEFINER` functions — `admin_review_application`, `admin_onboard_application`, `admin_set_feature_flag`, `admin_list_applications`, `admin_list_audit`.
+
+**A grant pattern that had to go the opposite direction.** Every prior definer function in this project is `service_role`-only, because they take `user_id` as an argument and would otherwise let a caller act as anyone. These five take no user id at all: they read `auth.uid()` themselves and raise `not authorised` unless that user holds `admin`. That inverts the correct grant — `authenticated` needs `EXECUTE` or a real admin's browser can't call them, and the in-function check is the actual gate. The rule was never "always `service_role`"; it is **never let the caller assert who they are**. Written up properly in `docs/SECURITY.md`, because "always `service_role`" was the wrong summary sitting in that doc and following it literally would have produced either an unusable console or an unsafe one.
+
+**And the exact mirror of the Cycle 1 near-miss, made fresh.** I locked the three write functions down with `revoke execute ... from anon, authenticated` — the Cycle 1 fix minus one word — and the advisor immediately flagged all three as anon-callable, because `anon` inherits `EXECUTE` through the `PUBLIC` grant that revoke never touched. Cycle 1 was `REVOKE FROM PUBLIC` leaving the direct grants behind; this was `REVOKE FROM anon` leaving `PUBLIC` behind. Same root cause from the other side. Fixed in `admin_functions_revoke_public`, and the doc now says to name all three roles every time rather than trusting whichever one bit last.
+
+**The read functions exist for one column, not for row visibility.** RLS already lets an admin select every application and every audit row. The email isn't in either table — it's in `auth.users`, which no client-facing policy can expose — so `admin_list_applications`/`admin_list_audit` do that join inside a definer function. Worth stating because "add an RPC" is usually the lazy answer to an RLS problem, and here RLS was already right.
+
+**Verified — six probes, all in rolled-back transactions with synthetic `auth.users` rows and forged JWT claims:**
+
+- Non-admin calls `admin_review_application` → `ERROR: P0001: not authorised`. ✓
+- Non-admin calls `admin_list_applications` / `admin_list_audit` → same. ✓
+- Non-admin selects from `audit_log` → **0 rows**. ✓
+- Admin onboards end to end → `{"slug":"kite-season","curve_rows":1,"member_role":"owner","app_status":"accepted","linked":true,"audit_rows":1}` — slug correctly derived from "Kite Season!". ✓
+- Onboarding the same application twice → `ERROR: P0001: this application already has an artist page`. ✓
+- Grant table swept directly (`has_function_privilege`): all five functions `anon=false`, `authenticated=true`. ✓
+
+Advisor: the two long-accepted lints, plus five `authenticated_security_definer_function_executable` warnings that are the intended design — documented rather than silently ignored.
+
+**Frontend**: a `useRoles` hook (a display signal only — it decides whether the nav link is worth rendering; every action is re-checked server-side, so faking it in devtools yields a page of buttons that all answer "not authorised"). `/admin` route, admin-only nav link, and a sticky result bar, because an admin acting on the fifth card in a queue will not scroll to the footer to find out whether it worked. Non-admins who type the URL get an honest refusal that points artists at the dashboard — no request flow is offered, because none exists.
+
+**Screenshots**: the harness now covers `/admin` at desktop and 390px, the non-admin refusal, and a third `navStrip` run with the admin link present — the nav gained a fourth link this cycle, which is exactly the change that produced the blob in Cycle 11. Mocking RPC meant teaching the harness that `/rest/v1/rpc/*` is a POST, and returning a real `P0001` for non-admins so the denied screenshot proves the denied path rather than an empty admin page.
+
+**Deliberately not built**: a UI to grant `admin`/`curator`. A console that mints admins is a privilege-escalation surface, and there's no second-person approval, self-demotion guard, or admin-count floor to make it safe with one operator — `docs/ASSUMPTIONS.md` #11 states that, and `docs/DEPLOYMENT.md` gives the SQL for the first admin, which has to be SQL regardless since `auth.users` is empty until someone signs in. Also absent: moderation (nothing user-generated exists to moderate), a withdrawal-fulfillment queue (still the `update ... set status='paid'` documented in `docs/DEPLOYMENT.md`), and jurisdiction enforcement (`jurisdiction_rules` remains a stub nothing reads).
 
 ---
 

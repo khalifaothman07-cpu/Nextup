@@ -59,6 +59,14 @@ Three properties worth being precise about, because each one is a real limit on 
 
 **The IP itself is read from `cf-connecting-ip`**, which Cloudflare overwrites on every request and a client therefore cannot forge. `x-forwarded-for` is only a fallback, and only its _last_ hop is trusted — anything earlier in that header may have been supplied by the caller.
 
+## The ledger has no client write surface at all (Cycle 16)
+
+`ledger_accounts`, `ledger_transactions` and `ledger_entries` carry `SELECT`-only policies scoped to accounts the caller owns, and **no `INSERT`/`UPDATE`/`DELETE` policy exists on any of the three**. The only writer is `private.post_ledger` running as the table owner, called from triggers on the money tables. This is the `audit_log` posture applied to accounting, for the same reason: a record whose subjects can write it is not a record. It matters more here, because the ledger's entire job is to disagree with `wallets` when `wallets` is wrong — and anything that can write both can make them agree.
+
+The `ledger_position` aggregate view is `service_role`-only; admins reach the same numbers through `admin_treasury_position()`, which self-checks the role.
+
+**`private.assert_ledger_balanced()` had a role-mutable `search_path`** when first written — the advisor's `function_search_path_mutable` lint. For a `SECURITY INVOKER` constraint trigger the practical risk is low, but the fix is free: `set search_path = ''` and fully qualify `public.ledger_entries`. Worth stating that pinning a `search_path` **changes what a working function resolves**, so the trigger was re-probed afterwards — unbalanced still rejected with the exact drift, balanced still committed. A lint fix applied to a money control and not re-tested is how you trade a warning for an outage.
+
 ## Magic-link sign-in is Supabase's endpoint, not ours
 
 The one surface a database trigger cannot reach. `signInWithOtp` posts to Supabase Auth directly, so there is no table to hang a trigger on and no function of ours in the path. Three things apply instead:

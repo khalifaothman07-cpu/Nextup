@@ -381,6 +381,21 @@ const ADMIN_APPS = [
  * one rejected, so the screenshots exercise the send form, the settled log and
  * the "nothing to do" path in one run.
  */
+/**
+ * Treasury position. Deliberately shows an UNCOVERED position, because the
+ * uncovered case is the one the panel exists for and the one that must never
+ * silently render as if it were fine.
+ */
+const ADMIN_TREASURY = [
+  {
+    customer_obligations_cents: 1098400,
+    company_holdings_cents: 1000000,
+    coverage_cents: -98400,
+    ledger_sum_must_be_zero: 0,
+    wallets_out_of_sync: 0,
+  },
+];
+
 const ADMIN_WITHDRAWALS = [
   {
     id: "wd-1",
@@ -550,6 +565,7 @@ await ctx.route("**/rest/v1/**", (route) => {
     if (fn === "admin_list_applications") return send(ADMIN_APPS);
     if (fn === "admin_list_audit") return send(ADMIN_AUDIT);
     if (fn === "admin_list_withdrawals") return send(ADMIN_WITHDRAWALS);
+    if (fn === "admin_treasury_position") return send(ADMIN_TREASURY);
     unmatched.push(t);
     return send([]);
   }
@@ -859,6 +875,8 @@ const STYLE_GUARD = [
   ["/admin", ".admin-band", "borderTopWidth", (v) => parseFloat(v) >= 3],
   ["/admin", ".wd-address code", "userSelect", (v) => v === "all"],
   ["/admin", ".wd-amount", "fontSize", (v) => parseFloat(v) > 24],
+  ["/admin", ".treasury", "display", (v) => v === "grid"],
+  ["/admin", ".tre-alert", "borderLeftWidth", (v) => parseFloat(v) >= 3],
 ];
 
 async function styleGuard(pg) {

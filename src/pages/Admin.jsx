@@ -36,6 +36,7 @@ export function Admin() {
   const [flags, setFlags] = useState([]);
   const [audit, setAudit] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
+  const [treasury, setTreasury] = useState(null);
   const [txRefs, setTxRefs] = useState({});
   const [rejecting, setRejecting] = useState(null);
   const [rejectReason, setRejectReason] = useState("");
@@ -46,15 +47,18 @@ export function Admin() {
 
   const load = useCallback(async () => {
     if (!isAdmin) return;
-    const [apps, flagRows, auditRows, wdRows] = await Promise.all([
-      supabase.rpc("admin_list_applications"),
-      supabase
-        .from("feature_flags")
-        .select("key, enabled, description, updated_at")
-        .order("key"),
-      supabase.rpc("admin_list_audit", { p_limit: 50 }),
-      supabase.rpc("admin_list_withdrawals", { p_limit: 100 }),
-    ]);
+    const [apps, flagRows, auditRows, wdRows, treasuryRows] = await Promise.all(
+      [
+        supabase.rpc("admin_list_applications"),
+        supabase
+          .from("feature_flags")
+          .select("key, enabled, description, updated_at")
+          .order("key"),
+        supabase.rpc("admin_list_audit", { p_limit: 50 }),
+        supabase.rpc("admin_list_withdrawals", { p_limit: 100 }),
+        supabase.rpc("admin_treasury_position"),
+      ],
+    );
     const list = apps.data ?? [];
     setApplications(list);
     // Seed each notes box from what's already stored, so editing one doesn't
@@ -63,6 +67,7 @@ export function Admin() {
     setFlags(flagRows.data ?? []);
     setAudit(auditRows.data ?? []);
     setWithdrawals(wdRows.data ?? []);
+    setTreasury(treasuryRows.data?.[0] ?? null);
     setTxRefs({});
     setRejecting(null);
     setRejectReason("");
@@ -247,6 +252,70 @@ export function Admin() {
             </button>
           </div>
         </div>
+      )}
+
+      {treasury && (
+        <section>
+          <div className="wrap">
+            <div className="section-head" data-reveal>
+              <div className="eyebrow">Treasury</div>
+              <h2>What we owe against what we hold.</h2>
+            </div>
+            <div className="treasury" data-reveal>
+              <div className="tre-fig">
+                <div className="l">Owed to customers</div>
+                <div className="n">
+                  {formatUSD(Number(treasury.customer_obligations_cents))}
+                </div>
+              </div>
+              <div className="tre-fig">
+                <div className="l">Held</div>
+                <div className="n">
+                  {formatUSD(Number(treasury.company_holdings_cents))}
+                </div>
+              </div>
+              <div
+                className={`tre-fig${Number(treasury.coverage_cents) < 0 ? " short" : " ok"}`}
+              >
+                <div className="l">Coverage</div>
+                <div className="n">
+                  {formatUSD(Number(treasury.coverage_cents))}
+                </div>
+              </div>
+            </div>
+
+            {Number(treasury.coverage_cents) < 0 && (
+              <div className="tre-alert" data-reveal>
+                <strong>Customer funds are not fully backed.</strong>{" "}
+                Obligations exceed holdings by{" "}
+                {formatUSD(Math.abs(Number(treasury.coverage_cents)))}. Trading
+                proceeds are paid from the platform, so a net-profitable market
+                creates an obligation nothing collected covers.
+              </div>
+            )}
+
+            {(Number(treasury.ledger_sum_must_be_zero) !== 0 ||
+              Number(treasury.wallets_out_of_sync) > 0) && (
+              <div className="tre-alert" data-reveal>
+                <strong>Books do not reconcile.</strong>{" "}
+                {Number(treasury.ledger_sum_must_be_zero) !== 0
+                  ? `The ledger is out of balance by ${formatUSD(Number(treasury.ledger_sum_must_be_zero))}. `
+                  : ""}
+                {Number(treasury.wallets_out_of_sync) > 0
+                  ? `${treasury.wallets_out_of_sync} wallet balance${Number(treasury.wallets_out_of_sync) === 1 ? "" : "s"} disagree with the ledger. `
+                  : ""}
+                This means value moved without being recorded. Investigate
+                before processing anything below.
+              </div>
+            )}
+
+            <p className="results-note" data-reveal>
+              Every movement is double-entry and the books cannot be committed
+              out of balance. Coverage is holdings minus obligations — negative
+              means customer balances are not fully backed.
+            </p>
+          </div>
+        </section>
       )}
 
       <section>

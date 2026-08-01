@@ -3186,3 +3186,60 @@ header .nav-link.is-admin {
 .wd-card .dash-field input {
   background: var(--ground);
 }
+
+/* ---- treasury ----
+   First panel in the console because it governs whether anything else on the
+   page is safe to do. Coverage carries its state in a word and a border, not
+   in colour alone. */
+.treasury {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 1px;
+  background: var(--edge);
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.tre-fig {
+  background: var(--raise);
+  padding: 20px 22px;
+}
+.tre-fig .l {
+  font-family: var(--data);
+  font-size: 10px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--soft);
+  margin-bottom: 9px;
+}
+.tre-fig .n {
+  font-family: var(--display);
+  font-weight: 700;
+  font-stretch: 120%;
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+.tre-fig.ok .n {
+  color: var(--up);
+}
+.tre-fig.short {
+  border-top: 3px solid var(--down);
+}
+.tre-fig.short .n {
+  color: var(--down);
+}
+.tre-alert {
+  border: 1px solid var(--down);
+  border-left-width: 3px;
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-top: 14px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--dim);
+}
+.tre-alert strong {
+  color: var(--down);
+}
