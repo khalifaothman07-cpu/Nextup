@@ -23,9 +23,16 @@
  * exactly that.
  */
 import { chromium } from "playwright";
+import { mkdirSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
+// Where shots land. Override with the first CLI arg; defaults inside the repo
+// so a fresh clone can run this without editing a path.
 const OUT =
-  "/tmp/claude-0/-home-user-Unbeatable/4457052f-2c62-57b7-af72-dd7380031700/scratchpad";
+  process.argv[2] ||
+  join(dirname(fileURLToPath(import.meta.url)), "..", "dist", "shots");
+mkdirSync(OUT, { recursive: true });
 const REF = "djnsjtlkjgjqmfcucjqp";
 const UID = "7c9e6679-7425-40de-944b-e07fc1f90ae7";
 
@@ -496,7 +503,9 @@ const FLAGS = [
 ];
 
 const browser = await chromium.launch({
-  executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+  // Unset means "use whatever `npx playwright install chromium` put down".
+  // Set CHROMIUM_PATH when the environment ships its own build.
+  executablePath: process.env.CHROMIUM_PATH || undefined,
 });
 const ctx = await browser.newContext({
   viewport: { width: 1280, height: 900 },

@@ -1,8 +1,12 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const dir =
-  "/tmp/claude-0/-home-user-Unbeatable/4457052f-2c62-57b7-af72-dd7380031700/scratchpad";
-const repo = "/workspace/nextup";
+const repo = join(dirname(fileURLToPath(import.meta.url)), "..");
+const fixtures = join(repo, "preview"); // template + data, version-controlled
+const dir = process.argv[2] || join(repo, "dist", "preview");
+mkdirSync(dir, { recursive: true });
+
 let css = readFileSync(`${repo}/css/styles.css`, "utf8");
 
 // The artifact CSP blocks every external host, and there is no /fonts/ path to
@@ -85,9 +89,9 @@ const LEGAL = {
   "{{PRIVACY_BODY}}": legalBodyFromSource("Privacy"),
 };
 
-const template = readFileSync(`${dir}/preview-template.html`, "utf8");
+const template = readFileSync(`${fixtures}/preview-template.html`, "utf8");
 const dataMin = JSON.stringify(
-  JSON.parse(readFileSync(`${dir}/preview-data.json`, "utf8")),
+  JSON.parse(readFileSync(`${fixtures}/preview-data.json`, "utf8")),
 );
 
 function build(outfile, title, defaultRoute) {

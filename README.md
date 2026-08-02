@@ -1,5 +1,10 @@
 # NextUp
 
+> **Taking this project over? Start with [`HANDOVER.md`](HANDOVER.md), not here.**
+> It covers what has to change hands, the one unresolved problem that gates real
+> money, and why `bash scripts/pull-schema.sh <project-ref>` is the first command
+> you should run — the database schema is not in this repository.
+
 An artist discovery, support, and commerce platform — not a generic streaming clone. Full product definition: `docs/PRODUCT_SPEC.md`. Current architecture, what's built vs. missing, and the implementation sequence: `docs/ARCHITECTURE.md`.
 
 **Status: not deployed anywhere.** Domain `nextup.exchange` is acquired but unconnected — nothing goes live without explicit approval.
@@ -35,6 +40,12 @@ Open the URL Vite prints (typically `http://localhost:5173`). `npm run build` pr
 ## Configure
 
 Copy `.env.example` for the list of secrets. In practice: the Supabase URL/publishable key are hardcoded in `src/lib/supabaseClient.js` (no env injection wired up yet, even though a build step now exists — see `docs/ASSUMPTIONS.md` #2's update); the Coinbase Commerce secrets (`COMMERCE_API_KEY`, `COMMERCE_WEBHOOK_SECRET`) are set via `supabase secrets set` against the `nextup` project and are **not currently set** — see `docs/DEPLOYMENT.md`.
+
+## Database schema
+
+**Not in this repository.** It lives in the Supabase project's migration history.
+`bash scripts/pull-schema.sh <project-ref>` writes it into `supabase/migrations/`
+— do that before anything else. See `HANDOVER.md` §1.
 
 ## Seed data
 
@@ -73,3 +84,4 @@ npm run shots          # writes full-page screenshots, then open them
 - `docs/ASSUMPTIONS.md` — recorded assumptions and why.
 - `docs/IMPLEMENTATION_LOG.md` — running log, newest first.
 - `docs/DEPLOYMENT.md` — what deploying would involve (nothing is deployed yet).
+- `HANDOVER.md` — transfer notes: accounts to move, what is and isn't deployed, the decisions that were never made, and the traps.

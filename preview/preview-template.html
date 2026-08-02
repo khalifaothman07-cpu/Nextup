@@ -1,0 +1,1027 @@
+<title>{{TITLE}}</title>
+<style>
+{{CSS}}
+
+/* ---- preview-snapshot additions (not part of the shipped site) ---- */
+.pv-bar {
+  background: #1c1305;
+  color: var(--brass);
+  font-family: "JetBrains Mono", ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-align: center;
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(198, 161, 91, 0.35);
+}
+.pv-note {
+  font-family: "JetBrains Mono", ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: 12px;
+  color: var(--brass);
+  margin-top: 10px;
+  min-height: 16px;
+}
+</style>
+
+<div class="pv-bar">
+  STATIC PREVIEW · SHOWN SIGNED IN AS A DEMO ACCOUNT SO ACCOUNT &amp; DASHBOARD
+  ARE VISIBLE · PAYMENTS AND TRADING RUN ON THE LIVE BUILD ONLY
+</div>
+
+<header>
+  <nav class="wrap">
+    <a href="#/" class="mark">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="26" cy="74" r="13" fill="currentColor" />
+        <path d="M39 74V22L74 12V52" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M74 52L86 40" stroke="currentColor" stroke-width="7" stroke-linecap="round" />
+        <path d="M86 40L86 26" stroke="currentColor" stroke-width="7" stroke-linecap="round" />
+        <path d="M86 40L72 40" stroke="currentColor" stroke-width="7" stroke-linecap="round" />
+      </svg>
+      <span>Nextup</span>
+    </a>
+    <div class="nav-links">
+      <a href="#/discover" class="nav-link">Discover</a>
+      <a href="#/account" class="nav-link">Account</a>
+      <a href="#/dashboard" class="nav-link">Dashboard</a>
+      <a href="#/apply" class="nav-link">Apply</a>
+      <a href="#/admin" class="nav-link is-admin">Admin</a>
+    </div>
+    <div class="nav-right">
+      <span class="whoami is-admin">Admin</span>
+      <div class="auth-widget">
+        <div class="auth-signed-in">
+          <span class="auth-email" id="pvEmail"></span>
+          <button class="auth-signout" type="button" id="pvSignOut">Sign out</button>
+        </div>
+        <div class="auth-note" id="pvAuthNote"></div>
+      </div>
+      <button class="theme-toggle" type="button" id="pvTheme">Light</button>
+      <!-- No CTA: the preview is shown signed in, and the live site hides it
+           for anyone who already has an account. -->
+    </div>
+  </nav>
+</header>
+
+<main id="app"></main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <a href="#/" class="mark">
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="26" cy="74" r="13" fill="currentColor" />
+          <path d="M39 74V22L74 12V52" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M74 52L86 40" stroke="currentColor" stroke-width="7" stroke-linecap="round" />
+          <path d="M86 40L86 26" stroke="currentColor" stroke-width="7" stroke-linecap="round" />
+          <path d="M86 40L72 40" stroke="currentColor" stroke-width="7" stroke-linecap="round" />
+        </svg>
+        <span>Nextup</span>
+      </a>
+      <div class="foot-links">
+        <div class="foot-col">
+          <h5>PRODUCT</h5>
+          <a href="#/how-it-works">How it works</a>
+          <a href="#/pricing">Pricing</a>
+          <a href="#/discover">Discover artists</a>
+          <a href="#/apply">Apply as an artist</a>
+          <a href="#/" class="pv-goto-waitlist">Early access</a>
+        </div>
+        <div class="foot-col">
+          <h5>COMPANY</h5>
+          <a href="#/about">About</a>
+          <a href="#/faq">FAQ</a>
+          <a href="#/press">Press</a>
+        </div>
+        <div class="foot-col">
+          <h5>LEGAL</h5>
+          <a href="#/terms">Terms</a>
+          <a href="#/risk-disclosure">Risk disclosure</a>
+          <a href="#/privacy">Privacy</a>
+        </div>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <div class="legal">
+        Nextup involves financial risk, including possible loss of your full
+        contribution and exposure to cryptocurrency price volatility. Nothing
+        on this page is investment advice or a solicitation. Payments are
+        crypto-only and final. Eligibility may vary based on local regulations
+        around crypto payments.
+      </div>
+      <div class="copy">© 2026 NEXTUP</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const DATA = {{DATA}};
+  const DEFAULT_ROUTE = "{{DEFAULT_ROUTE}}";
+  const PREVIEW_MSG = "Preview snapshot — this action runs on the live build only.";
+
+  const app = document.getElementById("app");
+  const momentumByArtist = {};
+  for (const m of DATA.momentum) {
+    if (!momentumByArtist[m.artist_id]) momentumByArtist[m.artist_id] = m;
+  }
+  const momentumHistory = {};
+  for (const m of DATA.momentum) {
+    (momentumHistory[m.artist_id] = momentumHistory[m.artist_id] || []).push(m);
+  }
+  const artistById = {};
+  for (const a of DATA.artists) artistById[a.id] = a;
+  const trackById = {};
+  for (const t of DATA.tracks) trackById[t.id] = t;
+  const curveByArtist = {};
+  for (const c of DATA.curves) curveByArtist[c.artist_id] = c;
+
+  function usd(cents) {
+    const f = cents % 100 === 0 ? 0 : 2;
+    return (cents / 100).toLocaleString("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: f,
+      maximumFractionDigits: f,
+    });
+  }
+  function plural(n, one, many) {
+    return n + " " + (n === 1 ? one : (many || one + "s"));
+  }
+  function esc(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function artistCard(a) {
+    const score = momentumByArtist[a.id] ? momentumByArtist[a.id].score : 0;
+    return (
+      '<a class="tile" href="#/artist/' + encodeURIComponent(a.slug) + '"' +
+      ' style="--f-from:' + a.accent_from + ";--f-to:" + a.accent_to + ';">' +
+      '<span class="tile-ghost">' + esc(a.name) + "</span>" +
+      '<span class="tile-meta">' + esc(a.genre) + " · " + esc(a.city) + "</span>" +
+      '<span class="tile-name">' + esc(a.name) + "</span>" +
+      '<span class="tile-foot"><span>' + a.follower_count.toLocaleString("en-US") + "</span>" +
+      '<span class="tile-score">▲ ' + score + "</span></span></a>"
+    );
+  }
+
+  function demoCard() {
+    return (
+      '<div class="card" id="pvDemoCard" tabindex="0" role="button" aria-label="Preview an artist profile">' +
+      '<div class="photo"></div><div class="grad"></div>' +
+      '<div class="top"><div><div class="name">Bruno Mars</div><div class="tag">Pop / Funk · Honolulu</div></div><div class="up">▲ 43</div></div>' +
+      '<div class="hint">Tap to preview profile</div>' +
+      '<div class="discs">' +
+      '<div class="disc-wrap"><div class="disc"></div><span>Die With A Smile</span></div>' +
+      '<div class="disc-wrap"><div class="disc"></div><span>Leave The Door Open</span></div>' +
+      '<div class="disc-wrap"><div class="disc"></div><span>Locked Out Of Heaven</span></div>' +
+      "</div></div>"
+    );
+  }
+
+  function waitlistForm(id) {
+    return (
+      '<form class="waitlist pv-waitlist" id="' + id + '">' +
+      '<input type="email" required placeholder="your@email.com" aria-label="Email address" />' +
+      "<button type=\"submit\">Get Early Access</button></form>" +
+      '<div class="wl-status"></div>'
+    );
+  }
+
+  const pages = {};
+
+
+
+  pages.apply = function () {
+    const fields = [
+      ["Artist or project name", "The name you release under", false],
+      ["City", "Where you're based", false],
+      ["Genre or scene", "However you'd describe it", false],
+      ["Where can we hear you?", "Spotify, SoundCloud, Bandcamp, YouTube, a private link — whatever you've got, one per line", 3],
+      ["What are you working on?", "A few sentences. What you're releasing next, what you're building, why now.", 5],
+    ].map(function (f) {
+      const control = f[2]
+        ? '<textarea rows="' + f[2] + '" placeholder="' + esc(f[1]) + '"></textarea>'
+        : '<input type="text" placeholder="' + esc(f[1]) + '" />';
+      return '<label class="dash-field"><span>' + esc(f[0]) + "</span>" + control + "</label>";
+    }).join("");
+
+    return (
+      '<a href="#/" class="breadcrumb wrap" style="display:inline-flex;margin-top:28px;">← Back to Nextup</a>' +
+      '<section class="page-hero"><div class="wrap"><div class="eyebrow">For artists</div>' +
+      "<h1>Apply to be on Nextup.</h1>" +
+      "<p>We're taking a small number of artists pre-launch. Tell us who you are and where to hear you — no press kit, no follower minimum. What matters is the music and that you're actually releasing.</p>" +
+      "</div></section>" +
+      '<section style="border-bottom:none;"><div class="wrap">' +
+      '<form class="dash-form pv-demo-form" data-reveal>' + fields +
+      '<div><button type="submit" class="back-btn">Send application</button><div class="pv-note"></div></div>' +
+      "</form>" +
+      '<p class="results-note" data-reveal>One application per account. It goes to a real person, not an autoresponder, and we reply by email — we\'re pre-launch, so reviews are manual and we won\'t invent a turnaround we can\'t keep. Nothing you send here is published anywhere.</p>' +
+      '<p class="results-note" data-reveal>On the live build, coming back here after submitting shows your application\'s real status (pending / reviewing / accepted / declined) and what you sent.</p>' +
+      "</div></section>"
+    );
+  };
+
+  pages.admin = function () {
+    const ad = DATA.admin;
+    const QUEUES = [
+      ["open", "Needs a decision", ["pending", "reviewing"]],
+      ["accepted", "Accepted", ["accepted"]],
+      ["declined", "Declined", ["declined"]],
+    ];
+    const openCount = ad.applications.filter(function (a) {
+      return a.status === "pending" || a.status === "reviewing";
+    }).length;
+
+    const chips = QUEUES.map(function (q, i) {
+      const n = ad.applications.filter(function (a) { return q[2].indexOf(a.status) >= 0; }).length;
+      return '<button type="button" class="filter-chip pv-admin-q' + (i === 0 ? " active" : "") +
+        '" data-queue="' + q[0] + '">' + esc(q[1]) + " (" + n + ")</button>";
+    }).join("");
+
+    const cards = ad.applications.map(function (a) {
+      const queue = a.status === "pending" || a.status === "reviewing" ? "open" : a.status;
+      const statuses = ["pending", "reviewing", "accepted", "declined"].filter(function (s2) { return s2 !== a.status; });
+      const actions = statuses.map(function (s2) {
+        return '<button type="button" class="filter-chip pv-demo-action">Mark ' + s2 + "</button>";
+      }).join("") + (a.onboarded_slug
+        ? '<span class="admin-done">Artist page created</span>'
+        : '<button type="button" class="back-btn admin-onboard pv-demo-action">Create artist page</button>');
+
+      return (
+        '<article class="admin-card pv-admin-card" data-queue="' + queue + '" data-reveal>' +
+        '<div class="admin-card-head"><div><h3>' + esc(a.artist_name) + "</h3>" +
+        '<div class="admin-meta">' + esc(a.genre) + " · " + esc(a.city) + " · applied " + esc(a.created_at) + "</div></div>" +
+        '<span class="status-pill ' + a.status + '">' + a.status + "</span></div>" +
+        '<dl class="admin-dl">' +
+        "<dt>Account</dt><dd>" + esc(a.applicant_email) +
+        (a.applicant_display_name ? " · " + esc(a.applicant_display_name) : "") + "</dd>" +
+        '<dt>Links</dt><dd class="apply-pre">' + esc(a.links) + "</dd>" +
+        '<dt>About</dt><dd class="apply-pre">' + esc(a.about) + "</dd>" +
+        (a.reviewed_at ? "<dt>Reviewed</dt><dd>" + esc(a.reviewed_at) + "</dd>" : "") +
+        (a.onboarded_slug ? '<dt>Artist page</dt><dd><a href="#/artist/' + esc(a.onboarded_slug) + '">/artist/' + esc(a.onboarded_slug) + " →</a></dd>" : "") +
+        "</dl>" +
+        '<label class="dash-field admin-notes"><span>Review note (the applicant sees this)</span>' +
+        '<textarea rows="2" placeholder="Optional — saved with whichever status you set below.">' + esc(a.review_notes) + "</textarea></label>" +
+        '<div class="admin-actions">' + actions + "</div>" +
+        "</article>"
+      );
+    }).join("");
+
+    const flags = ad.flags.map(function (f) {
+      return (
+        '<div class="admin-flag"><div><div class="admin-flag-key">' + esc(f.key) + "</div>" +
+        "<p>" + esc(f.description) + "</p>" +
+        '<div class="admin-meta">Changed ' + esc(f.updated_at) + "</div></div>" +
+        '<button type="button" class="filter-chip pv-demo-action' + (f.enabled ? " active" : "") + '">' +
+        (f.enabled ? "On" : "Off") + "</button></div>"
+      );
+    }).join("");
+
+    const audit = ad.audit.map(function (r) {
+      return (
+        '<div class="audit-row"><span class="audit-when">' + esc(r.created_at) + "</span>" +
+        '<span class="audit-action">' + esc(r.action) + "</span>" +
+        '<span class="audit-actor">' + esc(r.actor_email) + "</span>" +
+        '<span class="audit-detail">' + esc(r.entity + " " + r.entity_id + " · " + r.detail) + "</span></div>"
+      );
+    }).join("");
+
+    return (
+      '<div class="admin-band"><div class="wrap"><strong>Admin</strong><span>' + esc(DATA.demo.email) + '</span>' +
+      '<span class="spacer"></span><span>Every action is audited</span><a href="#/" class="nav-link">Leave console</a></div></div>' +
+      '<section class="page-hero"><div class="wrap"><div class="eyebrow">Console</div>' +
+      "<h1>Run the place.</h1>" +
+      "<p>" + openCount + " application" + (openCount === 1 ? "" : "s") +
+      " waiting on a decision. <strong>Only admin accounts can open this page</strong> — the demo account is shown with the role so the console is visible here.</p>" +
+      "</div></section>" +
+
+      '<section><div class="wrap">' +
+      '<div class="section-head" data-reveal><div class="eyebrow">Artist applications</div><h2>The queue.</h2></div>' +
+      '<div class="filter-chips" data-reveal style="margin-bottom:26px;">' + chips + "</div>" +
+      cards +
+      '<p class="results-note" data-reveal>"Create artist page" builds the artist, its price curve, and the applicant\'s owner role in one transaction. Until you press it, an accepted applicant has no page and no dashboard.</p>' +
+      "</div></section>" +
+
+      '<section><div class="wrap">' +
+      '<div class="section-head" data-reveal><div class="eyebrow">Feature flags</div><h2>What\'s switched on.</h2></div>' +
+      '<div class="admin-flags" data-reveal>' + flags + "</div>" +
+      '<p class="results-note" data-reveal>Takes effect for everyone on their next page load. Turning <code>regulated_offerings</code> off hides the Buy/Sell panel site-wide; open positions and wallets are untouched.</p>' +
+      "</div></section>" +
+
+      '<section style="border-bottom:none;"><div class="wrap">' +
+      '<div class="section-head" data-reveal><div class="eyebrow">Audit log</div><h2>Who did what.</h2></div>' +
+      '<div class="admin-audit" data-reveal>' + audit + "</div>" +
+      '<p class="results-note" data-reveal>Newest 50. Append-only — nobody, admins included, can edit or delete these rows.</p>' +
+      "</div></section>"
+    );
+  };
+
+  pages.account = function () {
+    const d = DATA.demo;
+    const isSupporter = d.positions.length > 0 || d.owned.length > 0;
+    const chips =
+      '<span class="role-chip">Listener</span>' +
+      (isSupporter ? '<span class="role-chip on">Supporter</span>' : "") +
+      d.roles.map(function (r) { return '<span class="role-chip on">' + esc(r) + "</span>"; }).join("") +
+      d.memberships.map(function (m) {
+        const a = artistById[m.artist_id];
+        return '<span class="role-chip on">' + esc((a ? a.name : "Artist") + " · " + m.role.replace(/_/g, " ")) + "</span>";
+      }).join("");
+
+    const withdrawals = d.withdrawals.length
+      ? d.withdrawals.map(function (w) {
+          return (
+            '<div class="position-row"><div>' +
+            '<div class="track-title">Withdrawal · ' + usd(w.amount_cents) + "</div>" +
+            '<div class="track-price">Pending — to ' + esc(w.destination_address.slice(0, 10)) + "…</div>" +
+            '</div><button type="button" class="track-buy pv-demo-action">Cancel</button></div>'
+          );
+        }).join("")
+      : '<p class="muted" style="font-size:14px;">No pending withdrawals.</p>';
+
+    const positions = d.positions.length
+      ? d.positions.map(function (pos) {
+          const a = artistById[pos.artist_id];
+          return (
+            '<div class="position-row"><div>' +
+            '<div class="track-title">' + (pos.direction === "positive" ? "Buy" : "Sell") + " · " +
+            esc(a ? a.name : "Artist") + " · " + usd(pos.stake_cents) + "</div>" +
+            '<div class="track-price">Entry ' + usd(pos.entry_price_cents) + "</div></div>" +
+            (a ? '<a class="track-buy" style="text-decoration:none;" href="#/artist/' + encodeURIComponent(a.slug) + '">Manage</a>' : "") +
+            "</div>"
+          );
+        }).join("")
+      : '<p class="muted" style="font-size:14px;">No open positions — find someone worth backing on <a href="#/discover">Discover</a>.</p>';
+
+    const follows = d.follows.map(function (id) { return artistById[id]; }).filter(Boolean);
+    const owned = d.owned.map(function (o) {
+      const t = trackById[o.track_id];
+      return t ? { t: t, price: o.price_cents, a: artistById[t.artist_id] } : null;
+    }).filter(Boolean);
+
+    return (
+      '<a href="#/" class="breadcrumb wrap" style="display:inline-flex;margin-top:28px;">← Back to Nextup</a>' +
+      '<section class="page-hero"><div class="wrap"><div class="eyebrow">Account</div><h1>Your Nextup.</h1>' +
+      "<p>" + esc(d.email) + "</p></div></section>" +
+
+      '<section><div class="wrap"><div class="two-col">' +
+      '<div data-reveal>' +
+      '<div class="section-head" style="margin-bottom:24px;"><div class="eyebrow">Profile</div>' +
+      '<h2 style="font-size:26px;margin-top:12px;">Display name</h2>' +
+      '<p style="margin-top:10px;">Shown where you appear publicly (early-backer credits, future community features). Leave blank to stay anonymous.</p></div>' +
+      '<form class="auth-form pv-demo-form" style="max-width:380px;">' +
+      '<input class="auth-input" style="flex:1;width:auto;" type="text" value="' + esc(d.display_name) + '" aria-label="Display name" />' +
+      '<button type="submit" class="auth-btn">Save</button></form>' +
+      '<div class="pv-note"></div>' +
+      '<div class="section-head" style="margin:36px 0 16px;"><div class="eyebrow">Roles</div></div>' +
+      '<div class="role-chips">' + chips + "</div>" +
+      '<p class="results-note" style="margin-top:14px;">Supporter status is earned by holding a position or owning a song — it isn\'t assigned, it\'s derived from what you\'ve actually done.</p>' +
+      "</div>" +
+
+      '<div data-reveal>' +
+      '<div class="section-head" style="margin-bottom:24px;"><div class="eyebrow">Wallet</div>' +
+      '<h2 style="font-size:26px;margin-top:12px;">' + usd(d.balance_cents) + "</h2>" +
+      '<p style="margin-top:10px;">Fund it or withdraw from any artist\'s backing panel — the balance is shared across all of Nextup.</p></div>' +
+      '<div class="positions-list">' + withdrawals + "</div>" +
+      '<div class="section-head" style="margin:36px 0 16px;"><div class="eyebrow">Open positions</div></div>' +
+      '<div class="positions-list">' + positions + "</div>" +
+      "</div></div></div></section>" +
+
+      '<section><div class="wrap">' +
+      '<div class="section-head" data-reveal><div class="eyebrow">Your artists</div><h2>Following</h2></div>' +
+      '<div class="discover-grid" data-reveal>' + follows.map(artistCard).join("") + "</div>" +
+      "</div></section>" +
+
+      '<section style="border-bottom:none;"><div class="wrap">' +
+      '<div class="section-head" data-reveal><div class="eyebrow">Side B</div><h2>Songs you own</h2></div>' +
+      '<div class="track-list" data-reveal style="max-width:640px;">' +
+      owned.map(function (o) {
+        return (
+          '<div class="track-row"><div><div class="track-title">' + esc(o.t.title) + "</div>" +
+          '<div class="track-price">' + esc(o.a ? o.a.name : "") + " · owned for " + usd(o.price) + "</div></div>" +
+          '<span class="track-owned">Owned</span></div>'
+        );
+      }).join("") +
+      "</div></div></section>"
+    );
+  };
+
+  pages.dashboard = function () {
+    const m = DATA.demo.memberships[0];
+    const a = artistById[m.artist_id];
+    const hist = momentumHistory[m.artist_id] || [];
+    const latest = hist[0];
+    const curve = curveByArtist[m.artist_id];
+    const price = curve ? Math.round(curve.base_price_cents * Math.exp(curve.k * curve.supply)) : null;
+    const tracks = DATA.tracks.filter(function (t) { return t.artist_id === m.artist_id; });
+    const ownedIds = DATA.demo.owned.map(function (o) { return o.track_id; });
+    const sold = tracks.filter(function (t) { return ownedIds.indexOf(t.id) !== -1; });
+    const gross = sold.reduce(function (sum, t) { return sum + t.price_cents; }, 0);
+
+    const rows = hist.map(function (row, i) {
+      const prev = hist[i + 1];
+      const delta = prev ? row.score - prev.score : null;
+      const cls = delta > 0 ? " up" : delta < 0 ? " down" : "";
+      const label =
+        delta === null ? "first snapshot" :
+        delta > 0 ? "+" + delta + " vs prev day" :
+        delta < 0 ? delta + " vs prev day" : "no change";
+      return (
+        '<div class="mh-row"><span class="mh-day">' + row.day + "</span>" +
+        '<span class="mh-score">▲ ' + row.score + "</span>" +
+        '<span class="mh-delta' + cls + '">' + label + "</span></div>"
+      );
+    }).join("");
+
+    const fields = [
+      ["Artist name", a.name],
+      ["Tagline", a.tagline],
+      ["Genre", a.genre],
+      ["City", a.city],
+    ].map(function (f) {
+      return (
+        '<label class="dash-field"><span>' + f[0] + "</span>" +
+        '<input type="text" value="' + esc(f[1]) + '" /></label>'
+      );
+    }).join("");
+
+    return (
+      '<a href="#/" class="breadcrumb wrap" style="display:inline-flex;margin-top:28px;">← Back to Nextup</a>' +
+      '<section class="page-hero"><div class="wrap"><div class="eyebrow">Artist dashboard</div>' +
+      "<h1>" + esc(a.name) + "</h1>" +
+      "<p>Your role: <strong>" + esc(m.role.replace(/_/g, " ")) + '</strong> · <a href="#/artist/' + encodeURIComponent(a.slug) + '">View public page →</a></p>' +
+      "</div></section>" +
+
+      '<section><div class="wrap">' +
+      '<div class="section-head" data-reveal><div class="eyebrow">This week, from real activity</div><h2>The numbers.</h2></div>' +
+      '<div class="dash-stats" data-reveal>' +
+      '<div class="dash-stat"><div class="n">' + a.follower_count + '</div><div class="l">Followers</div></div>' +
+      '<div class="dash-stat"><div class="n">▲ ' + (latest ? latest.score : 0) + '</div><div class="l">Momentum (7d)</div></div>' +
+      '<div class="dash-stat"><div class="n">' + (price != null ? usd(price) : "—") + '</div><div class="l">Curve price</div></div>' +
+      '<div class="dash-stat"><div class="n">' + sold.length + "/" + tracks.length + '</div><div class="l">Songs sold</div></div>' +
+      '<div class="dash-stat"><div class="n">' + usd(gross) + '</div><div class="l">Song gross (list price)</div></div>' +
+      "</div>" +
+      (latest
+        ? '<p class="results-note" data-reveal>Momentum this week: ' +
+          plural(latest.follows_7d, "new follow") + ", " +
+          plural(latest.trades_7d, "position") + " opened, " +
+          plural(latest.purchases_7d, "song") + " purchased, " +
+          usd(latest.trade_volume_cents_7d) + " traded. Recomputed daily from real platform activity only.</p>"
+        : "") +
+      "</div></section>" +
+
+      '<section><div class="wrap">' +
+      '<div class="section-head" data-reveal><div class="eyebrow">Momentum history</div><h2>Day by day.</h2></div>' +
+      '<div class="momentum-history" data-reveal>' + rows + "</div>" +
+      '<p class="results-note" data-reveal>History accrues one snapshot per day — charts get meaningful as the record grows.</p>' +
+      "</div></section>" +
+
+      '<section style="border-bottom:none;"><div class="wrap">' +
+      '<div class="section-head" data-reveal><div class="eyebrow">Public profile</div><h2>Edit what listeners see.</h2></div>' +
+      '<form class="dash-form pv-demo-form" data-reveal>' + fields +
+      '<label class="dash-field"><span>Bio</span><textarea rows="4">' + esc(a.bio) + "</textarea></label>" +
+      '<div><button type="submit" class="back-btn">Save profile</button><div class="pv-note"></div></div>' +
+      "</form></div></section>"
+    );
+  };
+
+  /* Preview-only. The live site's home page carries a short six-item index;
+     this is the full map, so someone opening the preview cold can reach every
+     screen — including the three that are role-gated and would be invisible to
+     them on the real build. */
+  const DIRECTORY = [
+    ["Public", [
+      ["#/", "Home", "Hero, roster, waitlist"],
+      ["#/discover", "Discover", "Full roster, search, genre filter, sort"],
+      ["#/artist/bruno-mars", "Artist profile", "Colour field, songs, backing panel"],
+      ["#/how-it-works", "How it works", "Discover, back, own"],
+      ["#/pricing", "Pricing", "Flat per song, live-priced backing"],
+      ["#/about", "About", "Why this exists"],
+      ["#/faq", "FAQ", "Backing, ownership, withdrawals"],
+      ["#/press", "Press", "Media contact"],
+    ]],
+    ["For artists", [
+      ["#/apply", "Apply as an artist", "Real intake form — writes a row"],
+      ["#/dashboard", "Artist dashboard", "Gated: artist team members only"],
+    ]],
+    ["Signed in", [
+      ["#/account", "Account", "Gated: roles, follows, wallet, positions, owned songs"],
+    ]],
+    ["Operator", [
+      ["#/admin", "Admin console", "Gated: admin role only — queue, flags, audit log"],
+    ]],
+    ["Legal", [
+      ["#/terms", "Terms of Service", "Draft, not reviewed by counsel"],
+      ["#/risk-disclosure", "Risk disclosure", "Draft, not reviewed by counsel"],
+      ["#/privacy", "Privacy policy", "Draft, not reviewed by counsel"],
+    ]],
+  ];
+
+  function directorySection() {
+    return (
+      '<section id="map"><div class="wrap">' +
+      '<div class="section-head" data-reveal><div class="eyebrow">Everything in here</div>' +
+      "<h2>Every page, reachable.</h2>" +
+      "<p>Sixteen routes. The gated ones are shown because this preview is fixed " +
+      "in a signed-in demo account holding the artist and admin roles — on the " +
+      "live build they are invisible unless you hold them.</p></div>" +
+      DIRECTORY.map(function (group) {
+        return (
+          '<div class="pv-dir-group" data-reveal>' +
+          '<div class="pv-dir-label">' + esc(group[0]) + "</div>" +
+          '<nav class="index-list">' +
+          group[1].map(function (r) {
+            return '<a href="' + r[0] + '"><span>' + esc(r[1]) + "</span><em>" + esc(r[2]) + "</em></a>";
+          }).join("") +
+          "</nav></div>"
+        );
+      }).join("") +
+      "</div></section>"
+    );
+  }
+
+  pages.home = function () {
+    return (
+      '<section class="hero"><div class="hero-grain"></div><div class="wrap hero-inner">' +
+      '<div class="eyebrow">Music, before the drop</div>' +
+      "<h1>Back artists <em>before</em> everyone else does.</h1>" +
+      '<p class="lede">Find artists before the industry does. Back them, or own their songs outright.</p>' +
+      waitlistForm("pvHeroForm") +
+      '<div class="fineprint">AVAILABLE WORLDWIDE — CRYPTO PAYMENTS ONLY</div>' +
+      "</div></section>" +
+      '<section id="how"><div class="wrap"><div class="signature">' +
+      demoCard() +
+      '<div class="signature-copy" data-reveal><div class="eyebrow">The moment</div>' +
+      "<h3>You hear it before you back it.</h3>" +
+      "<p>Open a profile and the tracks are already spinning — no streaming-app detour between hearing an artist and backing one.</p>" +
+      '<p class="muted"><a href="#/artist/bruno-mars">Open a real profile →</a></p>' +
+      "</div></div></div></section>" +
+      directorySection() +
+      '<section><div class="wrap">' +
+      '<div class="section-head" data-reveal><div class="eyebrow">On Nextup right now</div><h2>Getting backed early.</h2><p><a href="#/discover">Browse the full roster →</a></p></div>' +
+      '<div class="roster-row" data-reveal>' + DATA.artists.map(artistCard).join("") + "</div>" +
+      "</div></section>" +
+      '<section class="band" id="waitlist"><div class="wrap">' +
+      '<div class="eyebrow" style="justify-content:center;">Limited early access</div>' +
+      '<h2 data-reveal>Get in before it\'s obvious.</h2>' +
+      '<div style="margin-top:34px;">' + waitlistForm("pvBandForm") + "</div>" +
+      "</div></section>"
+    );
+  };
+
+  pages["how-it-works"] = function () {
+    return (
+      '<a href="#/" class="breadcrumb wrap" style="display:inline-flex;margin-top:28px;">← Back to Nextup</a>' +
+      '<section class="page-hero"><div class="wrap"><div class="eyebrow">How it actually works</div><h1>Discover. Spin. Own.</h1>' +
+      "<p>Three steps, in the order you'll actually use them — not a sales funnel dressed up as a process.</p></div></section>" +
+      '<section><div class="wrap"><div class="flow">' +
+      '<div class="flow-item" data-reveal><div class="fk">DISCOVER</div><h3>Ranked by momentum, not marketing budget</h3><p>Every week Nextup surfaces artists gaining real traction — plays, saves, show turnout — before a label\'s A&amp;R team ever sees the numbers.</p></div>' +
+      '<div class="flow-item" data-reveal><div class="fk">SPIN</div><h3>Hear it before you back it</h3><p>Each profile plays an artist\'s top three tracks on the spot. You\'re never deciding on a bio and a press photo alone.</p></div>' +
+      '<div class="flow-item" data-reveal><div class="fk">OWN</div><h3>Back the artist, or own the song</h3><p>Put money behind their career, or buy a specific track as a collectible. Either way, you were there before the rise — not after it.</p></div>' +
+      "</div></div></section>" +
+      '<section><div class="wrap">' +
+      '<div class="section-head" data-reveal><div class="eyebrow">Two ways in</div><h2>Every record has two sides.</h2><p>Nextup gives you the same choice — back the artist\'s whole career, or own one song outright. Full pricing for both: <a href="#/pricing">see pricing →</a></p></div>' +
+      '<div class="sides" data-reveal>' +
+      '<div class="side a"><div class="letter">SIDE A</div><h3>Back the Artist</h3><p>Fund your Nextup wallet and open a position on an artist\'s live, continuously-priced bonding curve. As their catalogue and audience grow, your position moves with it.</p><ul><li>Tied to the artist, not one release</li><li>No fixed tiers — trade in and out at the live price</li><li>You show up on their page as an early backer</li></ul></div>' +
+      '<div class="side b"><div class="letter">SIDE B</div><h3>Own the Song</h3><p>Buy a specific track as a collectible, at a flat price the artist sets. It\'s yours — provably, permanently — whether or not the artist ever releases another one.</p><ul><li>Tied to one track, not the artist\'s future</li><li>One-time price, set by the artist</li><li>Your name in the credits, permanently</li></ul></div>' +
+      "</div></div></section>" +
+      '<section style="border-bottom:none;"><div class="wrap">' +
+      '<div class="section-head" data-reveal><div class="eyebrow">See it live</div><h2>Every profile plays before you decide.</h2><p>This is a live preview of that exact screen — open a real artist profile to try it yourself.</p></div>' +
+      '<div class="signature">' + demoCard() +
+      '<div class="signature-copy" data-reveal><div class="eyebrow">The moment</div><h3>You hear it before you back it.</h3><p>The tracks are already spinning when you open a profile.</p><p class="muted"><a href="#/artist/bruno-mars">Open a real profile →</a></p></div>' +
+      "</div></div></section>"
+    );
+  };
+
+  pages.pricing = function () {
+    return (
+      '<a href="#/" class="breadcrumb wrap" style="display:inline-flex;margin-top:28px;">← Back to Nextup</a>' +
+      '<section class="page-hero"><div class="wrap"><div class="eyebrow">Pricing</div><h1>No tiers. Two honest ways to pay.</h1>' +
+      "<p>Priced in USD, paid in crypto. No platform fee — you pay the price shown, plus whatever the network costs.</p></div></section>" +
+      '<section><div class="wrap"><div class="sides" data-reveal>' +
+      '<div class="side b"><div class="letter">SIDE B</div><h3>Own the Song</h3><p>One flat price per track, set by the artist — typically <strong style="color:var(--text);">$34–$59</strong>. Pay once and the track is yours, whether or not they ever release another.</p><ul><li>No bidding, no subscription</li><li>Price shown on the artist\'s profile before you buy</li></ul></div>' +
+      '<div class="side a"><div class="letter">SIDE A</div><h3>Back the Artist</h3><p>No tiers. Fund a wallet, then trade Buy/Sell positions against the artist\'s live price, which moves with real demand.</p><ul><li>The curve sets the price, not us</li><li>Sell positions are escrow-backed — no margin calls</li></ul></div>' +
+      "</div></div></section>" +
+      '<section><div class="wrap">' +
+      '<div class="section-head" data-reveal><div class="eyebrow">Wallet minimums</div><h2>The only fixed numbers.</h2><p>Floors that stop network fees eating the transaction.</p></div>' +
+      '<div class="tiers" data-reveal>' +
+      '<div class="tier"><div class="tk">WALLET</div><div class="amount">$10<span>minimum</span></div><p>Add funds</p></div>' +
+      '<div class="tier featured"><div class="tk">TRADE</div><div class="amount">$1<span>minimum</span></div><p>Open a position</p></div>' +
+      '<div class="tier"><div class="tk">WITHDRAW</div><div class="amount">$10<span>minimum</span></div><p>Cash out</p></div>' +
+      "</div>" +
+      '<div class="tiers-note">Withdrawals are requests, not instant payouts. Cancel a pending one for an immediate refund. <a href="#/faq">FAQ</a> · <a href="#/risk-disclosure">Risk disclosure</a></div>' +
+      "</div></section>"
+    );
+  };
+
+  const discoverState = { q: "", genre: "all", sort: "momentum" };
+
+  function discoverGridHtml() {
+    const q = discoverState.q.trim().toLowerCase();
+    let list = DATA.artists.filter(function (a) {
+      if (discoverState.genre !== "all" && a.genre !== discoverState.genre) return false;
+      if (!q) return true;
+      return [a.name, a.genre, a.city].some(function (f) {
+        return f.toLowerCase().indexOf(q) !== -1;
+      });
+    });
+    const score = function (a) {
+      return momentumByArtist[a.id] ? momentumByArtist[a.id].score : 0;
+    };
+    list = list.slice().sort(function (a, b) {
+      if (discoverState.sort === "momentum") return score(b) - score(a) || a.sort_order - b.sort_order;
+      if (discoverState.sort === "name") return a.name.localeCompare(b.name);
+      if (discoverState.sort === "newest") return new Date(b.created_at) - new Date(a.created_at);
+      return a.sort_order - b.sort_order;
+    });
+    if (!list.length) return '<p class="muted">No artists match — clear the filters.</p>';
+    return list.map(artistCard).join("");
+  }
+
+  pages.discover = function () {
+    const genres = Array.from(new Set(DATA.artists.map(function (a) { return a.genre; }))).sort();
+    return (
+      '<a href="#/" class="breadcrumb wrap" style="display:inline-flex;margin-top:28px;">← Back to Nextup</a>' +
+      '<section class="page-hero"><div class="wrap"><div class="eyebrow">On Nextup right now</div><h1>The full roster.</h1>' +
+      "<p>Every artist on the platform, ranked by momentum computed from real activity — follows, trades, and song purchases. No editorial boosts, no seeded numbers.</p></div></section>" +
+      '<section style="border-bottom:none;"><div class="wrap">' +
+      '<div class="filter-bar">' +
+      '<input type="search" class="filter-search" id="pvSearch" placeholder="Search name, genre, city…" aria-label="Search artists" />' +
+      '<div class="filter-chips" id="pvChips">' +
+      '<button type="button" class="filter-chip active" data-genre="all">All</button>' +
+      genres.map(function (g) { return '<button type="button" class="filter-chip" data-genre="' + esc(g) + '">' + esc(g) + "</button>"; }).join("") +
+      "</div>" +
+      '<select class="sort-select" id="pvSort" aria-label="Sort artists">' +
+      '<option value="momentum">Sort: Momentum</option><option value="name">Sort: Name A–Z</option><option value="newest">Sort: Newest</option><option value="featured">Sort: Featured</option>' +
+      "</select></div>" +
+      '<div class="discover-grid" id="pvGrid">' + discoverGridHtml() + "</div>" +
+      '<p class="results-note">Momentum recomputes daily from the last 7 days of platform activity. New artists start at zero — that\'s honest, not broken.</p>' +
+      "</div></section>"
+    );
+  };
+
+  pages.about = function () {
+    return (
+      '<a href="#/" class="breadcrumb wrap" style="display:inline-flex;margin-top:28px;">← Back to Nextup</a>' +
+      '<section style="border-bottom:none;"><div class="wrap"><div class="about-grid">' +
+      '<div class="about-copy" data-reveal><div class="eyebrow">About Nextup</div>' +
+      '<h1 style="font-size:clamp(32px, 4.8vw, 52px);margin:16px 0 24px;">Built for the artists streaming still isn\'t paying.</h1>' +
+      "<p>Streaming pays artists fractions of a cent and pays the people who found them first nothing at all. Nextup asks the other question: what if getting there early counted for something?</p>" +
+      '<p>Global from day one. Everything settles in crypto — no borders, no banks, no waiting for a market to roll out to you.</p></div>' +
+      '<div class="about-stats" data-reveal>' +
+      '<div class="about-stat"><div class="n">0%</div><div class="l">Platform fee on anything you buy</div></div>' +
+      '<div class="about-stat"><div class="n">$1</div><div class="l">Minimum to back an artist</div></div>' +
+      '<div class="about-stat"><div class="n">Worldwide</div><div class="l">Crypto only, no borders</div></div>' +
+      "</div></div></div></section>"
+    );
+  };
+
+  pages.faq = function () {
+    function item(q, a) {
+      return "<details><summary>" + q + '</summary><div class="faq-a">' + a + "</div></details>";
+    }
+    return (
+      '<a href="#/" class="breadcrumb wrap" style="display:inline-flex;margin-top:28px;">← Back to Nextup</a>' +
+      '<section class="page-hero"><div class="wrap"><div class="eyebrow">Questions</div><h1>Before you ask.</h1></div></section>' +
+      '<section style="border-bottom:none;"><div class="wrap"><div class="faq" data-reveal>' +
+      item('What does "backing" an artist actually get me?', 'A position tied to that artist\'s career as a whole — not one release. You fund your wallet, then open a Buy or Sell position against the artist\'s live bonding-curve price. As their catalogue and audience grow, your position is tied to that growth. You also show up on their page as an early backer. See <a href="#/pricing">pricing</a> for the mechanics.') +
+      item("How is owning a song different from backing an artist?", "Backing is tied to the artist's whole future and priced live on their curve. Owning a song is tied to one specific track at a flat, one-time price — it's yours permanently, whether or not the artist ever releases anything else.") +
+      item("How do deposits and withdrawals work?", "Adding funds creates a Coinbase Commerce crypto charge; once it confirms, the amount lands in your Nextup wallet balance. Withdrawing is a request, not an instant payout — it debits your wallet right away and is fulfilled to your destination address shortly after. You can cancel a still-pending request for an instant refund back to your wallet balance.") +
+      item("Is this investment advice?", 'No. Backing an artist or owning a song carries real financial risk, including possible loss of your full contribution and exposure to cryptocurrency price volatility. Nothing on this site is investment advice or a solicitation. See the <a href="#/risk-disclosure">risk disclosure</a> for the full picture.') +
+      item("Where is Nextup available?", "Nextup is available worldwide — there's no regional rollout. Because payments are crypto-only, you'll need a crypto wallet or an exchange account to fund one; local regulations around crypto payments may still affect eligibility depending on where you live.") +
+      item("What crypto do you accept?", "BTC, ETH, USDC, and more, at checkout. Nextup doesn't accept cards or bank transfers — every backing and song purchase settles in crypto.") +
+      item("How do I get on the platform as an artist?", '<a href="#/apply">Apply here</a> — artist name, city, genre, somewhere to hear you, and what you\'re working on. A person reads every one and replies by email. We\'re taking a small number pre-launch; there\'s no follower minimum.') +
+      "</div></div></section>"
+    );
+  };
+
+  pages.press = function () {
+    return (
+      '<a href="#/" class="breadcrumb wrap" style="display:inline-flex;margin-top:28px;">← Back to Nextup</a>' +
+      '<section class="page-hero" style="border-bottom:none;"><div class="wrap"><div class="eyebrow">Press &amp; media</div><h1>Writing about Nextup?</h1></div></section>' +
+      '<section style="border-bottom:none;padding-top:0;"><div class="wrap"><div class="press-contact" data-reveal>' +
+      "<div><h3>Get in touch</h3><p>We're pre-launch and keeping details tight until early access opens — happy to talk to press under embargo. Reach out below.</p></div>" +
+      '<a href="mailto:admin@nextup.exchange" class="nav-cta">admin@nextup.exchange</a>' +
+      "</div></div></section>"
+    );
+  };
+
+  /* Body comes from src/pages/*.jsx at build time — see build-preview.mjs.
+     It already carries its own eyebrow, h1 and draft notice. */
+  function legalPage(bodyHtml) {
+    return (
+      '<a href="#/" class="breadcrumb wrap" style="display:inline-flex;margin-top:28px;">← Back to Nextup</a>' +
+      '<section style="border-bottom:none;"><div class="wrap content-page">' +
+      bodyHtml +
+      "</div></section>"
+    );
+  }
+
+  pages.terms = function () {
+    return legalPage({{TERMS_BODY}});
+  };
+
+  pages["risk-disclosure"] = function () {
+    return legalPage({{RISK_BODY}});
+  };
+
+  pages.privacy = function () {
+    return legalPage({{PRIVACY_BODY}});
+  };
+
+  function artistPage(slug) {
+    const a = DATA.artists.find(function (x) { return x.slug === slug; });
+    if (!a) {
+      return '<div class="wrap" style="padding-top:56px;"><p class="muted">Couldn\'t find that artist. <a href="#/">Back to Nextup →</a></p></div>';
+    }
+    const m = momentumByArtist[a.id];
+    const curve = curveByArtist[a.id];
+    const price = curve ? Math.round(curve.base_price_cents * Math.exp(curve.k * curve.supply)) : null;
+    const tracks = DATA.tracks.filter(function (t) { return t.artist_id === a.id; });
+    const volumeBonus = m ? Math.floor(m.trade_volume_cents_7d / 1000) : 0;
+    const score = m ? m.score : 0;
+    return (
+      '<section class="field">' +
+      '<div class="field-ghost">' + esc(a.name) + "</div>" +
+      '<div class="wrap field-inner">' +
+      '<a href="#/discover" class="field-back">← Roster</a>' +
+      '<div class="field-meta">' +
+      "<div><span>Genre</span>" + esc(a.genre) + "</div>" +
+      "<div><span>Based</span>" + esc(a.city) + "</div>" +
+      "<div><span>Followers</span>" + a.follower_count.toLocaleString("en-US") + "</div>" +
+      "<div><span>Momentum 7d</span>▲ " + score + "</div>" +
+      "</div>" +
+      '<h1 class="field-name">' + esc(a.name) + "</h1>" +
+      '<p class="field-tagline">' + esc(a.tagline) + "</p>" +
+      '<div class="field-actions"><button type="button" class="follow-btn pv-follow">Follow</button>' +
+      '<span class="follow-note"></span></div>' +
+      "</div></section>" +
+
+      '<div class="wrap artist-body">' +
+      '<div class="artist-main">' +
+      '<div class="col-head"><h2>Songs</h2><span>One owner each · priced in USD, paid in crypto</span></div>' +
+      '<ol class="tracks">' +
+      tracks.map(function (t, i) {
+        return (
+          '<li class="track"><span class="track-n">' + String(i + 1).padStart(2, "0") + "</span>" +
+          '<span class="track-title">' + esc(t.title) + "</span>" +
+          '<span class="track-price">' + usd(t.price_cents) + "</span>" +
+          '<button type="button" class="track-buy pv-buy">Own it</button></li>'
+        );
+      }).join("") +
+      "</ol>" +
+      '<div class="pv-note" id="pvBuyNote"></div>' +
+      '<div class="col-head" style="margin-top:56px;"><h2>About</h2></div>' +
+      '<p class="artist-bio">' + esc(a.bio) + "</p>" +
+      (m
+        ? '<div class="momentum-panel" data-reveal>' +
+          '<div class="mp-head">MOMENTUM — LAST 7 DAYS <span>recomputed daily</span></div>' +
+          '<div class="mp-score' + (m.score > 0 ? "" : " zero") + '">▲ ' + m.score + "</div>" +
+          '<div class="mp-rows">' +
+          '<div class="mp-row"><span>' + m.follows_7d + " new follow" + (m.follows_7d === 1 ? "" : "s") + ' × 3</span><span class="v">+' + m.follows_7d * 3 + "</span></div>" +
+          '<div class="mp-row"><span>' + m.trades_7d + " position" + (m.trades_7d === 1 ? "" : "s") + ' opened × 5</span><span class="v">+' + m.trades_7d * 5 + "</span></div>" +
+          '<div class="mp-row"><span>' + m.purchases_7d + " song" + (m.purchases_7d === 1 ? "" : "s") + ' purchased × 8</span><span class="v">+' + m.purchases_7d * 8 + "</span></div>" +
+          '<div class="mp-row"><span>' + usd(m.trade_volume_cents_7d) + ' traded (+1 per $10)</span><span class="v">+' + volumeBonus + "</span></div>" +
+          "</div>" +
+          '<p class="mp-note">Computed daily from real platform activity only — follows, trades, and song purchases. No streaming stats, no editorial boosts, no seeded numbers.</p>' +
+          "</div>"
+        : "") +
+      "</div>" +
+
+      '<aside class="artist-side">' +
+      '<div class="col-head"><h2>Back ' + esc(a.name) + "</h2></div>" +
+      '<div class="backing-panel">' +
+      '<div class="bp-price"><span class="bp-label">Live price</span>' +
+      '<div class="price-ticker">' + (price != null ? usd(price) : "—") + "</div></div>" +
+      '<div class="direction-toggle" id="pvDirection">' +
+      '<button type="button" class="direction-btn active" data-d="positive">Buy</button>' +
+      '<button type="button" class="direction-btn" data-d="negative">Sell</button>' +
+      "</div>" +
+      '<div class="amount-row" id="pvAmounts">' +
+      '<button type="button" class="amount-chip" data-amount="500">$5</button>' +
+      '<button type="button" class="amount-chip" data-amount="2000">$20</button>' +
+      '<button type="button" class="amount-chip" data-amount="10000">$100</button>' +
+      "</div>" +
+      '<button type="button" class="back-btn bp-submit" id="pvTradeBtn">Sign in to trade</button>' +
+      '<div class="action-status" id="pvTradeStatus"></div>' +
+      '<p class="bp-note">The price moves with demand. Paid from your Nextup wallet, funded by crypto. You can be wrong and lose the stake.</p>' +
+      "</div></aside>" +
+      "</div>"
+    );
+  }
+
+  function wireReveal() {
+    const els = document.querySelectorAll("[data-reveal]:not(.in)");
+    const io = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("in");
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15 },
+    );
+    els.forEach(function (el) { io.observe(el); });
+  }
+
+  function wireCommon() {
+    document.querySelectorAll(".pv-demo-form").forEach(function (form) {
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        const note = form.querySelector(".pv-note") || form.parentElement.querySelector(".pv-note");
+        if (note) note.textContent = PREVIEW_MSG;
+      });
+    });
+    const qChips = document.querySelectorAll(".pv-admin-q");
+    qChips.forEach(function (chip) {
+      chip.addEventListener("click", function () {
+        qChips.forEach(function (c) { c.classList.remove("active"); });
+        chip.classList.add("active");
+        document.querySelectorAll(".pv-admin-card").forEach(function (card) {
+          card.style.display = card.dataset.queue === chip.dataset.queue ? "" : "none";
+        });
+      });
+    });
+    document.querySelectorAll(".pv-admin-card").forEach(function (card) {
+      if (card.dataset.queue !== "open") card.style.display = "none";
+    });
+    document.querySelectorAll(".pv-demo-action").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        btn.textContent = "Preview only";
+        btn.disabled = true;
+      });
+    });
+    document.querySelectorAll(".pv-waitlist").forEach(function (form) {
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        form.nextElementSibling.textContent =
+          "Preview snapshot — the live build saves this to the real waitlist.";
+      });
+    });
+    const demo = document.getElementById("pvDemoCard");
+    if (demo) {
+      const toggle = function () { demo.classList.toggle("spin"); };
+      demo.addEventListener("click", toggle);
+      demo.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
+      });
+      const io = new IntersectionObserver(
+        function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              setTimeout(function () { demo.classList.add("spin"); }, 500);
+              io.disconnect();
+            }
+          });
+        },
+        { threshold: 0.5 },
+      );
+      io.observe(demo);
+    }
+  }
+
+  function wireDiscover() {
+    const grid = document.getElementById("pvGrid");
+    const search = document.getElementById("pvSearch");
+    if (!grid || !search) return;
+    search.value = discoverState.q;
+    search.addEventListener("input", function () {
+      discoverState.q = search.value;
+      grid.innerHTML = discoverGridHtml();
+    });
+    document.querySelectorAll("#pvChips .filter-chip").forEach(function (chip) {
+      chip.addEventListener("click", function () {
+        discoverState.genre = chip.dataset.genre;
+        document.querySelectorAll("#pvChips .filter-chip").forEach(function (c) {
+          c.classList.toggle("active", c === chip);
+        });
+        grid.innerHTML = discoverGridHtml();
+      });
+    });
+    const sort = document.getElementById("pvSort");
+    sort.value = discoverState.sort;
+    sort.addEventListener("change", function () {
+      discoverState.sort = sort.value;
+      grid.innerHTML = discoverGridHtml();
+    });
+  }
+
+  function wireArtist() {
+    const follow = document.querySelector(".pv-follow");
+    if (follow) {
+      follow.addEventListener("click", function () {
+        follow.nextElementSibling.textContent = PREVIEW_MSG;
+      });
+    }
+    document.querySelectorAll(".pv-buy").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        document.getElementById("pvBuyNote").textContent = PREVIEW_MSG;
+      });
+    });
+    const dir = document.getElementById("pvDirection");
+    if (dir) {
+      dir.querySelectorAll(".direction-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          dir.querySelectorAll(".direction-btn").forEach(function (b) {
+            b.classList.toggle("active", b === btn);
+          });
+        });
+      });
+      document.querySelectorAll("#pvAmounts .amount-chip").forEach(function (chip) {
+        chip.addEventListener("click", function () {
+          document.querySelectorAll("#pvAmounts .amount-chip").forEach(function (c) {
+            c.classList.toggle("active", c === chip);
+          });
+        });
+      });
+      document.getElementById("pvTradeBtn").addEventListener("click", function () {
+        document.getElementById("pvTradeStatus").textContent = PREVIEW_MSG;
+      });
+    }
+  }
+
+  function notFound() {
+    return (
+      '<section class="page-hero" style="border-bottom:none;"><div class="wrap">' +
+      '<div class="eyebrow">404</div><h1>That page doesn\'t exist.</h1>' +
+      '<p><a href="#/">Back to Nextup →</a></p></div></section>'
+    );
+  }
+
+  let scrollToWaitlist = false;
+
+  function render() {
+    const hash = window.location.hash || "#" + DEFAULT_ROUTE;
+    const path = hash.replace(/^#/, "");
+    let html;
+    if (path === "/" || path === "") html = pages.home();
+    else if (path.indexOf("/artist/") === 0) html = artistPage(decodeURIComponent(path.slice(8)));
+    else {
+      const key = path.replace(/^\//, "");
+      html = pages[key] ? pages[key]() : notFound();
+    }
+    app.className =
+      path === "/admin"
+        ? "app-shell admin-shell"
+        : ["/account", "/dashboard", "/apply"].indexOf(path) >= 0
+          ? "app-shell"
+          : path.indexOf("/artist/") === 0
+            ? "artist-page"
+            : "";
+    // One hue owns an artist's whole surface, buttons included.
+    if (path.indexOf("/artist/") === 0) {
+      const a = DATA.artists.find(function (x) {
+        return x.slug === decodeURIComponent(path.slice(8));
+      });
+      if (a) {
+        app.style.setProperty("--f-from", a.accent_from);
+        app.style.setProperty("--f-to", a.accent_to);
+        app.style.setProperty("--accent", "color-mix(in srgb, " + a.accent_from + " 76%, var(--text) 24%)");
+        app.style.setProperty("--accent-deep", "color-mix(in srgb, " + a.accent_to + " 78%, #000 22%)");
+        app.style.setProperty("--accent-ink", "#fff");
+      }
+    } else {
+      app.removeAttribute("style");
+    }
+    app.innerHTML = html;
+    wireCommon();
+    wireDiscover();
+    wireArtist();
+    wireReveal();
+    if (scrollToWaitlist) {
+      scrollToWaitlist = false;
+      const el = document.getElementById("waitlist");
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }
+
+  const themeBtn = document.getElementById("pvTheme");
+  themeBtn.addEventListener("click", function () {
+    const dark = document.documentElement.getAttribute("data-theme") !== "light";
+    document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
+    themeBtn.textContent = dark ? "Dark" : "Light";
+  });
+
+  document.getElementById("pvEmail").textContent = DATA.demo.email;
+  document.getElementById("pvSignOut").addEventListener("click", function () {
+    document.getElementById("pvAuthNote").textContent =
+      "Preview is fixed in a signed-in demo state.";
+  });
+
+  function gotoWaitlist(e) {
+    e.preventDefault();
+    scrollToWaitlist = true;
+    if ((window.location.hash || "#/") === "#/") render();
+    else window.location.hash = "#/";
+  }
+  document.querySelectorAll(".pv-goto-waitlist").forEach(function (a) {
+    a.addEventListener("click", gotoWaitlist);
+  });
+
+  window.addEventListener("hashchange", render);
+  if (!window.location.hash) window.location.hash = "#" + DEFAULT_ROUTE;
+  render();
+</script>

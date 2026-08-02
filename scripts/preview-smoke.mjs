@@ -10,14 +10,15 @@
  * unjudgeable.
  *
  * Usage:
- *   node scripts/build-preview.mjs   # from the scratchpad copy
+ *   node scripts/build-preview.mjs
+ *   npx serve dist/preview -l 8301        # or any static server
  *   node scripts/preview-smoke.mjs
  */
 import { chromium } from "playwright";
 
 const base = process.env.PREVIEW_BASE ?? "http://localhost:8301";
 const browser = await chromium.launch({
-  executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+  executablePath: process.env.CHROMIUM_PATH || undefined,
 });
 const page = await browser.newPage();
 const errors = [];

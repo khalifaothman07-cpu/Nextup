@@ -1,0 +1,483 @@
+{
+ "artists": [
+  {
+   "id": "6bf4e129-82b5-402f-a6ec-9b6252413a94",
+   "slug": "bruno-mars",
+   "name": "Bruno Mars",
+   "genre": "Pop / Funk",
+   "city": "Honolulu",
+   "tagline": "Silk, brass, and a snare you feel in your chest.",
+   "bio": "Twelve years of singles that refuse to leave radio. The live show still sells out in minutes.",
+   "accent_from": "#c4452f",
+   "accent_to": "#6d1d18",
+   "follower_count": 130507346,
+   "sort_order": 1,
+   "created_at": "2026-07-28T04:10:31.911683+00:00"
+  },
+  {
+   "id": "461256fe-8620-4ffc-a69c-c25ab2b1b2b2",
+   "slug": "justin-bieber",
+   "name": "Justin Bieber",
+   "genre": "Pop / R&B",
+   "city": "London, ON",
+   "tagline": "Fifteen years in, still rewriting the range.",
+   "bio": "A bedroom camera became a catalogue that never dips below nine figures a month.",
+   "accent_from": "#7b5aa6",
+   "accent_to": "#33224d",
+   "follower_count": 123282662,
+   "sort_order": 2,
+   "created_at": "2026-07-28T04:10:31.911683+00:00"
+  },
+  {
+   "id": "633573d9-3f67-409b-aa7b-6436345e3820",
+   "slug": "the-weeknd",
+   "name": "The Weeknd",
+   "genre": "R&B / Alt",
+   "city": "Toronto",
+   "tagline": "Neon, reverb, and nothing resolved.",
+   "bio": "Three mixtapes given away for free became the decade's most reliable catalogue.",
+   "accent_from": "#2e6f8e",
+   "accent_to": "#14303f",
+   "follower_count": 113317593,
+   "sort_order": 3,
+   "created_at": "2026-07-28T04:10:31.911683+00:00"
+  },
+  {
+   "id": "c633524f-0271-4e81-a2ce-1a90e02c6020",
+   "slug": "rihanna",
+   "name": "Rihanna",
+   "genre": "Pop / R&B",
+   "city": "Saint Michael",
+   "tagline": "Nine albums, then a decade of everyone waiting.",
+   "bio": "The rarest position in music: a back catalogue that grows without new releases.",
+   "accent_from": "#3f8f6d",
+   "accent_to": "#173d2f",
+   "follower_count": 111347454,
+   "sort_order": 4,
+   "created_at": "2026-07-28T04:10:31.911683+00:00"
+  },
+  {
+   "id": "4d260a6a-6cb9-41e6-aefa-35cc2444162e",
+   "slug": "shakira",
+   "name": "Shakira",
+   "genre": "Latin Pop",
+   "city": "Barranquilla",
+   "tagline": "Four decades, two languages, one unmistakable voice.",
+   "bio": "Barranquilla to the world, and back to the top of the chart in 2026.",
+   "accent_from": "#c98a2b",
+   "accent_to": "#6b4310",
+   "follower_count": 105969039,
+   "sort_order": 5,
+   "created_at": "2026-07-28T04:10:31.911683+00:00"
+  }
+ ],
+ "tracks": [
+  {
+   "id": "9dca8779-7443-43fb-bcc6-5baac94280fd",
+   "artist_id": "6bf4e129-82b5-402f-a6ec-9b6252413a94",
+   "title": "Die With A Smile",
+   "price_cents": 4900,
+   "sort_order": 1
+  },
+  {
+   "id": "b7aab3ae-6811-4e53-804d-2e7b5c94af28",
+   "artist_id": "6bf4e129-82b5-402f-a6ec-9b6252413a94",
+   "title": "Leave The Door Open",
+   "price_cents": 4900,
+   "sort_order": 2
+  },
+  {
+   "id": "3b85ca24-b397-49fb-94a1-9221236565b8",
+   "artist_id": "6bf4e129-82b5-402f-a6ec-9b6252413a94",
+   "title": "Locked Out Of Heaven",
+   "price_cents": 4900,
+   "sort_order": 3
+  },
+  {
+   "id": "b1e7703a-fbd3-40cf-ae9b-3ffba1a5c488",
+   "artist_id": "461256fe-8620-4ffc-a69c-c25ab2b1b2b2",
+   "title": "Peaches",
+   "price_cents": 3900,
+   "sort_order": 1
+  },
+  {
+   "id": "edffbb7a-faa2-4064-a766-1d27cd27d0a1",
+   "artist_id": "461256fe-8620-4ffc-a69c-c25ab2b1b2b2",
+   "title": "Ghost",
+   "price_cents": 3900,
+   "sort_order": 2
+  },
+  {
+   "id": "be3e0b7e-5da8-42ad-845a-135cca7d2db0",
+   "artist_id": "461256fe-8620-4ffc-a69c-c25ab2b1b2b2",
+   "title": "Anyone",
+   "price_cents": 3900,
+   "sort_order": 3
+  },
+  {
+   "id": "1706a381-fe64-440b-bedc-a1faee756cce",
+   "artist_id": "633573d9-3f67-409b-aa7b-6436345e3820",
+   "title": "Blinding Lights",
+   "price_cents": 5900,
+   "sort_order": 1
+  },
+  {
+   "id": "216780b9-e2fe-488c-93b3-78714282af66",
+   "artist_id": "633573d9-3f67-409b-aa7b-6436345e3820",
+   "title": "Save Your Tears",
+   "price_cents": 5900,
+   "sort_order": 2
+  },
+  {
+   "id": "092d3b9b-6fae-4ebe-8e0e-9f90f41c20d2",
+   "artist_id": "633573d9-3f67-409b-aa7b-6436345e3820",
+   "title": "The Hills",
+   "price_cents": 5900,
+   "sort_order": 3
+  },
+  {
+   "id": "6c9e1930-e07d-4660-873d-4afa5f1bf76d",
+   "artist_id": "c633524f-0271-4e81-a2ce-1a90e02c6020",
+   "title": "Umbrella",
+   "price_cents": 4400,
+   "sort_order": 1
+  },
+  {
+   "id": "d98655b4-4be6-47aa-8cf2-cf71fde952e4",
+   "artist_id": "c633524f-0271-4e81-a2ce-1a90e02c6020",
+   "title": "Diamonds",
+   "price_cents": 4400,
+   "sort_order": 2
+  },
+  {
+   "id": "c39d6922-9119-421d-9984-430a2d841774",
+   "artist_id": "c633524f-0271-4e81-a2ce-1a90e02c6020",
+   "title": "Work",
+   "price_cents": 4400,
+   "sort_order": 3
+  },
+  {
+   "id": "115188cd-5260-48f5-9592-57bfe2848f3a",
+   "artist_id": "4d260a6a-6cb9-41e6-aefa-35cc2444162e",
+   "title": "Hips Dont Lie",
+   "price_cents": 3400,
+   "sort_order": 1
+  },
+  {
+   "id": "e37234c4-4841-418f-aa0f-c816287c64d2",
+   "artist_id": "4d260a6a-6cb9-41e6-aefa-35cc2444162e",
+   "title": "Waka Waka",
+   "price_cents": 3400,
+   "sort_order": 2
+  },
+  {
+   "id": "8f96f0ba-0510-4e22-91d6-d0fc14517210",
+   "artist_id": "4d260a6a-6cb9-41e6-aefa-35cc2444162e",
+   "title": "Whenever, Wherever",
+   "price_cents": 3400,
+   "sort_order": 3
+  }
+ ],
+ "curves": [
+  {
+   "artist_id": "6bf4e129-82b5-402f-a6ec-9b6252413a94",
+   "supply": 1400,
+   "base_price_cents": 100,
+   "k": 0.0005
+  },
+  {
+   "artist_id": "461256fe-8620-4ffc-a69c-c25ab2b1b2b2",
+   "supply": 80,
+   "base_price_cents": 100,
+   "k": 0.0005
+  },
+  {
+   "artist_id": "633573d9-3f67-409b-aa7b-6436345e3820",
+   "supply": 0,
+   "base_price_cents": 100,
+   "k": 0.0005
+  },
+  {
+   "artist_id": "c633524f-0271-4e81-a2ce-1a90e02c6020",
+   "supply": 0,
+   "base_price_cents": 100,
+   "k": 0.0005
+  },
+  {
+   "artist_id": "4d260a6a-6cb9-41e6-aefa-35cc2444162e",
+   "supply": 0,
+   "base_price_cents": 100,
+   "k": 0.0005
+  }
+ ],
+ "momentum": [
+  {
+   "artist_id": "6bf4e129-82b5-402f-a6ec-9b6252413a94",
+   "day": "2026-07-29",
+   "score": 43,
+   "follows_7d": 6,
+   "trades_7d": 3,
+   "purchases_7d": 1,
+   "trade_volume_cents_7d": 2500,
+   "followers_total": 130507346
+  },
+  {
+   "artist_id": "6bf4e129-82b5-402f-a6ec-9b6252413a94",
+   "day": "2026-07-28",
+   "score": 38,
+   "follows_7d": 5,
+   "trades_7d": 3,
+   "purchases_7d": 1,
+   "trade_volume_cents_7d": 2000,
+   "followers_total": 130507346
+  },
+  {
+   "artist_id": "6bf4e129-82b5-402f-a6ec-9b6252413a94",
+   "day": "2026-07-27",
+   "score": 40,
+   "follows_7d": 6,
+   "trades_7d": 3,
+   "purchases_7d": 1,
+   "trade_volume_cents_7d": 1500,
+   "followers_total": 130507346
+  },
+  {
+   "artist_id": "6bf4e129-82b5-402f-a6ec-9b6252413a94",
+   "day": "2026-07-26",
+   "score": 31,
+   "follows_7d": 4,
+   "trades_7d": 2,
+   "purchases_7d": 1,
+   "trade_volume_cents_7d": 1000,
+   "followers_total": 130507346
+  },
+  {
+   "artist_id": "6bf4e129-82b5-402f-a6ec-9b6252413a94",
+   "day": "2026-07-25",
+   "score": 22,
+   "follows_7d": 3,
+   "trades_7d": 2,
+   "purchases_7d": 0,
+   "trade_volume_cents_7d": 500,
+   "followers_total": 130507346
+  },
+  {
+   "artist_id": "6bf4e129-82b5-402f-a6ec-9b6252413a94",
+   "day": "2026-07-24",
+   "score": 22,
+   "follows_7d": 4,
+   "trades_7d": 2,
+   "purchases_7d": 0,
+   "trade_volume_cents_7d": 0,
+   "followers_total": 130507346
+  },
+  {
+   "artist_id": "6bf4e129-82b5-402f-a6ec-9b6252413a94",
+   "day": "2026-07-23",
+   "score": 14,
+   "follows_7d": 3,
+   "trades_7d": 1,
+   "purchases_7d": 0,
+   "trade_volume_cents_7d": 0,
+   "followers_total": 130507346
+  },
+  {
+   "artist_id": "461256fe-8620-4ffc-a69c-c25ab2b1b2b2",
+   "day": "2026-07-29",
+   "score": 12,
+   "follows_7d": 4,
+   "trades_7d": 0,
+   "purchases_7d": 0,
+   "trade_volume_cents_7d": 0,
+   "followers_total": 123282662
+  },
+  {
+   "artist_id": "633573d9-3f67-409b-aa7b-6436345e3820",
+   "day": "2026-07-29",
+   "score": 7,
+   "follows_7d": 1,
+   "trades_7d": 0,
+   "purchases_7d": 0,
+   "trade_volume_cents_7d": 4000,
+   "followers_total": 113317593
+  },
+  {
+   "artist_id": "c633524f-0271-4e81-a2ce-1a90e02c6020",
+   "day": "2026-07-29",
+   "score": 3,
+   "follows_7d": 1,
+   "trades_7d": 0,
+   "purchases_7d": 0,
+   "trade_volume_cents_7d": 0,
+   "followers_total": 111347454
+  },
+  {
+   "artist_id": "4d260a6a-6cb9-41e6-aefa-35cc2444162e",
+   "day": "2026-07-29",
+   "score": 0,
+   "follows_7d": 0,
+   "trades_7d": 0,
+   "purchases_7d": 0,
+   "trade_volume_cents_7d": 0,
+   "followers_total": 105969039
+  }
+ ],
+ "demo": {
+  "email": "demo@nextup.exchange",
+  "display_name": "K. Othman",
+  "roles": [
+   "curator",
+   "admin"
+  ],
+  "memberships": [
+   {
+    "artist_id": "6bf4e129-82b5-402f-a6ec-9b6252413a94",
+    "role": "content_editor"
+   }
+  ],
+  "follows": [
+   "6bf4e129-82b5-402f-a6ec-9b6252413a94",
+   "633573d9-3f67-409b-aa7b-6436345e3820"
+  ],
+  "balance_cents": 4750,
+  "withdrawals": [
+   {
+    "id": "w-1",
+    "amount_cents": 1500,
+    "destination_address": "0x71C7656EC7ab88b098defB751B7401B5f6d8976F"
+   }
+  ],
+  "positions": [
+   {
+    "id": "p-1",
+    "artist_id": "6bf4e129-82b5-402f-a6ec-9b6252413a94",
+    "direction": "positive",
+    "stake_cents": 2000,
+    "entry_price_cents": 201
+   },
+   {
+    "id": "p-2",
+    "artist_id": "461256fe-8620-4ffc-a69c-c25ab2b1b2b2",
+    "direction": "negative",
+    "stake_cents": 500,
+    "entry_price_cents": 104
+   }
+  ],
+  "owned": [
+   {
+    "track_id": "9dca8779-7443-43fb-bcc6-5baac94280fd",
+    "price_cents": 4900
+   }
+  ]
+ },
+ "admin": {
+  "applications": [
+   {
+    "id": "app-1",
+    "applicant_email": "kiteseason@example.com",
+    "applicant_display_name": "Rui M.",
+    "artist_name": "Kite Season",
+    "city": "Lisbon",
+    "genre": "Alt R&B",
+    "links": "https://soundcloud.com/kiteseason\nhttps://open.spotify.com/artist/xxxx",
+    "about": "Two singles out, an EP mixed and waiting on masters. I've been selling out 200-cap rooms in Lisbon on word of mouth and want somewhere the people who found me first actually count for something.",
+    "status": "pending",
+    "created_at": "Jul 29, 2026, 9:14 AM",
+    "reviewed_at": null,
+    "review_notes": "",
+    "onboarded_slug": null
+   },
+   {
+    "id": "app-2",
+    "applicant_email": "hello@thelonghall.co",
+    "applicant_display_name": null,
+    "artist_name": "The Long Hall",
+    "city": "Glasgow",
+    "genre": "Post-punk",
+    "links": "https://thelonghall.bandcamp.com",
+    "about": "Four of us, one van, eleven shows booked through October. Recording the album live in a church in November.",
+    "status": "reviewing",
+    "created_at": "Jul 27, 2026, 4:02 PM",
+    "reviewed_at": "Jul 28, 2026, 10:31 AM",
+    "review_notes": "Strong live following. Waiting on the church recording.",
+    "onboarded_slug": null
+   },
+   {
+    "id": "app-3",
+    "applicant_email": "team@brunomars.com",
+    "applicant_display_name": "Bruno Mars",
+    "artist_name": "Bruno Mars",
+    "city": "Honolulu",
+    "genre": "Pop / Funk",
+    "links": "https://open.spotify.com/artist/brunomars",
+    "about": "Silk, brass, and a snare you feel in your chest.",
+    "status": "accepted",
+    "created_at": "Jul 21, 2026, 8:00 AM",
+    "reviewed_at": "Jul 22, 2026, 12:10 PM",
+    "review_notes": "Yes. Page is live.",
+    "onboarded_slug": "bruno-mars"
+   },
+   {
+    "id": "app-4",
+    "applicant_email": "dm@example.net",
+    "applicant_display_name": null,
+    "artist_name": "Placeholder Sound",
+    "city": "Austin",
+    "genre": "Unspecified",
+    "links": "https://example.net",
+    "about": "Nothing released yet.",
+    "status": "declined",
+    "created_at": "Jul 20, 2026, 7:45 PM",
+    "reviewed_at": "Jul 21, 2026, 9:02 AM",
+    "review_notes": "Nothing out yet — come back when there's music we can point people at.",
+    "onboarded_slug": null
+   }
+  ],
+  "flags": [
+   {
+    "key": "regulated_offerings",
+    "enabled": true,
+    "description": "Continuous bonding-curve Buy/Sell trading on artist momentum (the Pauv-style positions/wallet system). Disabled by default — this is a regulated-offerings-style product surface and must stay opt-in until explicitly configured per docs/ASSUMPTIONS.md.",
+    "updated_at": "Jul 28, 2026, 9:41 AM"
+   }
+  ],
+  "audit": [
+   {
+    "id": 4,
+    "created_at": "Jul 29, 2026, 2:02 PM",
+    "actor_email": "admin@nextup.exchange",
+    "action": "application.reviewed",
+    "entity": "artist_applications",
+    "entity_id": "app-2",
+    "detail": "{\"status\":\"reviewing\"}"
+   },
+   {
+    "id": 3,
+    "created_at": "Jul 28, 2026, 9:41 AM",
+    "actor_email": "admin@nextup.exchange",
+    "action": "feature_flag.set",
+    "entity": "feature_flags",
+    "entity_id": "regulated_offerings",
+    "detail": "{\"enabled\":true}"
+   },
+   {
+    "id": 2,
+    "created_at": "Jul 22, 2026, 12:10 PM",
+    "actor_email": "admin@nextup.exchange",
+    "action": "application.onboarded",
+    "entity": "artist_applications",
+    "entity_id": "app-3",
+    "detail": "{\"slug\":\"bruno-mars\"}"
+   },
+   {
+    "id": 1,
+    "created_at": "Jul 21, 2026, 9:02 AM",
+    "actor_email": "admin@nextup.exchange",
+    "action": "application.reviewed",
+    "entity": "artist_applications",
+    "entity_id": "app-4",
+    "detail": "{\"status\":\"declined\"}"
+   }
+  ]
+ }
+}
